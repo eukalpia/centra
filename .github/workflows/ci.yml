@@ -27,7 +27,17 @@ jobs:
       - name: Analyze
         run: dart analyze --fatal-warnings
       - name: Test
-        run: dart test
+        shell: bash
+        run: |
+          set -o pipefail
+          dart test --reporter expanded 2>&1 | tee test.log
+      - name: Upload failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: centra-test-log-${{ runner.os }}
+          path: test.log
+          if-no-files-found: warn
       - name: Compile executable
         shell: bash
         run: |
