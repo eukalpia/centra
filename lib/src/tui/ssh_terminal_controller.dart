@@ -21,7 +21,8 @@ class SshTerminalController extends PtyController {
   final SshConnection connection;
   final int maximumBufferedLines;
 
-  final List<void Function(String)> _outputCallbacks = <void Function(String)>[];
+  final List<void Function(String)> _outputCallbacks =
+      <void Function(String)>[];
   final List<void Function(int)> _exitCallbacks = <void Function(int)>[];
   final List<void Function(Object)> _errorCallbacks = <void Function(Object)>[];
   final List<VoidCallback> _listeners = <VoidCallback>[];

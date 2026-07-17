@@ -106,6 +106,16 @@ class SshConnection {
 
   String? get serverVersion => _client.remoteVersion;
 
+  Future<SSHSession> openShell({
+    required int columns,
+    required int rows,
+  }) async {
+    _checkOpen();
+    return _client.shell(
+      pty: SSHPtyConfig(width: columns, height: rows),
+    );
+  }
+
   Future<SshDirectoryListing> listDirectories(String path) async {
     _checkOpen();
     final normalized = normalizeSshPath(await _sftp.absolute(path));
