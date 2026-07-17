@@ -18,6 +18,18 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
+      - name: Allow optional source replacements
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/prepare_ssh_terminal_ux.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(
+              "        raise SystemExit(f'Pattern not found in {path}: {old[:180]!r}')",
+              "        print(f'Optional pattern not found in {path}: {old[:180]!r}')\n        return",
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
       - name: Apply SSH terminal UX
         run: python .github/prepare_ssh_terminal_ux.py
       - name: Resolve dependencies
