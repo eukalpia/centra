@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cinder/cinder.dart';
 import 'package:dartssh2/dartssh2.dart';
@@ -100,7 +101,7 @@ class SshTerminalController extends PtyController {
   @override
   void writeBytes(List<int> bytes) {
     if (!isRunning) throw StateError('SSH terminal is not running.');
-    _session!.write(bytes);
+    _session!.write(Uint8List.fromList(bytes));
   }
 
   @override
