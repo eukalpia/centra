@@ -22,8 +22,18 @@ jobs:
         with:
           sdk: stable
       - run: dart pub get
-      - name: Format report
-        run: dart format --output=none .
+      - name: Format sources
+        run: dart format .
+      - name: Upload formatted source
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: centra-formatted-source
+          path: |
+            bin
+            lib
+            test
+          if-no-files-found: error
       - run: dart analyze --fatal-infos
       - run: dart test
       - name: Compile executable
