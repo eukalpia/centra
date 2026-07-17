@@ -42,12 +42,14 @@ void main() {
       }
       final profile = draft.toProfile();
       expect(profile.locale, 'ru');
-      expect(profile.algorithmIds, containsAllInOrder(<String>['sha256', 'md5']));
+      expect(
+          profile.algorithmIds, containsAllInOrder(<String>['sha256', 'md5']));
       expect(profile.createdAt, fixed);
       expect(profile.validate(), isEmpty);
     });
 
-    test('requires ZIP mode before a password requirement can be serialized', () {
+    test('requires ZIP mode before a password requirement can be serialized',
+        () {
       final draft = WizardDraft()
         ..locale = 'en'
         ..sourceType = SourceType.local

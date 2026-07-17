@@ -74,16 +74,20 @@ class SourceConfig {
       case SourceType.ssh:
         if ((host ?? '').trim().isEmpty) errors.add('SSH host is required.');
         if ((user ?? '').trim().isEmpty) errors.add('SSH user is required.');
-        if (port < 1 || port > 65535) errors.add('SSH port must be between 1 and 65535.');
+        if (port < 1 || port > 65535)
+          errors.add('SSH port must be between 1 and 65535.');
         break;
       case SourceType.dockerContainer:
-        if ((container ?? '').trim().isEmpty) errors.add('Docker container is required.');
+        if ((container ?? '').trim().isEmpty)
+          errors.add('Docker container is required.');
         break;
       case SourceType.dockerImage:
-        if ((image ?? '').trim().isEmpty) errors.add('Docker image is required.');
+        if ((image ?? '').trim().isEmpty)
+          errors.add('Docker image is required.');
         break;
       case SourceType.dockerCompose:
-        if ((service ?? '').trim().isEmpty) errors.add('Compose service is required.');
+        if ((service ?? '').trim().isEmpty)
+          errors.add('Compose service is required.');
         break;
     }
     return errors;
@@ -138,7 +142,9 @@ class OutputConfig {
   List<String> validate() {
     final errors = <String>[];
     if (directory.trim().isEmpty) errors.add('Output directory is required.');
-    if (!writeCanonicalJson && !writeCompatibilityText && !includeMetadataReport) {
+    if (!writeCanonicalJson &&
+        !writeCompatibilityText &&
+        !includeMetadataReport) {
       errors.add('Select at least one output format.');
     }
     if (requireZipPassword && !createZip) {
@@ -159,7 +165,8 @@ class OutputConfig {
   factory OutputConfig.fromJson(Map<String, Object?> json) => OutputConfig(
         directory: json['directory']! as String,
         writeCanonicalJson: json['writeCanonicalJson'] as bool? ?? false,
-        writeCompatibilityText: json['writeCompatibilityText'] as bool? ?? false,
+        writeCompatibilityText:
+            json['writeCompatibilityText'] as bool? ?? false,
         createZip: json['createZip'] as bool? ?? false,
         requireZipPassword: json['requireZipPassword'] as bool? ?? false,
         includeMetadataReport: json['includeMetadataReport'] as bool? ?? false,
@@ -210,12 +217,16 @@ class CentraProfile {
   List<String> validate() {
     final errors = <String>[];
     if (!RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(id)) {
-      errors.add('Profile ID must be 2-64 lowercase letters, numbers, dots, dashes, or underscores.');
+      errors.add(
+          'Profile ID must be 2-64 lowercase letters, numbers, dots, dashes, or underscores.');
     }
     if (name.trim().isEmpty) errors.add('Profile name is required.');
-    if (algorithmIds.isEmpty) errors.add('Select at least one hash or checksum algorithm.');
-    if (algorithmIds.toSet().length != algorithmIds.length) errors.add('Algorithm IDs must be unique.');
-    if (workerCount < 1 || workerCount > 64) errors.add('Worker count must be between 1 and 64.');
+    if (algorithmIds.isEmpty)
+      errors.add('Select at least one hash or checksum algorithm.');
+    if (algorithmIds.toSet().length != algorithmIds.length)
+      errors.add('Algorithm IDs must be unique.');
+    if (workerCount < 1 || workerCount > 64)
+      errors.add('Worker count must be between 1 and 64.');
     errors
       ..addAll(source.validate())
       ..addAll(output.validate());
@@ -232,12 +243,14 @@ class CentraProfile {
         errors.add('Invalid custom algorithm ID: ${algorithm.id}');
       }
       if (!algorithm.arguments.any((argument) => argument.contains('{file}'))) {
-        errors.add('Custom algorithm ${algorithm.id} must include {file} in its arguments.');
+        errors.add(
+            'Custom algorithm ${algorithm.id} must include {file} in its arguments.');
       }
       try {
         RegExp(algorithm.outputPattern);
       } on FormatException {
-        errors.add('Custom algorithm ${algorithm.id} has an invalid output pattern.');
+        errors.add(
+            'Custom algorithm ${algorithm.id} has an invalid output pattern.');
       }
     }
     return errors;
@@ -252,7 +265,8 @@ class CentraProfile {
         'algorithmIds': algorithmIds,
         'includePatterns': includePatterns,
         'excludePatterns': excludePatterns,
-        'customAlgorithms': customAlgorithms.map((algorithm) => algorithm.toJson()).toList(),
+        'customAlgorithms':
+            customAlgorithms.map((algorithm) => algorithm.toJson()).toList(),
         'symlinkPolicy': symlinkPolicy.wireName,
         'includeHiddenFiles': includeHiddenFiles,
         'capturePermissions': capturePermissions,
@@ -273,20 +287,30 @@ class CentraProfile {
       id: json['id']! as String,
       name: json['name']! as String,
       locale: json['locale'] as String? ?? 'en',
-      source: SourceConfig.fromJson((json['source']! as Map).cast<String, Object?>()),
+      source: SourceConfig.fromJson(
+          (json['source']! as Map).cast<String, Object?>()),
       algorithmIds: (json['algorithmIds']! as List<Object?>).cast<String>(),
-      includePatterns: (json['includePatterns'] as List<Object?>? ?? const <Object?>['**']).cast<String>(),
-      excludePatterns: (json['excludePatterns'] as List<Object?>? ?? const <Object?>[]).cast<String>(),
-      customAlgorithms: (json['customAlgorithms'] as List<Object?>? ?? const <Object?>[])
-          .map((value) => CustomHashAlgorithm.fromJson((value! as Map).cast<String, Object?>()))
-          .toList(growable: false),
-      symlinkPolicy: SymlinkPolicyName.parse(json['symlinkPolicy'] as String? ?? 'skip'),
+      includePatterns:
+          (json['includePatterns'] as List<Object?>? ?? const <Object?>['**'])
+              .cast<String>(),
+      excludePatterns:
+          (json['excludePatterns'] as List<Object?>? ?? const <Object?>[])
+              .cast<String>(),
+      customAlgorithms:
+          (json['customAlgorithms'] as List<Object?>? ?? const <Object?>[])
+              .map((value) => CustomHashAlgorithm.fromJson(
+                  (value! as Map).cast<String, Object?>()))
+              .toList(growable: false),
+      symlinkPolicy:
+          SymlinkPolicyName.parse(json['symlinkPolicy'] as String? ?? 'skip'),
       includeHiddenFiles: json['includeHiddenFiles'] as bool? ?? true,
       capturePermissions: json['capturePermissions'] as bool? ?? true,
-      captureModificationTimes: json['captureModificationTimes'] as bool? ?? true,
+      captureModificationTimes:
+          json['captureModificationTimes'] as bool? ?? true,
       workerCount: json['workerCount'] as int? ?? 4,
       failOnReadError: json['failOnReadError'] as bool? ?? true,
-      output: OutputConfig.fromJson((json['output']! as Map).cast<String, Object?>()),
+      output: OutputConfig.fromJson(
+          (json['output']! as Map).cast<String, Object?>()),
       projectKind: json['projectKind'] as String? ?? 'generic',
       createdAt: DateTime.parse(json['createdAt']! as String),
       updatedAt: DateTime.parse(json['updatedAt']! as String),

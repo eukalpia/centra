@@ -14,9 +14,11 @@ class CentraPaths {
   final Directory configDirectory;
   final Directory dataDirectory;
 
-  Directory get profilesDirectory => Directory(p.join(configDirectory.path, 'profiles'));
+  Directory get profilesDirectory =>
+      Directory(p.join(configDirectory.path, 'profiles'));
   File get settingsFile => File(p.join(configDirectory.path, 'settings.json'));
-  Directory get historyDirectory => Directory(p.join(dataDirectory.path, 'history'));
+  Directory get historyDirectory =>
+      Directory(p.join(dataDirectory.path, 'history'));
 
   Future<void> ensure() async {
     await configDirectory.create(recursive: true);
@@ -28,10 +30,12 @@ class CentraPaths {
   static Directory _defaultConfigDirectory() {
     if (Platform.isWindows) {
       final appData = Platform.environment['APPDATA'];
-      return Directory(p.join(appData ?? Platform.environment['USERPROFILE'] ?? '.', 'Centra'));
+      return Directory(p.join(
+          appData ?? Platform.environment['USERPROFILE'] ?? '.', 'Centra'));
     }
     if (Platform.isMacOS) {
-      return Directory(p.join(_home(), 'Library', 'Application Support', 'Centra'));
+      return Directory(
+          p.join(_home(), 'Library', 'Application Support', 'Centra'));
     }
     final xdg = Platform.environment['XDG_CONFIG_HOME'];
     return Directory(p.join(xdg ?? p.join(_home(), '.config'), 'centra'));
@@ -40,16 +44,22 @@ class CentraPaths {
   static Directory _defaultDataDirectory() {
     if (Platform.isWindows) {
       final localAppData = Platform.environment['LOCALAPPDATA'];
-      return Directory(p.join(localAppData ?? Platform.environment['APPDATA'] ?? '.', 'Centra'));
+      return Directory(p.join(
+          localAppData ?? Platform.environment['APPDATA'] ?? '.', 'Centra'));
     }
     if (Platform.isMacOS) {
-      return Directory(p.join(_home(), 'Library', 'Application Support', 'Centra'));
+      return Directory(
+          p.join(_home(), 'Library', 'Application Support', 'Centra'));
     }
     final xdg = Platform.environment['XDG_DATA_HOME'];
-    return Directory(p.join(xdg ?? p.join(_home(), '.local', 'share'), 'centra'));
+    return Directory(
+        p.join(xdg ?? p.join(_home(), '.local', 'share'), 'centra'));
   }
 
-  static String _home() => Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
+  static String _home() =>
+      Platform.environment['HOME'] ??
+      Platform.environment['USERPROFILE'] ??
+      '.';
 }
 
 class CentraSettings {
@@ -83,7 +93,8 @@ class CentraSettings {
     return CentraSettings(
       locale: json['locale'] as String? ?? 'en',
       theme: json['theme'] as String? ?? 'auto',
-      confirmDestructiveActions: json['confirmDestructiveActions'] as bool? ?? true,
+      confirmDestructiveActions:
+          json['confirmDestructiveActions'] as bool? ?? true,
     );
   }
 }
@@ -93,7 +104,8 @@ class AtomicFileWriter {
 
   Future<void> writeText(File file, String content) async {
     await file.parent.create(recursive: true);
-    final temporary = File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
+    final temporary =
+        File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
     await temporary.writeAsString(content, encoding: utf8, flush: true);
     if (await file.exists()) {
       final backup = File('${file.path}.bak');
@@ -103,7 +115,8 @@ class AtomicFileWriter {
         await temporary.rename(file.path);
         await backup.delete();
       } catch (_) {
-        if (!await file.exists() && await backup.exists()) await backup.rename(file.path);
+        if (!await file.exists() && await backup.exists())
+          await backup.rename(file.path);
         rethrow;
       }
     } else {
@@ -113,7 +126,8 @@ class AtomicFileWriter {
 
   Future<void> writeBytes(File file, List<int> bytes) async {
     await file.parent.create(recursive: true);
-    final temporary = File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
+    final temporary =
+        File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
     await temporary.writeAsBytes(bytes, flush: true);
     if (await file.exists()) await file.delete();
     await temporary.rename(file.path);
@@ -121,7 +135,9 @@ class AtomicFileWriter {
 }
 
 class SettingsStore {
-  SettingsStore(this.paths, {AtomicFileWriter writer = const AtomicFileWriter()}) : _writer = writer;
+  SettingsStore(this.paths,
+      {AtomicFileWriter writer = const AtomicFileWriter()})
+      : _writer = writer;
 
   final CentraPaths paths;
   final AtomicFileWriter _writer;
@@ -135,17 +151,20 @@ class SettingsStore {
 
   Future<void> save(CentraSettings settings) async {
     await paths.ensure();
-    await _writer.writeText(paths.settingsFile, '${prettyJson(settings.toJson())}\n');
+    await _writer.writeText(
+        paths.settingsFile, '${prettyJson(settings.toJson())}\n');
   }
 }
 
 class ProfileStore {
-  ProfileStore(this.paths, {AtomicFileWriter writer = const AtomicFileWriter()}) : _writer = writer;
+  ProfileStore(this.paths, {AtomicFileWriter writer = const AtomicFileWriter()})
+      : _writer = writer;
 
   final CentraPaths paths;
   final AtomicFileWriter _writer;
 
-  File fileFor(String id) => File(p.join(paths.profilesDirectory.path, '$id.json'));
+  File fileFor(String id) =>
+      File(p.join(paths.profilesDirectory.path, '$id.json'));
 
   Future<List<CentraProfile>> list() async {
     await paths.ensure();
@@ -154,7 +173,8 @@ class ProfileStore {
       if (entity is! File || !entity.path.endsWith('.json')) continue;
       profiles.add(await loadFile(entity));
     }
-    profiles.sort((left, right) => left.name.toLowerCase().compareTo(right.name.toLowerCase()));
+    profiles.sort((left, right) =>
+        left.name.toLowerCase().compareTo(right.name.toLowerCase()));
     return profiles;
   }
 
@@ -169,7 +189,8 @@ class ProfileStore {
     final profile = CentraProfile.fromJson(json);
     final errors = profile.validate();
     if (errors.isNotEmpty) {
-      throw FormatException('Invalid profile ${file.path}:\n${errors.join('\n')}');
+      throw FormatException(
+          'Invalid profile ${file.path}:\n${errors.join('\n')}');
     }
     return profile;
   }
@@ -178,7 +199,8 @@ class ProfileStore {
     final errors = profile.validate();
     if (errors.isNotEmpty) throw FormatException(errors.join('\n'));
     await paths.ensure();
-    await _writer.writeText(fileFor(profile.id), '${prettyJson(profile.toJson())}\n');
+    await _writer.writeText(
+        fileFor(profile.id), '${prettyJson(profile.toJson())}\n');
   }
 
   Future<bool> delete(String id) async {

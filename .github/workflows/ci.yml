@@ -22,10 +22,22 @@ jobs:
         with:
           sdk: stable
       - run: dart pub get
-      - name: Format report
-        run: dart format --output=none .
-      - run: dart analyze --fatal-infos
-      - run: dart test
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        run: dart analyze --fatal-warnings
+      - name: Test
+        shell: bash
+        run: |
+          set -o pipefail
+          dart test --reporter expanded 2>&1 | tee test.log
+      - name: Upload failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: centra-test-log-${{ runner.os }}
+          path: test.log
+          if-no-files-found: warn
       - name: Compile executable
         shell: bash
         run: |

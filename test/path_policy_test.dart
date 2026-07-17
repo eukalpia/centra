@@ -8,7 +8,8 @@ void main() {
     });
 
     test('rejects paths escaping the root', () {
-      expect(() => normalizeRelativePath('../secret.env'), throwsFormatException);
+      expect(
+          () => normalizeRelativePath('../secret.env'), throwsFormatException);
       expect(() => normalizeRelativePath('/etc/passwd'), throwsFormatException);
     });
   });
@@ -29,7 +30,11 @@ void main() {
     test('excludes generated dependency directories', () {
       final policy = PathPolicy(
         includes: const <String>['**'],
-        excludes: const <String>['node_modules/**', '**/node_modules/**', 'build/**'],
+        excludes: const <String>[
+          'node_modules/**',
+          '**/node_modules/**',
+          'build/**'
+        ],
         includeHiddenFiles: true,
       );
       expect(policy.allows('node_modules/pkg/index.js'), isFalse);
@@ -62,7 +67,8 @@ void main() {
 
   group('ProjectDetector', () {
     test('detects Flutter and suggests build exclusions', () async {
-      final detection = await ProjectDetector.detect(<String>{'pubspec.yaml', 'lib', 'android', 'ios'});
+      final detection = await ProjectDetector.detect(
+          <String>{'pubspec.yaml', 'lib', 'android', 'ios'});
       expect(detection.kind, 'flutter');
       expect(detection.suggestedExcludes, contains('.dart_tool/**'));
       expect(detection.suggestedExcludes, contains('**/.env'));

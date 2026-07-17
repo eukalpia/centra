@@ -23,7 +23,8 @@ extension AlgorithmStatusName on AlgorithmStatus {
         AlgorithmStatus.custom => 'custom',
       };
 
-  static AlgorithmStatus parse(String value) => AlgorithmStatus.values.firstWhere(
+  static AlgorithmStatus parse(String value) =>
+      AlgorithmStatus.values.firstWhere(
         (status) => status.wireName == value,
         orElse: () => AlgorithmStatus.custom,
       );
@@ -138,7 +139,8 @@ class AlgorithmRegistry {
 
   final Map<String, CustomHashAlgorithm> _customAlgorithms;
 
-  static final List<HashAlgorithmDescriptor> builtIns = <HashAlgorithmDescriptor>[
+  static final List<HashAlgorithmDescriptor> builtIns =
+      <HashAlgorithmDescriptor>[
     const HashAlgorithmDescriptor(
       id: 'sha256',
       displayName: 'SHA-256',
@@ -272,7 +274,8 @@ class AlgorithmRegistry {
       status: AlgorithmStatus.legacy,
       registryName: 'SHA-1',
       summary: 'Legacy digest available only for compatibility.',
-      warning: 'Collision attacks are practical. Do not use SHA-1 as the only integrity algorithm.',
+      warning:
+          'Collision attacks are practical. Do not use SHA-1 as the only integrity algorithm.',
     ),
     const HashAlgorithmDescriptor(
       id: 'ripemd160',
@@ -289,7 +292,8 @@ class AlgorithmRegistry {
       outputBits: 192,
       status: AlgorithmStatus.legacy,
       registryName: 'Tiger',
-      summary: 'Legacy digest retained for compatibility with existing systems.',
+      summary:
+          'Legacy digest retained for compatibility with existing systems.',
       warning: 'Not recommended for new integrity baselines.',
     ),
     const HashAlgorithmDescriptor(
@@ -298,8 +302,10 @@ class AlgorithmRegistry {
       outputBits: 128,
       status: AlgorithmStatus.obsolete,
       registryName: 'MD5',
-      summary: 'Obsolete digest available for compatibility with legacy procedures.',
-      warning: 'MD5 is collision-broken. Pair it with a modern algorithm and never treat it as proof of authenticity.',
+      summary:
+          'Obsolete digest available for compatibility with legacy procedures.',
+      warning:
+          'MD5 is collision-broken. Pair it with a modern algorithm and never treat it as proof of authenticity.',
     ),
     const HashAlgorithmDescriptor(
       id: 'md4',
@@ -308,7 +314,8 @@ class AlgorithmRegistry {
       status: AlgorithmStatus.obsolete,
       registryName: 'MD4',
       summary: 'Obsolete digest retained only for historical compatibility.',
-      warning: 'MD4 is cryptographically broken and must not be used for security decisions.',
+      warning:
+          'MD4 is cryptographically broken and must not be used for security decisions.',
     ),
     const HashAlgorithmDescriptor(
       id: 'md2',
@@ -317,7 +324,8 @@ class AlgorithmRegistry {
       status: AlgorithmStatus.obsolete,
       registryName: 'MD2',
       summary: 'Obsolete digest retained only for historical compatibility.',
-      warning: 'MD2 is cryptographically broken and must not be used for security decisions.',
+      warning:
+          'MD2 is cryptographically broken and must not be used for security decisions.',
     ),
     const HashAlgorithmDescriptor(
       id: 'crc32',
@@ -364,8 +372,8 @@ class AlgorithmRegistry {
     if (id == 'blake2b-512') {
       return Blake2bDigest(digestSize: 64);
     }
-    final descriptor = descriptor(id);
-    final registryName = descriptor.registryName;
+    final algorithmDescriptor = descriptor(id);
+    final registryName = algorithmDescriptor.registryName;
     if (registryName == null) {
       throw StateError('$id is not backed by a PointyCastle digest.');
     }

@@ -33,4 +33,4 @@ Every push to `main` and every pull request runs formatting, static analysis, te
 - macOS
 - Windows
 
-A release tag builds native executables and SHA-256 checksum files for all supported runner platforms.
+The quality gate requires all three operating systems to pass before a release is tagged. A release tag builds native executables and SHA-256 checksum files for all supported runner platforms.
