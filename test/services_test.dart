@@ -74,12 +74,19 @@ void main() {
         ],
       );
 
-      final result = await OutputService()
-          .write(profile, manifest, zipPassword: 'correct horse battery staple');
+      final result = await OutputService().write(profile, manifest,
+          zipPassword: 'correct horse battery staple');
 
-      expect(result.artifacts.map((artifact) => artifact.kind), containsAll(
-        <String>['manifest', 'compatibility:sha256', 'compatibility:md5', 'report'],
-      ));
+      expect(
+          result.artifacts.map((artifact) => artifact.kind),
+          containsAll(
+            <String>[
+              'manifest',
+              'compatibility:sha256',
+              'compatibility:md5',
+              'report'
+            ],
+          ));
       expect(result.archive, isNotNull);
       expect(await result.archive!.file.exists(), isTrue);
 
@@ -94,10 +101,10 @@ void main() {
       final reportFile = result.artifacts
           .singleWhere((artifact) => artifact.kind == 'report')
           .file;
-      final report = jsonDecode(await reportFile.readAsString())
-          as Map<String, dynamic>;
-      final algorithms = (report['algorithms'] as List<dynamic>)
-          .cast<Map<String, dynamic>>();
+      final report =
+          jsonDecode(await reportFile.readAsString()) as Map<String, dynamic>;
+      final algorithms =
+          (report['algorithms'] as List<dynamic>).cast<Map<String, dynamic>>();
       final md5 = algorithms.singleWhere((entry) => entry['id'] == 'md5');
       expect(md5['status'], 'obsolete');
       expect(md5['securityWarningRequired'], isTrue);
@@ -210,7 +217,8 @@ void main() {
       }
     });
 
-    test('rejects malformed key IDs and unsupported signature schemas', () async {
+    test('rejects malformed key IDs and unsupported signature schemas',
+        () async {
       final service = SignatureService(clock: () => fixed);
 
       await expectLater(service.generate('../key'), throwsArgumentError);

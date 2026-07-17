@@ -240,7 +240,8 @@ class ProfileStore {
     if (type == FileSystemEntityType.notFound) {
       return false;
     }
-    if (type != FileSystemEntityType.file && type != FileSystemEntityType.link) {
+    if (type != FileSystemEntityType.file &&
+        type != FileSystemEntityType.link) {
       throw FileSystemException('Profile path is not deletable.', file.path);
     }
     if (type == FileSystemEntityType.link) {
