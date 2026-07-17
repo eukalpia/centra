@@ -1,9 +1,9 @@
 name: Source Snapshot
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/ssh-terminal-ux
+      - main
 
 permissions:
   contents: read
