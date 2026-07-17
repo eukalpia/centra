@@ -1,5 +1,3 @@
-library centra;
-
 export 'src/core/algorithm_registry.dart';
 export 'src/core/manifest.dart';
 export 'src/core/path_policy.dart';

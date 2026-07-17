@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'cli.dart';
 import '../tui/centra_app.dart';
+import 'cli.dart';
 
 class CentraApplication {
   CentraApplication({CentraCli? cli}) : cli = cli ?? CentraCli();
