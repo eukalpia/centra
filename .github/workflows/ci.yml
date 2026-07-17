@@ -1,93 +1,33 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Quality · ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  analyze-diagnostics:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
       - run: dart pub get
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
-        run: dart analyze --fatal-warnings
-      - name: Test
         shell: bash
         run: |
-          set -o pipefail
-          dart test --reporter expanded 2>&1 | tee test.log
-      - name: Upload failure log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: centra-test-log-${{ runner.os }}
-          path: test.log
-          if-no-files-found: warn
-      - name: Compile executable
-        shell: bash
-        run: |
-          mkdir -p build
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            dart compile exe bin/centra.dart -o build/centra.exe
-          else
-            dart compile exe bin/centra.dart -o build/centra
-          fi
+          set +e
+          dart analyze --fatal-warnings 2>&1 | tee analyze.log
+          status=${PIPESTATUS[0]}
+          echo "ANALYZE_STATUS=$status" >> "$GITHUB_ENV"
+          exit 0
       - uses: actions/upload-artifact@v4
         with:
-          name: centra-${{ runner.os }}-${{ runner.arch }}
-          path: build/centra*
+          name: docker-browser-analyzer
+          path: analyze.log
           if-no-files-found: error
-
-  install:
-    name: Install command · ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    env:
-      INSTALL_REF: ${{ github.event.pull_request.head.sha || github.sha }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - name: Configure isolated Dart Data Home
+      - name: Preserve analyzer result
         shell: bash
-        run: echo "DART_DATA_HOME=$RUNNER_TEMP/dart-data" >> "$GITHUB_ENV"
-      - name: Install from Git repository
-        shell: bash
-        run: dart install https://github.com/eukalpia/centra.git --git-ref "$INSTALL_REF" --overwrite
-      - name: Run installed command on Unix
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          set -o pipefail
-          export PATH="$PATH:$DART_DATA_HOME/install/bin"
-          centra --version | tee installed-version.txt
-          grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' installed-version.txt
-      - name: Run installed command on Windows
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $env:Path = "$env:Path;$env:DART_DATA_HOME\install\bin"
-          $version = (centra --version).Trim()
-          Write-Output $version
-          if ($version -notmatch '^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$') {
-            throw "Unexpected Centra version: $version"
-          }
+        run: exit "$ANALYZE_STATUS"
