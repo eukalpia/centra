@@ -1,14 +1,15 @@
 name: Prepare SSH interface
 
 on:
-  push:
-    branches: [feature/ssh-connection-manager]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   prepare:
+    if: github.head_ref == 'feature/ssh-connection-manager'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
