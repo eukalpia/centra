@@ -23,6 +23,50 @@ extension SourceTypeName on SourceType {
       );
 }
 
+enum SshAuthMethod {
+  password,
+  privateKey,
+  passwordAndKey,
+}
+
+extension SshAuthMethodName on SshAuthMethod {
+  String get wireName => switch (this) {
+        SshAuthMethod.password => 'password',
+        SshAuthMethod.privateKey => 'private-key',
+        SshAuthMethod.passwordAndKey => 'password-and-key',
+      };
+
+  bool get usesPassword =>
+      this == SshAuthMethod.password || this == SshAuthMethod.passwordAndKey;
+
+  bool get usesPrivateKey =>
+      this == SshAuthMethod.privateKey || this == SshAuthMethod.passwordAndKey;
+
+  static SshAuthMethod parse(String value) => SshAuthMethod.values.firstWhere(
+        (method) => method.wireName == value,
+        orElse: () => throw FormatException('Unknown SSH auth method: $value'),
+      );
+}
+
+enum SshHostKeyPolicy {
+  trustOnFirstUse,
+  pinned,
+}
+
+extension SshHostKeyPolicyName on SshHostKeyPolicy {
+  String get wireName => switch (this) {
+        SshHostKeyPolicy.trustOnFirstUse => 'trust-on-first-use',
+        SshHostKeyPolicy.pinned => 'pinned',
+      };
+
+  static SshHostKeyPolicy parse(String value) =>
+      SshHostKeyPolicy.values.firstWhere(
+        (policy) => policy.wireName == value,
+        orElse: () =>
+            throw FormatException('Unknown SSH host key policy: $value'),
+      );
+}
+
 enum SymlinkPolicy {
   skip,
   record,
@@ -46,6 +90,12 @@ class SourceConfig {
     this.user,
     this.port = 22,
     this.identityFile,
+    this.sshAuthMethod = SshAuthMethod.privateKey,
+    this.sshHostKeyPolicy = SshHostKeyPolicy.trustOnFirstUse,
+    this.hostKeyType,
+    this.hostKeyFingerprint,
+    this.connectTimeoutSeconds = 15,
+    this.keepAliveSeconds = 10,
     this.container,
     this.image,
     this.service,
@@ -59,6 +109,12 @@ class SourceConfig {
   final String? user;
   final int port;
   final String? identityFile;
+  final SshAuthMethod sshAuthMethod;
+  final SshHostKeyPolicy sshHostKeyPolicy;
+  final String? hostKeyType;
+  final String? hostKeyFingerprint;
+  final int connectTimeoutSeconds;
+  final int keepAliveSeconds;
   final String? container;
   final String? image;
   final String? service;
@@ -76,6 +132,19 @@ class SourceConfig {
         if ((user ?? '').trim().isEmpty) errors.add('SSH user is required.');
         if (port < 1 || port > 65535)
           errors.add('SSH port must be between 1 and 65535.');
+        if (sshAuthMethod.usesPrivateKey &&
+            (identityFile ?? '').trim().isEmpty) {
+          errors.add('SSH private key file is required.');
+        }
+        if ((hostKeyFingerprint ?? '').trim().isEmpty) {
+          errors.add('SSH host key fingerprint is required.');
+        }
+        if (connectTimeoutSeconds < 1 || connectTimeoutSeconds > 300) {
+          errors.add('SSH timeout must be between 1 and 300 seconds.');
+        }
+        if (keepAliveSeconds < 0 || keepAliveSeconds > 3600) {
+          errors.add('SSH keepalive must be between 0 and 3600 seconds.');
+        }
         break;
       case SourceType.dockerContainer:
         if ((container ?? '').trim().isEmpty)
@@ -100,6 +169,15 @@ class SourceConfig {
         if (host != null) 'host': host,
         if (user != null) 'user': user,
         if (identityFile != null) 'identityFile': identityFile,
+        if (type == SourceType.ssh) 'sshAuthMethod': sshAuthMethod.wireName,
+        if (type == SourceType.ssh)
+          'sshHostKeyPolicy': sshHostKeyPolicy.wireName,
+        if (hostKeyType != null) 'hostKeyType': hostKeyType,
+        if (hostKeyFingerprint != null)
+          'hostKeyFingerprint': hostKeyFingerprint,
+        if (type == SourceType.ssh)
+          'connectTimeoutSeconds': connectTimeoutSeconds,
+        if (type == SourceType.ssh) 'keepAliveSeconds': keepAliveSeconds,
         if (container != null) 'container': container,
         if (image != null) 'image': image,
         if (service != null) 'service': service,
@@ -114,6 +192,16 @@ class SourceConfig {
         user: json['user'] as String?,
         port: json['port'] as int? ?? 22,
         identityFile: json['identityFile'] as String?,
+        sshAuthMethod: SshAuthMethodName.parse(
+          json['sshAuthMethod'] as String? ?? 'private-key',
+        ),
+        sshHostKeyPolicy: SshHostKeyPolicyName.parse(
+          json['sshHostKeyPolicy'] as String? ?? 'trust-on-first-use',
+        ),
+        hostKeyType: json['hostKeyType'] as String?,
+        hostKeyFingerprint: json['hostKeyFingerprint'] as String?,
+        connectTimeoutSeconds: json['connectTimeoutSeconds'] as int? ?? 15,
+        keepAliveSeconds: json['keepAliveSeconds'] as int? ?? 10,
         container: json['container'] as String?,
         image: json['image'] as String?,
         service: json['service'] as String?,

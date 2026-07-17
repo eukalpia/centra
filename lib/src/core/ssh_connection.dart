@@ -273,7 +273,8 @@ class SshConnectionService {
     bool acceptUnknownHost = false,
   }) async {
     if (config.type != SourceType.ssh) {
-      throw ArgumentError.value(config.type, 'config.type', 'Expected SSH source.');
+      throw ArgumentError.value(
+          config.type, 'config.type', 'Expected SSH source.');
     }
     final validation = config.validate();
     final connectionErrors = validation
@@ -285,7 +286,8 @@ class SshConnectionService {
 
     final identities = await _loadIdentities(config, secrets);
     if (config.sshAuthMethod.usesPassword && !secrets.hasPassword) {
-      throw const FormatException('SSH password is required for this connection.');
+      throw const FormatException(
+          'SSH password is required for this connection.');
     }
 
     String? observedKeyType;
@@ -301,9 +303,8 @@ class SshConnectionService {
         socket,
         username: config.user!,
         identities: identities.isEmpty ? null : identities,
-        onPasswordRequest: config.sshAuthMethod.usesPassword
-            ? () => secrets.password
-            : null,
+        onPasswordRequest:
+            config.sshAuthMethod.usesPassword ? () => secrets.password : null,
         onUserInfoRequest: config.sshAuthMethod.usesPassword
             ? (request) => List<String>.filled(
                   request.prompts.length,
@@ -354,7 +355,8 @@ class SshConnectionService {
     }
     final file = File(identityPath);
     if (!await file.exists()) {
-      throw FileSystemException('SSH private key file does not exist.', identityPath);
+      throw FileSystemException(
+          'SSH private key file does not exist.', identityPath);
     }
     final pem = await file.readAsString();
     if (SSHKeyPair.isEncryptedPem(pem) && !secrets.hasKeyPassphrase) {
@@ -394,7 +396,8 @@ String expandUserPath(String path) {
   return p.join(home, value.substring(2));
 }
 
-String? _homeDirectory() => Platform.environment['USERPROFILE'] ??
+String? _homeDirectory() =>
+    Platform.environment['USERPROFILE'] ??
     Platform.environment['HOME'] ??
     Platform.environment['HOMEPATH'];
 
@@ -416,7 +419,8 @@ String _safeLocalPath(String root, String relative) {
   }
   final output = p.joinAll(<String>[root, ...segments]);
   if (!p.isWithin(root, output)) {
-    throw FormatException('Remote snapshot path escapes destination: $relative');
+    throw FormatException(
+        'Remote snapshot path escapes destination: $relative');
   }
   return output;
 }

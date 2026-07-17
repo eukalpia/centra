@@ -9,6 +9,7 @@ import '../core/profile.dart';
 import '../core/scanner.dart';
 import '../core/services.dart';
 import '../core/storage.dart';
+import '../core/ssh_connection.dart';
 import '../util/json.dart';
 
 abstract final class ExitCode {
@@ -88,6 +89,10 @@ class CentraCli {
               abbr: 'p', help: 'Profile ID.', mandatory: true)
           ..addOption('password-env',
               help: 'Environment variable containing the ZIP password.')
+          ..addOption('ssh-password-env',
+              help: 'Environment variable containing the SSH password.')
+          ..addOption('ssh-key-passphrase-env',
+              help: 'Environment variable containing the SSH key passphrase.')
           ..addFlag('json',
               negatable: false, help: 'Write machine-readable JSON.'));
 
@@ -98,6 +103,10 @@ class CentraCli {
               abbr: 'p', help: 'Profile ID.', mandatory: true)
           ..addOption('manifest',
               abbr: 'm', help: 'Approved manifest file.', mandatory: true)
+          ..addOption('ssh-password-env',
+              help: 'Environment variable containing the SSH password.')
+          ..addOption('ssh-key-passphrase-env',
+              help: 'Environment variable containing the SSH key passphrase.')
           ..addFlag('json',
               negatable: false, help: 'Write machine-readable JSON.'));
 
@@ -285,8 +294,10 @@ class CentraCli {
     final profile = await _requireProfile(results['profile']! as String);
     final password =
         _passwordFromEnvironment(results['password-env'] as String?);
+    final sshSecrets = _sshSecretsFromResults(results);
     final scan = await scanner.scan(
       profile,
+      sshSecrets: sshSecrets,
       onProgress: (progress) {
         if (!(results['json'] as bool) && stderr.hasTerminal) {
           stderr.write(
@@ -337,7 +348,11 @@ class CentraCli {
     final profile = await _requireProfile(results['profile']! as String);
     final approved =
         await manifestCodec.read(File(results['manifest']! as String));
-    final current = (await scanner.scan(profile)).manifest;
+    final current = (await scanner.scan(
+      profile,
+      sshSecrets: _sshSecretsFromResults(results),
+    ))
+        .manifest;
     final diff = const ManifestComparator().compare(approved, current);
     if (results['json'] as bool) {
       stdout.writeln(canonicalJson(diff.toJson()));
@@ -440,6 +455,23 @@ class CentraCli {
     final profile = await profiles.load(id);
     if (profile == null) throw FormatException('Profile not found: $id');
     return profile;
+  }
+
+  SshConnectionSecrets? _sshSecretsFromResults(ArgResults results) {
+    final passwordVariable = results.options.contains('ssh-password-env')
+        ? results['ssh-password-env'] as String?
+        : null;
+    final passphraseVariable =
+        results.options.contains('ssh-key-passphrase-env')
+            ? results['ssh-key-passphrase-env'] as String?
+            : null;
+    final password = _passwordFromEnvironment(passwordVariable);
+    final passphrase = _passwordFromEnvironment(passphraseVariable);
+    if (password == null && passphrase == null) return null;
+    return SshConnectionSecrets(
+      password: password,
+      keyPassphrase: passphrase,
+    );
   }
 
   String? _passwordFromEnvironment(String? variable) {

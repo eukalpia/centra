@@ -50,9 +50,11 @@ class SshPickerStrings {
       'refresh': 'Refresh',
       'empty': 'No subfolders',
       'loading': 'Reading remote filesystem…',
-      'security': 'The server fingerprint is pinned after the first successful connection.',
+      'security':
+          'The server fingerprint is pinned after the first successful connection.',
       'helpForm': 'Tab fields  Mouse supported  Esc cancel',
-      'helpBrowser': '↑↓ move  Enter open  Backspace parent  Space choose  R refresh  Esc back',
+      'helpBrowser':
+          '↑↓ move  Enter open  Backspace parent  Space choose  R refresh  Esc back',
     },
     'ru': <String, String>{
       'title': 'SSH-подключение',
@@ -82,9 +84,11 @@ class SshPickerStrings {
       'refresh': 'Обновить',
       'empty': 'Вложенных папок нет',
       'loading': 'Чтение файловой системы сервера…',
-      'security': 'После первого успешного подключения отпечаток сервера закрепляется в профиле.',
+      'security':
+          'После первого успешного подключения отпечаток сервера закрепляется в профиле.',
       'helpForm': 'Tab поля  Мышь поддерживается  Esc отмена',
-      'helpBrowser': '↑↓ выбор  Enter открыть  Backspace вверх  Space выбрать  R обновить  Esc назад',
+      'helpBrowser':
+          '↑↓ выбор  Enter открыть  Backspace вверх  Space выбрать  R обновить  Esc назад',
     },
     'uz': <String, String>{
       'title': 'SSH ulanish',
@@ -114,9 +118,11 @@ class SshPickerStrings {
       'refresh': 'Yangilash',
       'empty': 'Ichki papkalar yo‘q',
       'loading': 'Server fayl tizimi o‘qilmoqda…',
-      'security': 'Birinchi muvaffaqiyatli ulanishdan so‘ng server izi profilga biriktiriladi.',
+      'security':
+          'Birinchi muvaffaqiyatli ulanishdan so‘ng server izi profilga biriktiriladi.',
       'helpForm': 'Tab maydonlar  Sichqoncha ishlaydi  Esc bekor',
-      'helpBrowser': '↑↓ tanlash  Enter ochish  Backspace yuqori  Space tanlash  R yangilash  Esc orqaga',
+      'helpBrowser':
+          '↑↓ tanlash  Enter ochish  Backspace yuqori  Space tanlash  R yangilash  Esc orqaga',
     },
     'uz-Cyrl': <String, String>{
       'title': 'SSH уланиш',
@@ -146,9 +152,11 @@ class SshPickerStrings {
       'refresh': 'Янгилаш',
       'empty': 'Ички папкалар йўқ',
       'loading': 'Сервер файл тизими ўқилмоқда…',
-      'security': 'Биринчи муваффақиятли уланишдан сўнг сервер изи профилга бириктирилади.',
+      'security':
+          'Биринчи муваффақиятли уланишдан сўнг сервер изи профилга бириктирилади.',
       'helpForm': 'Tab майдонлар  Сичқонча ишлайди  Esc бекор',
-      'helpBrowser': '↑↓ танлаш  Enter очиш  Backspace юқори  Space танлаш  R янгилаш  Esc орқага',
+      'helpBrowser':
+          '↑↓ танлаш  Enter очиш  Backspace юқори  Space танлаш  R янгилаш  Esc орқага',
     },
     'tr': <String, String>{
       'title': 'SSH bağlantısı',
@@ -178,9 +186,11 @@ class SshPickerStrings {
       'refresh': 'Yenile',
       'empty': 'Alt klasör yok',
       'loading': 'Uzak dosya sistemi okunuyor…',
-      'security': 'İlk başarılı bağlantıdan sonra sunucu parmak izi profile sabitlenir.',
+      'security':
+          'İlk başarılı bağlantıdan sonra sunucu parmak izi profile sabitlenir.',
       'helpForm': 'Tab alanlar  Fare desteklenir  Esc iptal',
-      'helpBrowser': '↑↓ seç  Enter aç  Backspace üst  Space kullan  R yenile  Esc geri',
+      'helpBrowser':
+          '↑↓ seç  Enter aç  Backspace üst  Space kullan  R yenile  Esc geri',
     },
     'kk': <String, String>{},
     'ky': <String, String>{},
@@ -214,9 +224,11 @@ class SshPickerStrings {
       'refresh': 'Aktualisieren',
       'empty': 'Keine Unterordner',
       'loading': 'Entferntes Dateisystem wird gelesen…',
-      'security': 'Nach der ersten erfolgreichen Verbindung wird der Fingerabdruck im Profil fixiert.',
+      'security':
+          'Nach der ersten erfolgreichen Verbindung wird der Fingerabdruck im Profil fixiert.',
       'helpForm': 'Tab Felder  Maus unterstützt  Esc abbrechen',
-      'helpBrowser': '↑↓ wählen  Enter öffnen  Backspace hoch  Space verwenden  R neu  Esc zurück',
+      'helpBrowser':
+          '↑↓ wählen  Enter öffnen  Backspace hoch  Space verwenden  R neu  Esc zurück',
     },
   };
 }
@@ -305,9 +317,10 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
     host = TextEditingController(text: widget.initialHost);
     port = TextEditingController(text: widget.initialPort.toString());
     user = TextEditingController(text: widget.initialUser);
-    password = TextEditingController(text: widget.initialSecrets.password ?? '');
-    identityFile =
-        TextEditingController(text: widget.initialIdentityFile ?? '~/.ssh/id_ed25519');
+    password =
+        TextEditingController(text: widget.initialSecrets.password ?? '');
+    identityFile = TextEditingController(
+        text: widget.initialIdentityFile ?? '~/.ssh/id_ed25519');
     passphrase =
         TextEditingController(text: widget.initialSecrets.keyPassphrase ?? '');
     timeout = TextEditingController(
@@ -346,9 +359,8 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
         host: host.text.trim(),
         user: user.text.trim(),
         port: int.tryParse(port.text.trim()) ?? 0,
-        identityFile: authMethod.usesPrivateKey
-            ? identityFile.text.trim()
-            : null,
+        identityFile:
+            authMethod.usesPrivateKey ? identityFile.text.trim() : null,
         sshAuthMethod: authMethod,
         sshHostKeyPolicy: SshHostKeyPolicy.trustOnFirstUse,
         hostKeyFingerprint: widget.initialFingerprint,
@@ -465,8 +477,7 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
       user: user.text.trim(),
       path: current.path,
       authMethod: authMethod,
-      identityFile:
-          authMethod.usesPrivateKey ? identityFile.text.trim() : null,
+      identityFile: authMethod.usesPrivateKey ? identityFile.text.trim() : null,
       hostKeyType: active.hostKeyType,
       hostKeyFingerprint: active.hostKeyFingerprint,
       connectTimeoutSeconds: int.parse(timeout.text.trim()),
@@ -567,9 +578,13 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
         Text(strings('address'), style: const TextStyle(color: _sshAccent)),
         Row(
           children: <Widget>[
-            Expanded(child: _field(strings('host'), host, hostFocus, '195.158.3.42')),
+            Expanded(
+                child:
+                    _field(strings('host'), host, hostFocus, '195.158.3.42')),
             const SizedBox(width: 1),
-            SizedBox(width: 14, child: _field(strings('port'), port, portFocus, '22')),
+            SizedBox(
+                width: 14,
+                child: _field(strings('port'), port, portFocus, '22')),
           ],
         ),
         _field(strings('user'), user, userFocus, 'deploy'),
@@ -700,7 +715,8 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
           style: const TextStyle(color: _sshWarning),
         ),
         const SizedBox(height: 1),
-        Text(strings('currentFolder'), style: const TextStyle(color: _sshMuted)),
+        Text(strings('currentFolder'),
+            style: const TextStyle(color: _sshMuted)),
         Container(
           color: _sshSurfaceStrong,
           padding: const EdgeInsets.symmetric(horizontal: 1),
