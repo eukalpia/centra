@@ -23,6 +23,7 @@ jobs:
         run: |
           python .github/patch_ssh_snapshot.py
           python .github/patch_ssh_scan_pipeline.py
+          python .github/patch_ssh_timeout_import.py
       - run: dart pub get
       - name: Format changed Dart files
         run: dart format lib/src/core/path_policy.dart lib/src/core/ssh_connection.dart lib/src/core/source.dart lib/src/core/scanner.dart lib/src/tui/ssh_source_picker.dart test/path_policy_test.dart test/ssh_connection_test.dart
@@ -45,8 +46,10 @@ jobs:
         run: |
           rm .github/patch_ssh_snapshot.py
           rm .github/patch_ssh_scan_pipeline.py
+          rm .github/patch_ssh_timeout_import.py
           rm .github/workflows/prepare-ssh-scan-performance.yml
           rm .github/trigger-ssh-scan-performance
+          rm -f ssh-analyze.log
           git fetch origin main
           git checkout origin/main -- .github/workflows/ci.yml
       - name: Commit product changes
