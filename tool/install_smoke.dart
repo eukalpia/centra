@@ -20,7 +20,9 @@ Future<void> main() async {
   }
 
   final version = result.stdout.toString().trim();
-  if (!RegExp(r'^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$').hasMatch(version)) {
+  if (!RegExp(
+    r'^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$',
+  ).hasMatch(version)) {
     stderr.writeln('Unexpected Centra version: $version');
     exitCode = 1;
   }
