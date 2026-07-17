@@ -163,23 +163,23 @@ void main() {
 
       expect(
         runner.commands.any(
-          (command) => containsAll(<String>[
+          (command) => <String>[
             'compose',
             '-f',
             'compose.yml',
             'create',
             'api',
-          ]).matches(command.arguments, <dynamic, dynamic>{}),
+          ].every(command.arguments.contains),
         ),
         isTrue,
       );
       expect(
         runner.commands.any(
-          (command) => containsAll(<String>[
+          (command) => <String>[
             'rm',
             '-f',
             'compose-container',
-          ]).matches(command.arguments, <dynamic, dynamic>{}),
+          ].every(command.arguments.contains),
         ),
         isTrue,
       );
