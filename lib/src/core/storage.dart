@@ -109,14 +109,17 @@ class AtomicFileWriter {
     await temporary.writeAsString(content, encoding: utf8, flush: true);
     if (await file.exists()) {
       final backup = File('${file.path}.bak');
-      if (await backup.exists()) await backup.delete();
+      if (await backup.exists()) {
+        await backup.delete();
+      }
       await file.rename(backup.path);
       try {
         await temporary.rename(file.path);
         await backup.delete();
       } catch (_) {
-        if (!await file.exists() && await backup.exists())
+        if (!await file.exists() && await backup.exists()) {
           await backup.rename(file.path);
+        }
         rethrow;
       }
     } else {
@@ -129,7 +132,9 @@ class AtomicFileWriter {
     final temporary =
         File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
     await temporary.writeAsBytes(bytes, flush: true);
-    if (await file.exists()) await file.delete();
+    if (await file.exists()) {
+      await file.delete();
+    }
     await temporary.rename(file.path);
   }
 }
@@ -144,7 +149,9 @@ class SettingsStore {
 
   Future<CentraSettings> load() async {
     await paths.ensure();
-    if (!await paths.settingsFile.exists()) return CentraSettings.defaults;
+    if (!await paths.settingsFile.exists()) {
+      return CentraSettings.defaults;
+    }
     final json = decodeJsonObject(await paths.settingsFile.readAsString());
     return CentraSettings.fromJson(json);
   }
@@ -160,17 +167,33 @@ class ProfileStore {
   ProfileStore(this.paths, {AtomicFileWriter writer = const AtomicFileWriter()})
       : _writer = writer;
 
+  static final RegExp _profileIdPattern =
+      RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$');
+
   final CentraPaths paths;
   final AtomicFileWriter _writer;
 
-  File fileFor(String id) =>
-      File(p.join(paths.profilesDirectory.path, '$id.json'));
+  File fileFor(String id) {
+    if (!_profileIdPattern.hasMatch(id)) {
+      throw ArgumentError.value(id, 'id', 'Invalid profile ID.');
+    }
+    final root = p.canonicalize(paths.profilesDirectory.absolute.path);
+    final file = File(p.join(root, '$id.json')).absolute;
+    final candidate = p.canonicalize(file.path);
+    if (!p.isWithin(root, candidate)) {
+      throw ArgumentError.value(id, 'id', 'Profile path escapes storage.');
+    }
+    return File(candidate);
+  }
 
   Future<List<CentraProfile>> list() async {
     await paths.ensure();
     final profiles = <CentraProfile>[];
-    await for (final entity in paths.profilesDirectory.list()) {
-      if (entity is! File || !entity.path.endsWith('.json')) continue;
+    await for (final entity
+        in paths.profilesDirectory.list(followLinks: false)) {
+      if (entity is! File || !entity.path.endsWith('.json')) {
+        continue;
+      }
       profiles.add(await loadFile(entity));
     }
     profiles.sort((left, right) =>
@@ -180,7 +203,13 @@ class ProfileStore {
 
   Future<CentraProfile?> load(String id) async {
     final file = fileFor(id);
-    if (!await file.exists()) return null;
+    final type = await FileSystemEntity.type(file.path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) {
+      return null;
+    }
+    if (type != FileSystemEntityType.file) {
+      throw FormatException('Profile path is not a regular file: ${file.path}');
+    }
     return loadFile(file);
   }
 
@@ -197,7 +226,9 @@ class ProfileStore {
 
   Future<void> save(CentraProfile profile) async {
     final errors = profile.validate();
-    if (errors.isNotEmpty) throw FormatException(errors.join('\n'));
+    if (errors.isNotEmpty) {
+      throw FormatException(errors.join('\n'));
+    }
     await paths.ensure();
     await _writer.writeText(
         fileFor(profile.id), '${prettyJson(profile.toJson())}\n');
@@ -205,8 +236,14 @@ class ProfileStore {
 
   Future<bool> delete(String id) async {
     final file = fileFor(id);
-    if (!await file.exists()) return false;
-    await file.delete();
+    final type = await FileSystemEntity.type(file.path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) {
+      return false;
+    }
+    if (type != FileSystemEntityType.file && type != FileSystemEntityType.link) {
+      throw FileSystemException('Profile path is not deletable.', file.path);
+    }
+    await FileSystemEntity.delete(file.path);
     return true;
   }
 }
