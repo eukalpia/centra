@@ -22,61 +22,23 @@ jobs:
         with:
           sdk: stable
       - run: dart pub get
-      - name: Format sources
-        id: format
-        continue-on-error: true
-        shell: bash
-        run: |
-          dart format . 2>&1 | tee format.log
-          exit ${PIPESTATUS[0]}
-      - name: Upload diagnostics
-        if: runner.os == 'Linux' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: centra-diagnostics
-          path: |
-            bin
-            lib
-            test
-            format.log
-          if-no-files-found: error
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
-        id: analyze
-        continue-on-error: true
-        shell: bash
-        run: dart analyze --fatal-infos 2>&1 | tee analyze.log
+        run: dart analyze --fatal-warnings
       - name: Test
-        id: test
-        continue-on-error: true
-        shell: bash
-        run: dart test 2>&1 | tee test.log
+        run: dart test
       - name: Compile executable
-        id: compile
-        continue-on-error: true
         shell: bash
         run: |
           mkdir -p build
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            dart compile exe bin/centra.dart -o build/centra.exe 2>&1 | tee compile.log
+            dart compile exe bin/centra.dart -o build/centra.exe
           else
-            dart compile exe bin/centra.dart -o build/centra 2>&1 | tee compile.log
+            dart compile exe bin/centra.dart -o build/centra
           fi
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: centra-logs-${{ runner.os }}
-          path: |
-            format.log
-            analyze.log
-            test.log
-            compile.log
-          if-no-files-found: warn
-      - name: Diagnostic summary
-        if: always()
-        shell: bash
-        run: |
-          echo "format=${{ steps.format.outcome }}"
-          echo "analyze=${{ steps.analyze.outcome }}"
-          echo "test=${{ steps.test.outcome }}"
-          echo "compile=${{ steps.compile.outcome }}"
+          name: centra-${{ runner.os }}-${{ runner.arch }}
+          path: build/centra*
+          if-no-files-found: error
