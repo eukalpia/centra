@@ -1,0 +1,33 @@
+name: Format source
+
+on:
+  push:
+    branches: [quality/initial-verification]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quality/initial-verification
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - run: dart format .
+      - name: Commit formatting
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Source is already formatted."
+            exit 0
+          fi
+          git config user.name "Centra CI"
+          git config user.email "centra-ci@users.noreply.github.com"
+          git add --all
+          git commit -m "Format Dart sources"
+          git push origin HEAD:quality/initial-verification
