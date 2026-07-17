@@ -61,6 +61,8 @@ class SshPickerStrings {
       'helpForm': 'Tab fields  Mouse supported  Esc cancel',
       'helpBrowser':
           '↑↓ move  Enter open  Backspace parent  Space choose  R refresh  Esc back',
+      'rootWarning':
+          'Scanning / can be very large. /proc, /sys, /dev and /run are skipped for safety.',
     },
     'ru': <String, String>{
       'title': 'SSH-подключение',
@@ -100,6 +102,8 @@ class SshPickerStrings {
       'helpForm': 'Tab поля  Мышь поддерживается  Esc отмена',
       'helpBrowser':
           '↑↓ выбор  Enter открыть  Backspace вверх  Space выбрать  R обновить  Esc назад',
+      'rootWarning':
+          'Сканирование / может быть очень долгим. /proc, /sys, /dev и /run пропускаются для безопасности.',
     },
     'uz': <String, String>{
       'title': 'SSH ulanish',
@@ -837,6 +841,12 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
             style: const TextStyle(color: _sshAccent),
           ),
         ),
+        if ((current?.path ?? '/') == '/')
+          Text(
+            strings('rootWarning'),
+            maxLines: 2,
+            style: const TextStyle(color: _sshWarning),
+          ),
         const SizedBox(height: 1),
         Expanded(
           child: Container(

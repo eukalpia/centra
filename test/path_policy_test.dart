@@ -42,6 +42,25 @@ void main() {
       expect(policy.allows('build/app.exe'), isFalse);
     });
 
+    test('prunes excluded directories before remote traversal', () {
+      final policy = PathPolicy(
+        includes: const <String>['**'],
+        excludes: const <String>[
+          'node_modules/**',
+          '**/node_modules/**',
+          '.git/**',
+        ],
+        includeHiddenFiles: true,
+      );
+      expect(policy.shouldTraverseDirectory('node_modules'), isFalse);
+      expect(
+        policy.shouldTraverseDirectory('apps/web/node_modules'),
+        isFalse,
+      );
+      expect(policy.shouldTraverseDirectory('.git'), isFalse);
+      expect(policy.shouldTraverseDirectory('lib'), isTrue);
+    });
+
     test('honors explicit include patterns', () {
       final policy = PathPolicy(
         includes: const <String>['lib/**', 'pubspec.yaml'],

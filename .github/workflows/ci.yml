@@ -6,73 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prepare-ssh-scan:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'fix/ssh-scan-performance'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: fix/ssh-scan-performance
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - name: Apply product changes
-        run: |
-          python .github/patch_ssh_snapshot.py
-          python .github/patch_ssh_scan_pipeline.py
-          python .github/patch_ssh_timeout_import.py
-          python .github/patch_path_policy_directory_match.py
-      - run: dart pub get
-      - name: Format changed Dart files
-        run: dart format lib/src/core/path_policy.dart lib/src/core/ssh_connection.dart lib/src/core/source.dart lib/src/core/scanner.dart lib/src/tui/ssh_source_picker.dart test/path_policy_test.dart test/ssh_connection_test.dart
-      - name: Analyze
-        shell: bash
-        run: |
-          set -o pipefail
-          dart analyze --fatal-warnings 2>&1 | tee ssh-analyze.log
-      - name: Publish analyzer diagnostics
-        if: failure()
-        run: |
-          git config user.name "Centra CI"
-          git config user.email "ci@centra.local"
-          git add -f ssh-analyze.log
-          git commit -m "Record SSH scan analyzer diagnostics"
-          git push origin HEAD:fix/ssh-scan-performance
-      - name: Test
-        shell: bash
-        run: |
-          set -o pipefail
-          dart test --reporter expanded 2>&1 | tee ssh-test.log
-      - name: Publish test diagnostics
-        if: failure()
-        run: |
-          git config user.name "Centra CI"
-          git config user.email "ci@centra.local"
-          git add -f ssh-test.log
-          git commit -m "Record SSH scan test diagnostics"
-          git push origin HEAD:fix/ssh-scan-performance
-      - name: Restore clean project workflow
-        run: |
-          rm .github/patch_ssh_snapshot.py
-          rm .github/patch_ssh_scan_pipeline.py
-          rm .github/patch_ssh_timeout_import.py
-          rm .github/patch_path_policy_directory_match.py
-          rm .github/workflows/prepare-ssh-scan-performance.yml
-          rm .github/trigger-ssh-scan-performance
-          rm -f ssh-analyze.log ssh-test.log
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-      - name: Commit product changes
-        run: |
-          git config user.name "Centra CI"
-          git config user.email "ci@centra.local"
-          git add -A
-          git commit -m "Speed up SSH scans and report snapshot progress"
-          git push origin HEAD:fix/ssh-scan-performance
-
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:

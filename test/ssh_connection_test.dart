@@ -131,5 +131,17 @@ void main() {
       expect(sshParentPath('/srv'), '/');
       expect(sshParentPath('/'), isNull);
     });
+
+    test('skips virtual Linux filesystems only for a root scan', () {
+      expect(isSshVirtualFileSystemPath('/', 'proc/1/status'), isTrue);
+      expect(isSshVirtualFileSystemPath('/', 'sys/kernel'), isTrue);
+      expect(isSshVirtualFileSystemPath('/', 'dev/null'), isTrue);
+      expect(isSshVirtualFileSystemPath('/', 'run/lock'), isTrue);
+      expect(isSshVirtualFileSystemPath('/', 'srv/application'), isFalse);
+      expect(
+        isSshVirtualFileSystemPath('/srv', 'proc/legitimate-file'),
+        isFalse,
+      );
+    });
   });
 }
