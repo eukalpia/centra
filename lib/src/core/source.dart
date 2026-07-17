@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'path_policy.dart';
 import 'profile.dart';
+import 'ssh_connection.dart';
 
 class ProcessResultData {
   const ProcessResultData({
@@ -88,7 +89,10 @@ class PreparedSource {
 abstract interface class SourceProvider {
   SourceType get type;
 
-  Future<PreparedSource> prepare(SourceConfig config);
+  Future<PreparedSource> prepare(
+    SourceConfig config, {
+    SshConnectionSecrets? sshSecrets,
+  });
 }
 
 class LocalSourceProvider implements SourceProvider {
@@ -98,7 +102,10 @@ class LocalSourceProvider implements SourceProvider {
   SourceType get type => SourceType.local;
 
   @override
-  Future<PreparedSource> prepare(SourceConfig config) async {
+  Future<PreparedSource> prepare(
+    SourceConfig config, {
+    SshConnectionSecrets? sshSecrets,
+  }) async {
     final directory = Directory(config.root).absolute;
     if (!await directory.exists()) {
       throw FileSystemException(
@@ -114,6 +121,57 @@ class LocalSourceProvider implements SourceProvider {
   }
 }
 
+class SshSourceProvider implements SourceProvider {
+  const SshSourceProvider({
+    this.service = const SshConnectionService(),
+  });
+
+  final SshConnectionService service;
+
+  @override
+  SourceType get type => SourceType.ssh;
+
+  @override
+  Future<PreparedSource> prepare(
+    SourceConfig config, {
+    SshConnectionSecrets? sshSecrets,
+  }) async {
+    final connection = await service.connect(
+      config,
+      secrets: sshSecrets ?? const SshConnectionSecrets(),
+    );
+    try {
+      final snapshot = await connection.downloadSnapshot(config.root);
+      return PreparedSource(
+        directory: snapshot.directory,
+        metadata: <String, Object?>{
+          'type': type.wireName,
+          'root': config.root,
+          'host': config.host,
+          'user': config.user,
+          'port': config.port,
+          'authMethod': config.sshAuthMethod.wireName,
+          'hostKeyType': connection.hostKeyType,
+          'hostKeyFingerprint': connection.hostKeyFingerprint,
+          'serverVersion': connection.serverVersion,
+          'snapshotFiles': snapshot.files,
+          'snapshotDirectories': snapshot.directories,
+          'snapshotSymlinks': snapshot.symlinks,
+        },
+        dispose: () async {
+          await connection.close();
+          if (await snapshot.directory.exists()) {
+            await snapshot.directory.delete(recursive: true);
+          }
+        },
+      );
+    } catch (_) {
+      await connection.close();
+      rethrow;
+    }
+  }
+}
+
 class ArchiveSourceProvider implements SourceProvider {
   ArchiveSourceProvider({
     required this.type,
@@ -125,7 +183,10 @@ class ArchiveSourceProvider implements SourceProvider {
   final CommandRunner runner;
 
   @override
-  Future<PreparedSource> prepare(SourceConfig config) async {
+  Future<PreparedSource> prepare(
+    SourceConfig config, {
+    SshConnectionSecrets? sshSecrets,
+  }) async {
     final temp = await Directory.systemTemp.createTemp('centra-source-');
     try {
       final command = _command(config);
@@ -155,24 +216,7 @@ class ArchiveSourceProvider implements SourceProvider {
   (String, List<String>) _command(SourceConfig config) {
     switch (type) {
       case SourceType.ssh:
-        final target = '${config.user}@${config.host}';
-        final args = <String>[
-          '-p',
-          config.port.toString(),
-          if ((config.identityFile ?? '').isNotEmpty) ...<String>[
-            '-i',
-            config.identityFile!
-          ],
-          '--',
-          target,
-          'tar',
-          '-C',
-          config.root,
-          '-cf',
-          '-',
-          '.',
-        ];
-        return ('ssh', args);
+        throw UnsupportedError('SSH snapshots use SshSourceProvider.');
       case SourceType.dockerContainer:
         return (
           'docker',
@@ -269,7 +313,10 @@ class DockerImageSourceProvider implements SourceProvider {
   SourceType get type => SourceType.dockerImage;
 
   @override
-  Future<PreparedSource> prepare(SourceConfig config) async {
+  Future<PreparedSource> prepare(
+    SourceConfig config, {
+    SshConnectionSecrets? sshSecrets,
+  }) async {
     final createArguments = <String>[
       ...dockerContextArguments(config),
       'create',
@@ -332,8 +379,7 @@ class SourceRegistry {
   SourceRegistry({CommandRunner runner = const SystemCommandRunner()})
       : _providers = <SourceType, SourceProvider>{
           SourceType.local: const LocalSourceProvider(),
-          SourceType.ssh:
-              ArchiveSourceProvider(type: SourceType.ssh, runner: runner),
+          SourceType.ssh: const SshSourceProvider(),
           SourceType.dockerContainer: ArchiveSourceProvider(
               type: SourceType.dockerContainer, runner: runner),
           SourceType.dockerImage: DockerImageSourceProvider(runner),

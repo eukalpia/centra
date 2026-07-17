@@ -26,6 +26,12 @@ class WizardDraft {
   String user = '';
   String port = '22';
   String identityFile = '';
+  SshAuthMethod sshAuthMethod = SshAuthMethod.privateKey;
+  SshHostKeyPolicy sshHostKeyPolicy = SshHostKeyPolicy.trustOnFirstUse;
+  String hostKeyType = '';
+  String hostKeyFingerprint = '';
+  int connectTimeoutSeconds = 15;
+  int keepAliveSeconds = 10;
   String container = '';
   String image = '';
   String service = '';
@@ -123,6 +129,14 @@ class WizardDraft {
         user: user.trim().isEmpty ? null : user.trim(),
         port: int.tryParse(port) ?? 0,
         identityFile: identityFile.trim().isEmpty ? null : identityFile.trim(),
+        sshAuthMethod: sshAuthMethod,
+        sshHostKeyPolicy: sshHostKeyPolicy,
+        hostKeyType: hostKeyType.trim().isEmpty ? null : hostKeyType.trim(),
+        hostKeyFingerprint: hostKeyFingerprint.trim().isEmpty
+            ? null
+            : hostKeyFingerprint.trim(),
+        connectTimeoutSeconds: connectTimeoutSeconds,
+        keepAliveSeconds: keepAliveSeconds,
         container: container.trim().isEmpty ? null : container.trim(),
         image: image.trim().isEmpty ? null : image.trim(),
         service: service.trim().isEmpty ? null : service.trim(),

@@ -14,6 +14,7 @@ import 'manifest.dart';
 import 'path_policy.dart';
 import 'profile.dart';
 import 'source.dart';
+import 'ssh_connection.dart';
 
 const centraVersion = '0.1.0';
 
@@ -118,6 +119,7 @@ class IntegrityScanner {
   Future<ScanResult> scan(
     CentraProfile profile, {
     ScanProgressCallback? onProgress,
+    SshConnectionSecrets? sshSecrets,
   }) async {
     final validationErrors = profile.validate();
     if (validationErrors.isNotEmpty) {
@@ -126,7 +128,7 @@ class IntegrityScanner {
     final stopwatch = Stopwatch()..start();
     final prepared = await _sourceRegistry
         .provider(profile.source.type)
-        .prepare(profile.source);
+        .prepare(profile.source, sshSecrets: sshSecrets);
     try {
       final registry =
           AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
@@ -295,9 +297,16 @@ class IntegrityScanner {
     return ManifestFileRecord(
       path: entry.path,
       size: entry.isLink ? utf8.encode(symlinkTarget!).length : stat.size,
-      modifiedAt:
-          profile.captureModificationTimes ? stat.modified.toUtc() : null,
-      mode: profile.capturePermissions ? stat.mode : null,
+      modifiedAt: profile.source.type == SourceType.ssh
+          ? null
+          : profile.captureModificationTimes
+              ? stat.modified.toUtc()
+              : null,
+      mode: profile.source.type == SourceType.ssh
+          ? null
+          : profile.capturePermissions
+              ? stat.mode
+              : null,
       symlinkTarget: symlinkTarget,
       digests: Map<String, String>.fromEntries(
         profile.algorithmIds
