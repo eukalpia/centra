@@ -1,0 +1,34 @@
+name: Prepare SSH interface
+
+on:
+  push:
+    branches: [feature/ssh-connection-manager]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ssh-connection-manager
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Apply interface integration
+        run: python .github/prepare_ssh_ui.py
+      - name: Resolve dependencies
+        run: dart pub get
+      - name: Format changed interface
+        run: dart format lib/src/tui/centra_app.dart lib/src/tui/ssh_source_picker.dart
+      - name: Remove preparation files
+        run: rm .github/prepare_ssh_ui.py .github/workflows/prepare-ssh-ui.yml .github/ssh-ui.trigger
+      - name: Commit prepared interface
+        run: |
+          git config user.name "Centra CI"
+          git config user.email "ci@centra.local"
+          git add -A
+          git commit -m "Build SSH connection interface" || exit 0
+          git push origin HEAD:feature/ssh-connection-manager
