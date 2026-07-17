@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cinder/cinder.dart';
 
 import '../core/algorithm_registry.dart';
+import '../core/docker_browser.dart';
 import '../core/manifest.dart';
 import '../core/path_policy.dart';
 import '../core/profile.dart';
@@ -10,6 +11,7 @@ import '../core/scanner.dart';
 import '../core/services.dart';
 import '../core/storage.dart';
 import '../i18n/messages.dart';
+import 'docker_source_picker.dart';
 import 'folder_picker.dart';
 import 'wizard_state.dart';
 
@@ -193,6 +195,8 @@ class _WizardScreenState extends State<_WizardScreen> {
 
   TextEditingController? folderPickerController;
   FocusNode? folderPickerReturnFocus;
+  SourceType? dockerPickerSourceType;
+  String? selectedDockerResourceTitle;
 
   String get locale => draft.locale ?? widget.initialLocale ?? 'en';
   CentraStrings get strings => CentraStrings(locale);
@@ -292,6 +296,58 @@ class _WizardScreenState extends State<_WizardScreen> {
     returnFocus?.requestFocus();
   }
 
+  String? _selectedDockerReference(SourceType sourceType) =>
+      switch (sourceType) {
+        SourceType.dockerContainer => container.text.trim(),
+        SourceType.dockerImage => image.text.trim(),
+        SourceType.dockerCompose => service.text.trim(),
+        SourceType.local || SourceType.ssh => null,
+      };
+
+  void _openDockerPicker() {
+    _syncDraft();
+    final sourceType = draft.sourceType;
+    if (sourceType != SourceType.dockerContainer &&
+        sourceType != SourceType.dockerImage &&
+        sourceType != SourceType.dockerCompose) {
+      return;
+    }
+    setState(() {
+      error = null;
+      dockerPickerSourceType = sourceType;
+    });
+  }
+
+  void _closeDockerPicker() {
+    setState(() => dockerPickerSourceType = null);
+    wizardFocus.requestFocus();
+  }
+
+  void _selectDockerSource(DockerSourceSelection selection) {
+    root.text = selection.path;
+    switch (selection.sourceType) {
+      case SourceType.dockerContainer:
+        container.text = selection.resource.reference;
+        break;
+      case SourceType.dockerImage:
+        image.text = selection.resource.reference;
+        break;
+      case SourceType.dockerCompose:
+        service.text = selection.resource.reference;
+        break;
+      case SourceType.local:
+      case SourceType.ssh:
+        return;
+    }
+    selectedDockerResourceTitle = selection.resource.title;
+    _syncDraft();
+    setState(() {
+      error = null;
+      dockerPickerSourceType = null;
+    });
+    wizardFocus.requestFocus();
+  }
+
   bool _stepHasTextField(WizardStep candidate) =>
       candidate == WizardStep.details ||
       candidate == WizardStep.exclusions ||
@@ -313,7 +369,9 @@ class _WizardScreenState extends State<_WizardScreen> {
       };
 
   bool _handleKey(KeyboardEvent event) {
-    if (folderPickerController != null) return false;
+    if (folderPickerController != null || dockerPickerSourceType != null) {
+      return false;
+    }
     if (event.matches(LogicalKey.keyC, ctrl: true) ||
         event.matches(LogicalKey.keyQ, ctrl: true)) {
       widget.onCancel();
@@ -370,7 +428,15 @@ class _WizardScreenState extends State<_WizardScreen> {
           draft.locale = (items[index] as LocaleOption).code;
           break;
         case WizardStep.source:
-          draft.sourceType = items[index] as SourceType;
+          final nextSource = items[index] as SourceType;
+          if (draft.sourceType != nextSource) {
+            root.clear();
+            container.clear();
+            image.clear();
+            service.clear();
+            selectedDockerResourceTitle = null;
+          }
+          draft.sourceType = nextSource;
           break;
         case WizardStep.algorithms:
           final id = (items[index] as HashAlgorithmDescriptor).id;
@@ -523,6 +589,32 @@ class _WizardScreenState extends State<_WizardScreen> {
         ),
       ),
     );
+
+    final dockerSourceType = dockerPickerSourceType;
+    if (dockerSourceType != null) {
+      return Stack(
+        children: <Widget>[
+          screen,
+          ModalBarrier(
+            color: const Color(0x000000).withAlpha(196),
+            obscure: false,
+            onDismiss: _closeDockerPicker,
+          ),
+          Center(
+            child: DockerSourcePicker(
+              sourceType: dockerSourceType,
+              locale: locale,
+              dockerContext: dockerContext.text.trim(),
+              composeFile: composeFile.text.trim(),
+              initialResource: _selectedDockerReference(dockerSourceType),
+              initialPath: root.text.trim().isEmpty ? '/' : root.text.trim(),
+              onSelected: _selectDockerSource,
+              onCancel: _closeDockerPicker,
+            ),
+          ),
+        ],
+      );
+    }
 
     final pickerController = folderPickerController;
     if (pickerController == null) return screen;
@@ -701,23 +793,26 @@ class _WizardScreenState extends State<_WizardScreen> {
         autofocus: true,
       ),
       _field(strings('profileId'), profileId, profileIdFocus, 'production-app'),
-      _field(
-        strings('rootPath'),
-        root,
-        rootFocus,
-        draft.sourceType == SourceType.local ? Directory.current.path : '/app',
-        trailing: draft.sourceType == SourceType.local
-            ? _ActionButton(
-                label: folderStrings.browse,
-                onTap: () => _openFolderPicker(root, rootFocus),
-                muted: true,
-              )
-            : null,
-      ),
     ];
     switch (draft.sourceType) {
+      case SourceType.local:
+        fields.add(
+          _field(
+            strings('rootPath'),
+            root,
+            rootFocus,
+            Directory.current.path,
+            trailing: _ActionButton(
+              label: folderStrings.browse,
+              onTap: () => _openFolderPicker(root, rootFocus),
+              muted: true,
+            ),
+          ),
+        );
+        break;
       case SourceType.ssh:
         fields.addAll(<Widget>[
+          _field(strings('rootPath'), root, rootFocus, '/srv/application'),
           _field(strings('host'), host, hostFocus, 'server.example.com'),
           _field(strings('user'), user, userFocus, 'deploy'),
           _field(strings('port'), port, portFocus, '22'),
@@ -732,38 +827,27 @@ class _WizardScreenState extends State<_WizardScreen> {
       case SourceType.dockerContainer:
         fields.addAll(<Widget>[
           _field(
-            strings('container'),
-            container,
-            containerFocus,
-            'application-1',
-          ),
-          _field(
             strings('dockerContext'),
             dockerContext,
             dockerContextFocus,
             'default',
           ),
+          _dockerSelectionPanel(SourceType.dockerContainer),
         ]);
         break;
       case SourceType.dockerImage:
         fields.addAll(<Widget>[
           _field(
-            strings('image'),
-            image,
-            imageFocus,
-            'registry.example.com/application:1.0.0',
-          ),
-          _field(
             strings('dockerContext'),
             dockerContext,
             dockerContextFocus,
             'default',
           ),
+          _dockerSelectionPanel(SourceType.dockerImage),
         ]);
         break;
       case SourceType.dockerCompose:
         fields.addAll(<Widget>[
-          _field(strings('service'), service, serviceFocus, 'api'),
           _field(
             strings('composeFile'),
             composeFile,
@@ -776,9 +860,9 @@ class _WizardScreenState extends State<_WizardScreen> {
             dockerContextFocus,
             'default',
           ),
+          _dockerSelectionPanel(SourceType.dockerCompose),
         ]);
         break;
-      case SourceType.local:
       case null:
         break;
     }
@@ -792,6 +876,59 @@ class _WizardScreenState extends State<_WizardScreen> {
         const SizedBox(height: 1),
         ...fields,
       ],
+    );
+  }
+
+  Widget _dockerSelectionPanel(SourceType sourceType) {
+    final reference = _selectedDockerReference(sourceType) ?? '';
+    final resourceLabel = switch (sourceType) {
+      SourceType.dockerContainer => strings('container'),
+      SourceType.dockerImage => strings('image'),
+      SourceType.dockerCompose => strings('service'),
+      SourceType.local || SourceType.ssh => strings('source'),
+    };
+    final hasSelection = reference.isNotEmpty && root.text.trim().isNotEmpty;
+    return Container(
+      decoration: BoxDecoration(
+        color: _surfaceStrong,
+        border: BoxBorder.all(
+          color: hasSelection ? _accent : const Color(0x394453),
+          style: BoxBorderStyle.rounded,
+        ),
+      ),
+      padding: const EdgeInsets.all(1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            resourceLabel,
+            style: const TextStyle(color: _muted),
+          ),
+          Text(
+            hasSelection ? (selectedDockerResourceTitle ?? reference) : '—',
+            maxLines: 1,
+            style: TextStyle(
+              color: hasSelection ? _text : _muted,
+              fontWeight: hasSelection ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            strings('rootPath'),
+            style: const TextStyle(color: _muted),
+          ),
+          Text(
+            hasSelection ? root.text.trim() : '—',
+            maxLines: 1,
+            style: TextStyle(color: hasSelection ? _accent : _muted),
+          ),
+          const SizedBox(height: 1),
+          _ActionButton(
+            label: '${folderStrings.browse} Docker',
+            onTap: _openDockerPicker,
+            muted: !hasSelection,
+          ),
+        ],
+      ),
     );
   }
 
