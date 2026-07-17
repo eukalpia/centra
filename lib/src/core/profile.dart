@@ -4,27 +4,27 @@ enum SourceType { local, ssh, dockerContainer, dockerImage, dockerCompose }
 
 extension SourceTypeName on SourceType {
   String get wireName => switch (this) {
-    SourceType.local => 'local',
-    SourceType.ssh => 'ssh',
-    SourceType.dockerContainer => 'docker-container',
-    SourceType.dockerImage => 'docker-image',
-    SourceType.dockerCompose => 'docker-compose',
-  };
+        SourceType.local => 'local',
+        SourceType.ssh => 'ssh',
+        SourceType.dockerContainer => 'docker-container',
+        SourceType.dockerImage => 'docker-image',
+        SourceType.dockerCompose => 'docker-compose',
+      };
 
   static SourceType parse(String value) => SourceType.values.firstWhere(
-    (type) => type.wireName == value,
-    orElse: () => throw FormatException('Unknown source type: $value'),
-  );
+        (type) => type.wireName == value,
+        orElse: () => throw FormatException('Unknown source type: $value'),
+      );
 }
 
 enum SshAuthMethod { password, privateKey, passwordAndKey }
 
 extension SshAuthMethodName on SshAuthMethod {
   String get wireName => switch (this) {
-    SshAuthMethod.password => 'password',
-    SshAuthMethod.privateKey => 'private-key',
-    SshAuthMethod.passwordAndKey => 'password-and-key',
-  };
+        SshAuthMethod.password => 'password',
+        SshAuthMethod.privateKey => 'private-key',
+        SshAuthMethod.passwordAndKey => 'password-and-key',
+      };
 
   bool get usesPassword =>
       this == SshAuthMethod.password || this == SshAuthMethod.passwordAndKey;
@@ -33,18 +33,18 @@ extension SshAuthMethodName on SshAuthMethod {
       this == SshAuthMethod.privateKey || this == SshAuthMethod.passwordAndKey;
 
   static SshAuthMethod parse(String value) => SshAuthMethod.values.firstWhere(
-    (method) => method.wireName == value,
-    orElse: () => throw FormatException('Unknown SSH auth method: $value'),
-  );
+        (method) => method.wireName == value,
+        orElse: () => throw FormatException('Unknown SSH auth method: $value'),
+      );
 }
 
 enum SshHostKeyPolicy { trustOnFirstUse, pinned }
 
 extension SshHostKeyPolicyName on SshHostKeyPolicy {
   String get wireName => switch (this) {
-    SshHostKeyPolicy.trustOnFirstUse => 'trust-on-first-use',
-    SshHostKeyPolicy.pinned => 'pinned',
-  };
+        SshHostKeyPolicy.trustOnFirstUse => 'trust-on-first-use',
+        SshHostKeyPolicy.pinned => 'pinned',
+      };
 
   static SshHostKeyPolicy parse(String value) =>
       SshHostKeyPolicy.values.firstWhere(
@@ -60,9 +60,9 @@ extension SymlinkPolicyName on SymlinkPolicy {
   String get wireName => name;
 
   static SymlinkPolicy parse(String value) => SymlinkPolicy.values.firstWhere(
-    (policy) => policy.name == value,
-    orElse: () => throw FormatException('Unknown symlink policy: $value'),
-  );
+        (policy) => policy.name == value,
+        orElse: () => throw FormatException('Unknown symlink policy: $value'),
+      );
 }
 
 class SourceConfig {
@@ -146,48 +146,51 @@ class SourceConfig {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'type': type.wireName,
-    'root': root,
-    'port': port,
-    if (host != null) 'host': host,
-    if (user != null) 'user': user,
-    if (identityFile != null) 'identityFile': identityFile,
-    if (type == SourceType.ssh) 'sshAuthMethod': sshAuthMethod.wireName,
-    if (type == SourceType.ssh) 'sshHostKeyPolicy': sshHostKeyPolicy.wireName,
-    if (hostKeyType != null) 'hostKeyType': hostKeyType,
-    if (hostKeyFingerprint != null) 'hostKeyFingerprint': hostKeyFingerprint,
-    if (type == SourceType.ssh) 'connectTimeoutSeconds': connectTimeoutSeconds,
-    if (type == SourceType.ssh) 'keepAliveSeconds': keepAliveSeconds,
-    if (container != null) 'container': container,
-    if (image != null) 'image': image,
-    if (service != null) 'service': service,
-    if (composeFile != null) 'composeFile': composeFile,
-    if (dockerContext != null) 'dockerContext': dockerContext,
-  };
+        'type': type.wireName,
+        'root': root,
+        'port': port,
+        if (host != null) 'host': host,
+        if (user != null) 'user': user,
+        if (identityFile != null) 'identityFile': identityFile,
+        if (type == SourceType.ssh) 'sshAuthMethod': sshAuthMethod.wireName,
+        if (type == SourceType.ssh)
+          'sshHostKeyPolicy': sshHostKeyPolicy.wireName,
+        if (hostKeyType != null) 'hostKeyType': hostKeyType,
+        if (hostKeyFingerprint != null)
+          'hostKeyFingerprint': hostKeyFingerprint,
+        if (type == SourceType.ssh)
+          'connectTimeoutSeconds': connectTimeoutSeconds,
+        if (type == SourceType.ssh) 'keepAliveSeconds': keepAliveSeconds,
+        if (container != null) 'container': container,
+        if (image != null) 'image': image,
+        if (service != null) 'service': service,
+        if (composeFile != null) 'composeFile': composeFile,
+        if (dockerContext != null) 'dockerContext': dockerContext,
+      };
 
   factory SourceConfig.fromJson(Map<String, Object?> json) => SourceConfig(
-    type: SourceTypeName.parse(json['type']! as String),
-    root: json['root']! as String,
-    host: json['host'] as String?,
-    user: json['user'] as String?,
-    port: json['port'] as int? ?? 22,
-    identityFile: json['identityFile'] as String?,
-    sshAuthMethod: SshAuthMethodName.parse(
-      json['sshAuthMethod'] as String? ?? 'private-key',
-    ),
-    sshHostKeyPolicy: SshHostKeyPolicyName.parse(
-      json['sshHostKeyPolicy'] as String? ?? 'trust-on-first-use',
-    ),
-    hostKeyType: json['hostKeyType'] as String?,
-    hostKeyFingerprint: json['hostKeyFingerprint'] as String?,
-    connectTimeoutSeconds: json['connectTimeoutSeconds'] as int? ?? 15,
-    keepAliveSeconds: json['keepAliveSeconds'] as int? ?? 10,
-    container: json['container'] as String?,
-    image: json['image'] as String?,
-    service: json['service'] as String?,
-    composeFile: json['composeFile'] as String?,
-    dockerContext: json['dockerContext'] as String?,
-  );
+        type: SourceTypeName.parse(json['type']! as String),
+        root: json['root']! as String,
+        host: json['host'] as String?,
+        user: json['user'] as String?,
+        port: json['port'] as int? ?? 22,
+        identityFile: json['identityFile'] as String?,
+        sshAuthMethod: SshAuthMethodName.parse(
+          json['sshAuthMethod'] as String? ?? 'private-key',
+        ),
+        sshHostKeyPolicy: SshHostKeyPolicyName.parse(
+          json['sshHostKeyPolicy'] as String? ?? 'trust-on-first-use',
+        ),
+        hostKeyType: json['hostKeyType'] as String?,
+        hostKeyFingerprint: json['hostKeyFingerprint'] as String?,
+        connectTimeoutSeconds: json['connectTimeoutSeconds'] as int? ?? 15,
+        keepAliveSeconds: json['keepAliveSeconds'] as int? ?? 10,
+        container: json['container'] as String?,
+        image: json['image'] as String?,
+        service: json['service'] as String?,
+        composeFile: json['composeFile'] as String?,
+        dockerContext: json['dockerContext'] as String?,
+      );
 }
 
 class OutputConfig {
@@ -222,22 +225,23 @@ class OutputConfig {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'directory': directory,
-    'writeCanonicalJson': writeCanonicalJson,
-    'writeCompatibilityText': writeCompatibilityText,
-    'createZip': createZip,
-    'requireZipPassword': requireZipPassword,
-    'includeMetadataReport': includeMetadataReport,
-  };
+        'directory': directory,
+        'writeCanonicalJson': writeCanonicalJson,
+        'writeCompatibilityText': writeCompatibilityText,
+        'createZip': createZip,
+        'requireZipPassword': requireZipPassword,
+        'includeMetadataReport': includeMetadataReport,
+      };
 
   factory OutputConfig.fromJson(Map<String, Object?> json) => OutputConfig(
-    directory: json['directory']! as String,
-    writeCanonicalJson: json['writeCanonicalJson'] as bool? ?? false,
-    writeCompatibilityText: json['writeCompatibilityText'] as bool? ?? false,
-    createZip: json['createZip'] as bool? ?? false,
-    requireZipPassword: json['requireZipPassword'] as bool? ?? false,
-    includeMetadataReport: json['includeMetadataReport'] as bool? ?? false,
-  );
+        directory: json['directory']! as String,
+        writeCanonicalJson: json['writeCanonicalJson'] as bool? ?? false,
+        writeCompatibilityText:
+            json['writeCompatibilityText'] as bool? ?? false,
+        createZip: json['createZip'] as bool? ?? false,
+        requireZipPassword: json['requireZipPassword'] as bool? ?? false,
+        includeMetadataReport: json['includeMetadataReport'] as bool? ?? false,
+      );
 }
 
 class CentraProfile {
@@ -327,28 +331,27 @@ class CentraProfile {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'schema': 'centra.profile.v1',
-    'id': id,
-    'name': name,
-    'locale': locale,
-    'source': source.toJson(),
-    'algorithmIds': algorithmIds,
-    'includePatterns': includePatterns,
-    'excludePatterns': excludePatterns,
-    'customAlgorithms': customAlgorithms
-        .map((algorithm) => algorithm.toJson())
-        .toList(),
-    'symlinkPolicy': symlinkPolicy.wireName,
-    'includeHiddenFiles': includeHiddenFiles,
-    'capturePermissions': capturePermissions,
-    'captureModificationTimes': captureModificationTimes,
-    'workerCount': workerCount,
-    'failOnReadError': failOnReadError,
-    'output': output.toJson(),
-    'projectKind': projectKind,
-    'createdAt': createdAt.toUtc().toIso8601String(),
-    'updatedAt': updatedAt.toUtc().toIso8601String(),
-  };
+        'schema': 'centra.profile.v1',
+        'id': id,
+        'name': name,
+        'locale': locale,
+        'source': source.toJson(),
+        'algorithmIds': algorithmIds,
+        'includePatterns': includePatterns,
+        'excludePatterns': excludePatterns,
+        'customAlgorithms':
+            customAlgorithms.map((algorithm) => algorithm.toJson()).toList(),
+        'symlinkPolicy': symlinkPolicy.wireName,
+        'includeHiddenFiles': includeHiddenFiles,
+        'capturePermissions': capturePermissions,
+        'captureModificationTimes': captureModificationTimes,
+        'workerCount': workerCount,
+        'failOnReadError': failOnReadError,
+        'output': output.toJson(),
+        'projectKind': projectKind,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'updatedAt': updatedAt.toUtc().toIso8601String(),
+      };
 
   factory CentraProfile.fromJson(Map<String, Object?> json) {
     if (json['schema'] != 'centra.profile.v1') {

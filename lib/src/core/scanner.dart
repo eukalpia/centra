@@ -102,11 +102,11 @@ class IntegrityScanner {
     CommandRunner commandRunner = const SystemCommandRunner(),
     DateTime Function()? clock,
     Random? random,
-  }) : _sourceRegistry =
-           sourceRegistry ?? SourceRegistry(runner: commandRunner),
-       _commandRunner = commandRunner,
-       _clock = clock ?? DateTime.now,
-       _random = random ?? Random.secure();
+  })  : _sourceRegistry =
+            sourceRegistry ?? SourceRegistry(runner: commandRunner),
+        _commandRunner = commandRunner,
+        _clock = clock ?? DateTime.now,
+        _random = random ?? Random.secure();
 
   final SourceRegistry _sourceRegistry;
   final CommandRunner _commandRunner;
@@ -130,9 +130,8 @@ class IntegrityScanner {
       final registry = AlgorithmRegistry(
         customAlgorithms: profile.customAlgorithms,
       );
-      final descriptors = profile.algorithmIds
-          .map(registry.descriptor)
-          .toList(growable: false);
+      final descriptors =
+          profile.algorithmIds.map(registry.descriptor).toList(growable: false);
       final policy = PathPolicy(
         includes: profile.includePatterns,
         excludes: profile.excludePatterns,
@@ -330,13 +329,13 @@ class IntegrityScanner {
       modifiedAt: profile.source.type == SourceType.ssh
           ? null
           : profile.captureModificationTimes
-          ? stat.modified.toUtc()
-          : null,
+              ? stat.modified.toUtc()
+              : null,
       mode: profile.source.type == SourceType.ssh
           ? null
           : profile.capturePermissions
-          ? stat.mode
-          : null,
+              ? stat.mode
+              : null,
       symlinkTarget: symlinkTarget,
       digests: Map<String, String>.fromEntries(
         profile.algorithmIds.map(

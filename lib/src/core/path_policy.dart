@@ -69,8 +69,8 @@ class PathPolicy {
     required Iterable<String> includes,
     required Iterable<String> excludes,
     required this.includeHiddenFiles,
-  }) : includePatterns = includes.map(GlobPattern.new).toList(growable: false),
-       excludePatterns = excludes.map(GlobPattern.new).toList(growable: false);
+  })  : includePatterns = includes.map(GlobPattern.new).toList(growable: false),
+        excludePatterns = excludes.map(GlobPattern.new).toList(growable: false);
 
   final List<GlobPattern> includePatterns;
   final List<GlobPattern> excludePatterns;
@@ -83,8 +83,7 @@ class PathPolicy {
         path.split('/').any((segment) => segment.startsWith('.'))) {
       return false;
     }
-    final included =
-        includePatterns.isEmpty ||
+    final included = includePatterns.isEmpty ||
         includePatterns.any((pattern) => pattern.matches(path));
     if (!included) return false;
     return !excludePatterns.any((pattern) => pattern.matches(path));

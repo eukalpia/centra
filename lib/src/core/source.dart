@@ -55,9 +55,8 @@ class SystemCommandRunner implements CommandRunner {
       stdoutEncoding: null,
       stderrEncoding: null,
     );
-    final result = timeout == null
-        ? await future
-        : await future.timeout(timeout);
+    final result =
+        timeout == null ? await future : await future.timeout(timeout);
     return ProcessResultData(
       exitCode: result.exitCode,
       stdoutBytes: Uint8List.fromList(
@@ -269,22 +268,22 @@ class ArchiveSourceProvider implements SourceProvider {
   }
 
   Map<String, Object?> _metadata(SourceConfig config) => <String, Object?>{
-    'type': type.wireName,
-    'root': config.root,
-    if (config.host != null) 'host': config.host,
-    if (config.user != null) 'user': config.user,
-    if (type == SourceType.ssh) 'port': config.port,
-    if (config.container != null) 'container': config.container,
-    if (config.service != null) 'service': config.service,
-    if (config.composeFile != null) 'composeFile': config.composeFile,
-    if (config.dockerContext != null) 'dockerContext': config.dockerContext,
-  };
+        'type': type.wireName,
+        'root': config.root,
+        if (config.host != null) 'host': config.host,
+        if (config.user != null) 'user': config.user,
+        if (type == SourceType.ssh) 'port': config.port,
+        if (config.container != null) 'container': config.container,
+        if (config.service != null) 'service': config.service,
+        if (config.composeFile != null) 'composeFile': config.composeFile,
+        if (config.dockerContext != null) 'dockerContext': config.dockerContext,
+      };
 }
 
 List<String> dockerContextArguments(SourceConfig config) =>
     (config.dockerContext ?? '').isEmpty
-    ? const <String>[]
-    : <String>['--context', config.dockerContext!];
+        ? const <String>[]
+        : <String>['--context', config.dockerContext!];
 
 Future<void> extractTarSafely(List<int> bytes, Directory destination) async {
   final archive = TarDecoder().decodeBytes(bytes);
@@ -400,19 +399,19 @@ class DockerImageSourceProvider implements SourceProvider {
 
 class SourceRegistry {
   SourceRegistry({CommandRunner runner = const SystemCommandRunner()})
-    : _providers = <SourceType, SourceProvider>{
-        SourceType.local: const LocalSourceProvider(),
-        SourceType.ssh: const SshSourceProvider(),
-        SourceType.dockerContainer: ArchiveSourceProvider(
-          type: SourceType.dockerContainer,
-          runner: runner,
-        ),
-        SourceType.dockerImage: DockerImageSourceProvider(runner),
-        SourceType.dockerCompose: ArchiveSourceProvider(
-          type: SourceType.dockerCompose,
-          runner: runner,
-        ),
-      };
+      : _providers = <SourceType, SourceProvider>{
+          SourceType.local: const LocalSourceProvider(),
+          SourceType.ssh: const SshSourceProvider(),
+          SourceType.dockerContainer: ArchiveSourceProvider(
+            type: SourceType.dockerContainer,
+            runner: runner,
+          ),
+          SourceType.dockerImage: DockerImageSourceProvider(runner),
+          SourceType.dockerCompose: ArchiveSourceProvider(
+            type: SourceType.dockerCompose,
+            runner: runner,
+          ),
+        };
 
   final Map<SourceType, SourceProvider> _providers;
 

@@ -30,11 +30,11 @@ class CentraCli {
     OutputService? outputService,
     SignatureService? signatureService,
     ManifestCodec manifestCodec = const ManifestCodec(),
-  }) : paths = paths ?? CentraPaths(),
-       scanner = scanner ?? IntegrityScanner(),
-       outputService = outputService ?? OutputService(),
-       signatureService = signatureService ?? SignatureService(),
-       manifestCodec = manifestCodec;
+  })  : paths = paths ?? CentraPaths(),
+        scanner = scanner ?? IntegrityScanner(),
+        outputService = outputService ?? OutputService(),
+        signatureService = signatureService ?? SignatureService(),
+        manifestCodec = manifestCodec;
 
   final CentraPaths paths;
   final IntegrityScanner scanner;
@@ -51,11 +51,12 @@ class CentraCli {
 
     parser.addCommand(
       'algorithms',
-      ArgParser()..addFlag(
-        'json',
-        negatable: false,
-        help: 'Write machine-readable JSON.',
-      ),
+      ArgParser()
+        ..addFlag(
+          'json',
+          negatable: false,
+          help: 'Write machine-readable JSON.',
+        ),
     );
 
     final profileParser = ArgParser();
@@ -82,12 +83,13 @@ class CentraCli {
     );
     profileParser.addCommand(
       'import',
-      ArgParser()..addOption(
-        'file',
-        abbr: 'f',
-        help: 'Profile JSON file.',
-        mandatory: true,
-      ),
+      ArgParser()
+        ..addOption(
+          'file',
+          abbr: 'f',
+          help: 'Profile JSON file.',
+          mandatory: true,
+        ),
     );
     profileParser.addCommand(
       'export',
@@ -287,9 +289,8 @@ class CentraCli {
     if (results['json'] as bool) {
       stdout.writeln(
         prettyJson(<String, Object?>{
-          'algorithms': algorithms
-              .map((algorithm) => algorithm.toJson())
-              .toList(),
+          'algorithms':
+              algorithms.map((algorithm) => algorithm.toJson()).toList(),
         }),
       );
       return ExitCode.success;
@@ -429,9 +430,8 @@ class CentraCli {
       stdout.writeln(
         'Files: ${scan.manifest.files.length}  Bytes: ${scan.manifest.totalBytes}',
       );
-      for (final artifact
-          in (result['artifacts']! as List<Object?>)
-              .cast<Map<String, Object?>>()) {
+      for (final artifact in (result['artifacts']! as List<Object?>)
+          .cast<Map<String, Object?>>()) {
         stdout.writeln('${artifact['kind']}: ${artifact['path']}');
       }
     }
@@ -446,7 +446,8 @@ class CentraCli {
     final current = (await scanner.scan(
       profile,
       sshSecrets: _sshSecretsFromResults(results),
-    )).manifest;
+    ))
+        .manifest;
     final diff = const ManifestComparator().compare(approved, current);
     if (results['json'] as bool) {
       stdout.writeln(canonicalJson(diff.toJson()));
@@ -572,8 +573,8 @@ class CentraCli {
         : null;
     final passphraseVariable =
         results.options.contains('ssh-key-passphrase-env')
-        ? results['ssh-key-passphrase-env'] as String?
-        : null;
+            ? results['ssh-key-passphrase-env'] as String?
+            : null;
     final password = _passwordFromEnvironment(passwordVariable);
     final passphrase = _passwordFromEnvironment(passphraseVariable);
     if (password == null && passphrase == null) return null;
@@ -594,9 +595,12 @@ class CentraCli {
   Future<bool> _executableAvailable(String executable) async {
     try {
       final command = Platform.isWindows ? 'where' : 'which';
-      final result = await Process.run(command, <String>[
-        executable,
-      ], runInShell: false);
+      final result = await Process.run(
+          command,
+          <String>[
+            executable,
+          ],
+          runInShell: false);
       return result.exitCode == 0;
     } on ProcessException {
       return false;
@@ -621,8 +625,7 @@ class CentraCli {
     }
   }
 
-  String _help(ArgParser parser) =>
-      '''
+  String _help(ArgParser parser) => '''
 Centra $centraVersion
 File integrity, deployment verification, and manifest management.
 

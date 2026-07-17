@@ -8,8 +8,8 @@ import 'profile.dart';
 
 class CentraPaths {
   CentraPaths({Directory? configDirectory, Directory? dataDirectory})
-    : configDirectory = configDirectory ?? _defaultConfigDirectory(),
-      dataDirectory = dataDirectory ?? _defaultDataDirectory();
+      : configDirectory = configDirectory ?? _defaultConfigDirectory(),
+        dataDirectory = dataDirectory ?? _defaultDataDirectory();
 
   final Directory configDirectory;
   final Directory dataDirectory;
@@ -88,11 +88,11 @@ class CentraSettings {
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'schema': 'centra.settings.v1',
-    'locale': locale,
-    'theme': theme,
-    'confirmDestructiveActions': confirmDestructiveActions,
-  };
+        'schema': 'centra.settings.v1',
+        'locale': locale,
+        'theme': theme,
+        'confirmDestructiveActions': confirmDestructiveActions,
+      };
 
   factory CentraSettings.fromJson(Map<String, Object?> json) {
     if (json['schema'] != 'centra.settings.v1') {
@@ -178,7 +178,7 @@ class SettingsStore {
 
 class ProfileStore {
   ProfileStore(this.paths, {AtomicFileWriter writer = const AtomicFileWriter()})
-    : _writer = writer;
+      : _writer = writer;
 
   static final RegExp _profileIdPattern = RegExp(
     r'^[a-z0-9][a-z0-9._-]{1,63}$',

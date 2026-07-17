@@ -91,8 +91,8 @@ class SshConnection {
     required this.config,
     required this.hostKeyType,
     required this.hostKeyFingerprint,
-  }) : _client = client,
-       _sftp = sftp;
+  })  : _client = client,
+        _sftp = sftp;
 
   final SSHClient _client;
   final SftpClient _sftp;
@@ -126,7 +126,8 @@ class SshConnection {
         try {
           directory = (await _sftp.stat(
             p.posix.join(normalized, name),
-          )).isDirectory;
+          ))
+              .isDirectory;
         } on Object {
           directory = false;
         }
@@ -308,14 +309,13 @@ class SshConnectionService {
         socket,
         username: config.user!,
         identities: identities.isEmpty ? null : identities,
-        onPasswordRequest: config.sshAuthMethod.usesPassword
-            ? () => secrets.password
-            : null,
+        onPasswordRequest:
+            config.sshAuthMethod.usesPassword ? () => secrets.password : null,
         onUserInfoRequest: config.sshAuthMethod.usesPassword
             ? (request) => List<String>.filled(
-                request.prompts.length,
-                secrets.password ?? '',
-              )
+                  request.prompts.length,
+                  secrets.password ?? '',
+                )
             : null,
         onVerifyHostKey: (type, fingerprintBytes) {
           final fingerprint = utf8.decode(fingerprintBytes);

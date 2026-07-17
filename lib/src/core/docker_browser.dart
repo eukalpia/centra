@@ -63,9 +63,9 @@ class DockerBrowseSession {
     required this.containerId,
     required List<String> contextArguments,
     Future<void> Function()? dispose,
-  }) : _runner = runner,
-       _contextArguments = List<String>.unmodifiable(contextArguments),
-       _dispose = dispose;
+  })  : _runner = runner,
+        _contextArguments = List<String>.unmodifiable(contextArguments),
+        _dispose = dispose;
 
   final CommandRunner _runner;
   final List<String> _contextArguments;
@@ -112,8 +112,7 @@ class DockerBrowseSession {
     }
 
     final selectedBaseName = p.posix.basename(normalizedPath);
-    final stripSelectedPrefix =
-        selectedBaseName.isNotEmpty &&
+    final stripSelectedPrefix = selectedBaseName.isNotEmpty &&
         selectedBaseName != '/' &&
         archiveNames.isNotEmpty &&
         archiveNames.every(
@@ -171,7 +170,7 @@ class DockerBrowseSession {
 
 class DockerBrowserService {
   DockerBrowserService({CommandRunner runner = const SystemCommandRunner()})
-    : _runner = runner;
+      : _runner = runner;
 
   final CommandRunner _runner;
 
@@ -329,8 +328,7 @@ class DockerBrowserService {
       final id = fields[2].trim();
       final size = fields.length > 3 ? fields[3].trim() : '';
       if (id.isEmpty) continue;
-      final hasNamedReference =
-          repository.isNotEmpty &&
+      final hasNamedReference = repository.isNotEmpty &&
           repository != '<none>' &&
           tag.isNotEmpty &&
           tag != '<none>';
@@ -399,12 +397,15 @@ class DockerBrowserService {
     String containerId,
     List<String> contextArguments,
   ) async {
-    await _runner.run('docker', <String>[
-      ...contextArguments,
-      'rm',
-      '-f',
-      containerId,
-    ], timeout: const Duration(minutes: 2));
+    await _runner.run(
+        'docker',
+        <String>[
+          ...contextArguments,
+          'rm',
+          '-f',
+          containerId,
+        ],
+        timeout: const Duration(minutes: 2));
   }
 
   Future<ProcessResultData> _run(

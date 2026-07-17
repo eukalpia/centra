@@ -20,13 +20,14 @@ class ManifestFileRecord {
   final Map<String, String> digests;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'path': path,
-    'size': size,
-    if (modifiedAt != null) 'modifiedAt': modifiedAt!.toUtc().toIso8601String(),
-    if (mode != null) 'mode': mode,
-    if (symlinkTarget != null) 'symlinkTarget': symlinkTarget,
-    'digests': digests,
-  };
+        'path': path,
+        'size': size,
+        if (modifiedAt != null)
+          'modifiedAt': modifiedAt!.toUtc().toIso8601String(),
+        if (mode != null) 'mode': mode,
+        if (symlinkTarget != null) 'symlinkTarget': symlinkTarget,
+        'digests': digests,
+      };
 
   factory ManifestFileRecord.fromJson(Map<String, Object?> json) =>
       ManifestFileRecord(
@@ -53,10 +54,10 @@ class ManifestReadError {
   final String message;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'path': path,
-    'code': code,
-    'message': message,
-  };
+        'path': path,
+        'code': code,
+        'message': message,
+      };
 
   factory ManifestReadError.fromJson(Map<String, Object?> json) =>
       ManifestReadError(
@@ -82,7 +83,7 @@ class CentraManifest {
     required this.errors,
     required this.totalBytes,
   }) : files = (files.toList()
-         ..sort((left, right) => left.path.compareTo(right.path)));
+          ..sort((left, right) => left.path.compareTo(right.path)));
 
   final String id;
   final DateTime generatedAt;
@@ -99,31 +100,31 @@ class CentraManifest {
   final int totalBytes;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'schema': 'centra.manifest.v1',
-    'id': id,
-    'generatedAt': generatedAt.toUtc().toIso8601String(),
-    'tool': <String, Object?>{'name': 'Centra', 'version': toolVersion},
-    'profile': <String, Object?>{
-      'id': profileId,
-      'name': profileName,
-      'projectKind': projectKind,
-    },
-    'source': source,
-    'algorithms': algorithms
-        .map((algorithm) => algorithm.toJson())
-        .toList(growable: false),
-    'policy': <String, Object?>{
-      'includes': includePatterns,
-      'excludes': excludePatterns,
-    },
-    'summary': <String, Object?>{
-      'fileCount': files.length,
-      'totalBytes': totalBytes,
-      'readErrorCount': errors.length,
-    },
-    'files': files.map((file) => file.toJson()).toList(growable: false),
-    'errors': errors.map((error) => error.toJson()).toList(growable: false),
-  };
+        'schema': 'centra.manifest.v1',
+        'id': id,
+        'generatedAt': generatedAt.toUtc().toIso8601String(),
+        'tool': <String, Object?>{'name': 'Centra', 'version': toolVersion},
+        'profile': <String, Object?>{
+          'id': profileId,
+          'name': profileName,
+          'projectKind': projectKind,
+        },
+        'source': source,
+        'algorithms': algorithms
+            .map((algorithm) => algorithm.toJson())
+            .toList(growable: false),
+        'policy': <String, Object?>{
+          'includes': includePatterns,
+          'excludes': excludePatterns,
+        },
+        'summary': <String, Object?>{
+          'fileCount': files.length,
+          'totalBytes': totalBytes,
+          'readErrorCount': errors.length,
+        },
+        'files': files.map((file) => file.toJson()).toList(growable: false),
+        'errors': errors.map((error) => error.toJson()).toList(growable: false),
+      };
 
   String encodeCanonical() => canonicalJson(toJson());
 
@@ -191,12 +192,12 @@ class ManifestChange {
   final ManifestFileRecord? after;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'path': path,
-    'type': type.name,
-    'changedAlgorithms': changedAlgorithms,
-    if (before != null) 'before': before!.toJson(),
-    if (after != null) 'after': after!.toJson(),
-  };
+        'path': path,
+        'type': type.name,
+        'changedAlgorithms': changedAlgorithms,
+        if (before != null) 'before': before!.toJson(),
+        if (after != null) 'after': after!.toJson(),
+      };
 }
 
 class ManifestDiff {
@@ -208,18 +209,19 @@ class ManifestDiff {
       changes.where((change) => change.type == type).length;
 
   bool get hasIntegrityChanges => changes.any(
-    (change) =>
-        change.type == ManifestChangeType.added ||
-        change.type == ManifestChangeType.removed ||
-        change.type == ManifestChangeType.modified,
-  );
+        (change) =>
+            change.type == ManifestChangeType.added ||
+            change.type == ManifestChangeType.removed ||
+            change.type == ManifestChangeType.modified,
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'summary': <String, Object?>{
-      for (final type in ManifestChangeType.values) type.name: count(type),
-    },
-    'changes': changes.map((change) => change.toJson()).toList(growable: false),
-  };
+        'summary': <String, Object?>{
+          for (final type in ManifestChangeType.values) type.name: count(type),
+        },
+        'changes':
+            changes.map((change) => change.toJson()).toList(growable: false),
+      };
 }
 
 class ManifestComparator {
@@ -263,7 +265,8 @@ class ManifestComparator {
       final algorithmIds = <String>{
         ...oldFile.digests.keys,
         ...newFile.digests.keys,
-      }.toList()..sort();
+      }.toList()
+        ..sort();
       final changedAlgorithms = <String>[];
       for (final id in algorithmIds) {
         final left = oldFile.digests[id];
@@ -290,7 +293,7 @@ class ManifestComparator {
       }
       final metadataChanged =
           oldFile.modifiedAt?.toUtc() != newFile.modifiedAt?.toUtc() ||
-          oldFile.mode != newFile.mode;
+              oldFile.mode != newFile.mode;
       changes.add(
         ManifestChange(
           path: path,

@@ -52,7 +52,7 @@ class ScanArtifacts {
 
 class OutputService {
   OutputService({AtomicFileWriter writer = const AtomicFileWriter()})
-    : _writer = writer;
+      : _writer = writer;
 
   final AtomicFileWriter _writer;
 
@@ -84,9 +84,8 @@ class OutputService {
     if (profile.output.writeCompatibilityText) {
       final multiple = manifest.algorithms.length > 1;
       for (final algorithm in manifest.algorithms) {
-        final fileName = multiple
-            ? 'hash_values.${algorithm.id}.txt'
-            : 'hash_values.txt';
+        final fileName =
+            multiple ? 'hash_values.${algorithm.id}.txt' : 'hash_values.txt';
         final file = File(p.join(directory.path, fileName));
         final content = _compatibilityText(manifest, algorithm.id);
         await _writer.writeText(file, content);
@@ -156,31 +155,32 @@ class OutputService {
   Map<String, Object?> _report(
     CentraProfile profile,
     CentraManifest manifest,
-  ) => <String, Object?>{
-    'schema': 'centra.report.v1',
-    'manifestId': manifest.id,
-    'profile': <String, Object?>{'id': profile.id, 'name': profile.name},
-    'generatedAt': manifest.generatedAt.toUtc().toIso8601String(),
-    'source': manifest.source,
-    'summary': <String, Object?>{
-      'files': manifest.files.length,
-      'bytes': manifest.totalBytes,
-      'readErrors': manifest.errors.length,
-    },
-    'algorithms': manifest.algorithms
-        .map(
-          (algorithm) => <String, Object?>{
-            ...algorithm.toJson(),
-            'securityWarningRequired': algorithm.warning != null,
-          },
-        )
-        .toList(growable: false),
-    'policy': <String, Object?>{
-      'includes': profile.includePatterns,
-      'excludes': profile.excludePatterns,
-      'symlinkPolicy': profile.symlinkPolicy.wireName,
-    },
-  };
+  ) =>
+      <String, Object?>{
+        'schema': 'centra.report.v1',
+        'manifestId': manifest.id,
+        'profile': <String, Object?>{'id': profile.id, 'name': profile.name},
+        'generatedAt': manifest.generatedAt.toUtc().toIso8601String(),
+        'source': manifest.source,
+        'summary': <String, Object?>{
+          'files': manifest.files.length,
+          'bytes': manifest.totalBytes,
+          'readErrors': manifest.errors.length,
+        },
+        'algorithms': manifest.algorithms
+            .map(
+              (algorithm) => <String, Object?>{
+                ...algorithm.toJson(),
+                'securityWarningRequired': algorithm.warning != null,
+              },
+            )
+            .toList(growable: false),
+        'policy': <String, Object?>{
+          'includes': profile.includePatterns,
+          'excludes': profile.excludePatterns,
+          'symlinkPolicy': profile.symlinkPolicy.wireName,
+        },
+      };
 
   String _safeBaseName(String value) => value
       .replaceAll(':', '-')
@@ -202,21 +202,21 @@ class SigningKeyDocument {
   final DateTime createdAt;
 
   Map<String, Object?> toPrivateJson() => <String, Object?>{
-    'schema': 'centra.ed25519.private.v1',
-    'id': id,
-    'algorithm': 'Ed25519',
-    'privateKey': base64Encode(privateKey),
-    'publicKey': base64Encode(publicKey),
-    'createdAt': createdAt.toUtc().toIso8601String(),
-  };
+        'schema': 'centra.ed25519.private.v1',
+        'id': id,
+        'algorithm': 'Ed25519',
+        'privateKey': base64Encode(privateKey),
+        'publicKey': base64Encode(publicKey),
+        'createdAt': createdAt.toUtc().toIso8601String(),
+      };
 
   Map<String, Object?> toPublicJson() => <String, Object?>{
-    'schema': 'centra.ed25519.public.v1',
-    'id': id,
-    'algorithm': 'Ed25519',
-    'publicKey': base64Encode(publicKey),
-    'createdAt': createdAt.toUtc().toIso8601String(),
-  };
+        'schema': 'centra.ed25519.public.v1',
+        'id': id,
+        'algorithm': 'Ed25519',
+        'publicKey': base64Encode(publicKey),
+        'createdAt': createdAt.toUtc().toIso8601String(),
+      };
 }
 
 class ManifestSignatureDocument {
@@ -235,14 +235,14 @@ class ManifestSignatureDocument {
   final DateTime signedAt;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'schema': 'centra.signature.v1',
-    'algorithm': 'Ed25519',
-    'keyId': keyId,
-    'manifestId': manifestId,
-    'signature': base64Encode(signature),
-    'publicKey': base64Encode(publicKey),
-    'signedAt': signedAt.toUtc().toIso8601String(),
-  };
+        'schema': 'centra.signature.v1',
+        'algorithm': 'Ed25519',
+        'keyId': keyId,
+        'manifestId': manifestId,
+        'signature': base64Encode(signature),
+        'publicKey': base64Encode(publicKey),
+        'signedAt': signedAt.toUtc().toIso8601String(),
+      };
 
   factory ManifestSignatureDocument.fromJson(Map<String, Object?> json) {
     if (json['schema'] != 'centra.signature.v1' ||
@@ -264,9 +264,9 @@ class SignatureService {
     Ed25519? algorithm,
     AtomicFileWriter writer = const AtomicFileWriter(),
     DateTime Function()? clock,
-  }) : _algorithm = algorithm ?? Ed25519(),
-       _writer = writer,
-       _clock = clock ?? DateTime.now;
+  })  : _algorithm = algorithm ?? Ed25519(),
+        _writer = writer,
+        _clock = clock ?? DateTime.now;
 
   final Ed25519 _algorithm;
   final AtomicFileWriter _writer;
@@ -303,10 +303,13 @@ class SignatureService {
     );
     await _writer.writeText(publicFile, '${prettyJson(key.toPublicJson())}\n');
     if (!Platform.isWindows) {
-      final result = await Process.run('chmod', <String>[
-        '600',
-        privateFile.path,
-      ], runInShell: false);
+      final result = await Process.run(
+          'chmod',
+          <String>[
+            '600',
+            privateFile.path,
+          ],
+          runInShell: false);
       if (result.exitCode != 0) {
         throw FileSystemException(
           'Unable to restrict private key permissions.',

@@ -95,7 +95,8 @@ void main() {
       final json = testProfile(
         root: sandbox.path,
         id: 'broken-profile',
-      ).toJson()..['algorithmIds'] = <String>[];
+      ).toJson()
+        ..['algorithmIds'] = <String>[];
       await store
           .fileFor('broken-profile')
           .writeAsString(jsonEncode(json), flush: true);

@@ -158,8 +158,7 @@ class _WizardScreen extends StatefulWidget {
   final Future<void> Function(
     CentraProfile profile,
     SshConnectionSecrets? secrets,
-  )
-  onSaved;
+  ) onSaved;
   final VoidCallback onCancel;
 
   @override
@@ -219,21 +218,21 @@ class _WizardScreenState extends State<_WizardScreen> {
       FolderPickerStrings.forLocale(locale);
 
   List<FocusNode> get _textFieldFocusNodes => <FocusNode>[
-    profileNameFocus,
-    profileIdFocus,
-    rootFocus,
-    hostFocus,
-    userFocus,
-    portFocus,
-    identityFileFocus,
-    containerFocus,
-    imageFocus,
-    serviceFocus,
-    composeFileFocus,
-    dockerContextFocus,
-    outputDirectoryFocus,
-    exclusionPatternFocus,
-  ];
+        profileNameFocus,
+        profileIdFocus,
+        rootFocus,
+        hostFocus,
+        userFocus,
+        portFocus,
+        identityFileFocus,
+        containerFocus,
+        imageFocus,
+        serviceFocus,
+        composeFileFocus,
+        dockerContextFocus,
+        outputDirectoryFocus,
+        exclusionPatternFocus,
+      ];
 
   @override
   void dispose() {
@@ -405,19 +404,19 @@ class _WizardScreenState extends State<_WizardScreen> {
       candidate == WizardStep.output;
 
   List<Object> get _itemsForStep => switch (step) {
-    WizardStep.language => CentraStrings.locales,
-    WizardStep.source => SourceType.values,
-    WizardStep.algorithms => AlgorithmRegistry.builtIns,
-    WizardStep.exclusions => exclusionSuggestions,
-    WizardStep.output => const <String>[
-      'json',
-      'text',
-      'zip',
-      'report',
-      'zip-password',
-    ],
-    _ => const <Object>[],
-  };
+        WizardStep.language => CentraStrings.locales,
+        WizardStep.source => SourceType.values,
+        WizardStep.algorithms => AlgorithmRegistry.builtIns,
+        WizardStep.exclusions => exclusionSuggestions,
+        WizardStep.output => const <String>[
+            'json',
+            'text',
+            'zip',
+            'report',
+            'zip-password',
+          ],
+        _ => const <Object>[],
+      };
 
   bool _handleKey(KeyboardEvent event) {
     if (folderPickerController != null ||
@@ -748,46 +747,40 @@ class _WizardScreenState extends State<_WizardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: WizardStep.values
-            .map((candidate) {
-              final active = candidate == step;
-              final complete = candidate.index < step.index;
-              final label = strings(candidate.name);
-              return GestureDetector(
-                onTap: () {
-                  if (candidate.index <= step.index) {
-                    setState(() {
-                      step = candidate;
-                      cursor = 0;
-                      error = null;
-                    });
-                    if (!_stepHasTextField(candidate)) {
-                      wizardFocus.requestFocus();
-                    }
-                  }
-                },
-                child: Container(
-                  color: active ? _surfaceStrong : null,
-                  padding: const EdgeInsets.symmetric(horizontal: 1),
-                  child: Text(
-                    '${active
-                        ? '›'
-                        : complete
-                        ? '✓'
-                        : '·'} $label',
-                    style: TextStyle(
-                      color: active
-                          ? _accent
-                          : complete
+        children: WizardStep.values.map((candidate) {
+          final active = candidate == step;
+          final complete = candidate.index < step.index;
+          final label = strings(candidate.name);
+          return GestureDetector(
+            onTap: () {
+              if (candidate.index <= step.index) {
+                setState(() {
+                  step = candidate;
+                  cursor = 0;
+                  error = null;
+                });
+                if (!_stepHasTextField(candidate)) {
+                  wizardFocus.requestFocus();
+                }
+              }
+            },
+            child: Container(
+              color: active ? _surfaceStrong : null,
+              padding: const EdgeInsets.symmetric(horizontal: 1),
+              child: Text(
+                '${active ? '›' : complete ? '✓' : '·'} $label',
+                style: TextStyle(
+                  color: active
+                      ? _accent
+                      : complete
                           ? _success
                           : _muted,
-                      fontWeight: active ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
+                  fontWeight: active ? FontWeight.bold : FontWeight.normal,
                 ),
-              );
-            })
-            .toList(growable: false),
+              ),
+            ),
+          );
+        }).toList(growable: false),
       ),
     );
   }
@@ -836,21 +829,22 @@ class _WizardScreenState extends State<_WizardScreen> {
   }
 
   Widget _languageStep() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: <Widget>[
-      _SectionTitle(strings('chooseLanguage'), strings('noAlgorithmDefault')),
-      const SizedBox(height: 1),
-      ...CentraStrings.locales.asMap().entries.map(
-        (entry) => _OptionTile(
-          selected: draft.locale == entry.value.code,
-          focused: cursor == entry.key,
-          title: entry.value.nativeName,
-          subtitle: entry.value.code,
-          onTap: () => _activate(entry.key, continueAfter: true),
-        ),
-      ),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _SectionTitle(
+              strings('chooseLanguage'), strings('noAlgorithmDefault')),
+          const SizedBox(height: 1),
+          ...CentraStrings.locales.asMap().entries.map(
+                (entry) => _OptionTile(
+                  selected: draft.locale == entry.value.code,
+                  focused: cursor == entry.key,
+                  title: entry.value.nativeName,
+                  subtitle: entry.value.code,
+                  onTap: () => _activate(entry.key, continueAfter: true),
+                ),
+              ),
+        ],
+      );
 
   Widget _sourceStep() {
     final sourceLabels = <SourceType, String>{
@@ -869,14 +863,14 @@ class _WizardScreenState extends State<_WizardScreen> {
         ),
         const SizedBox(height: 1),
         ...SourceType.values.asMap().entries.map(
-          (entry) => _OptionTile(
-            selected: draft.sourceType == entry.value,
-            focused: cursor == entry.key,
-            title: sourceLabels[entry.value]!,
-            subtitle: entry.value.wireName,
-            onTap: () => _activate(entry.key, continueAfter: true),
-          ),
-        ),
+              (entry) => _OptionTile(
+                selected: draft.sourceType == entry.value,
+                focused: cursor == entry.key,
+                title: sourceLabels[entry.value]!,
+                subtitle: entry.value.wireName,
+                onTap: () => _activate(entry.key, continueAfter: true),
+              ),
+            ),
       ],
     );
   }
@@ -967,8 +961,7 @@ class _WizardScreenState extends State<_WizardScreen> {
   }
 
   Widget _sshSelectionPanel() {
-    final connected =
-        host.text.trim().isNotEmpty &&
+    final connected = host.text.trim().isNotEmpty &&
         user.text.trim().isNotEmpty &&
         root.text.trim().isNotEmpty &&
         draft.hostKeyFingerprint.trim().isNotEmpty;
@@ -1075,79 +1068,81 @@ class _WizardScreenState extends State<_WizardScreen> {
   }
 
   Widget _algorithmStep() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: <Widget>[
-      _SectionTitle(strings('chooseAlgorithms'), strings('noAlgorithmDefault')),
-      const SizedBox(height: 1),
-      ...AlgorithmRegistry.builtIns.asMap().entries.map((entry) {
-        final algorithm = entry.value;
-        final warning = algorithm.id == 'md5'
-            ? strings('md5Warning')
-            : algorithm.warning;
-        return _OptionTile(
-          selected: draft.algorithmIds.contains(algorithm.id),
-          focused: cursor == entry.key,
-          title: '${algorithm.displayName} · ${algorithm.outputBits}-bit',
-          subtitle:
-              '${strings(algorithm.status.wireName)}${warning == null ? '' : ' — $warning'}',
-          status: algorithm.status,
-          onTap: () => _activate(entry.key, continueAfter: false),
-        );
-      }),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _SectionTitle(
+              strings('chooseAlgorithms'), strings('noAlgorithmDefault')),
+          const SizedBox(height: 1),
+          ...AlgorithmRegistry.builtIns.asMap().entries.map((entry) {
+            final algorithm = entry.value;
+            final warning = algorithm.id == 'md5'
+                ? strings('md5Warning')
+                : algorithm.warning;
+            return _OptionTile(
+              selected: draft.algorithmIds.contains(algorithm.id),
+              focused: cursor == entry.key,
+              title: '${algorithm.displayName} · ${algorithm.outputBits}-bit',
+              subtitle:
+                  '${strings(algorithm.status.wireName)}${warning == null ? '' : ' — $warning'}',
+              status: algorithm.status,
+              onTap: () => _activate(entry.key, continueAfter: false),
+            );
+          }),
+        ],
+      );
 
   Widget _exclusionStep() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: <Widget>[
-      _SectionTitle(strings('exclusions'), strings('exclusionHelp')),
-      const SizedBox(height: 1),
-      _field(
-        strings('addPattern'),
-        exclusionPattern,
-        exclusionPatternFocus,
-        '**/private/**',
-        autofocus: true,
-        onSubmitted: (_) => _addExclusion(),
-      ),
-      _ActionButton(
-        label: strings('addPattern'),
-        onTap: _addExclusion,
-        muted: true,
-      ),
-      const SizedBox(height: 1),
-      Text(
-        'Detected project: ${draft.projectKind}',
-        style: const TextStyle(color: _muted),
-      ),
-      const SizedBox(height: 1),
-      ...exclusionSuggestions.asMap().entries.map(
-        (entry) => _OptionTile(
-          selected: draft.excludePatterns.contains(entry.value),
-          focused: cursor == entry.key,
-          title: entry.value,
-          subtitle: _exclusionDescription(entry.value),
-          onTap: () => _activate(entry.key, continueAfter: false),
-        ),
-      ),
-      if (draft.excludePatterns.isNotEmpty) ...<Widget>[
-        const SizedBox(height: 1),
-        const Text(
-          'Selected policy',
-          style: TextStyle(color: _accent, fontWeight: FontWeight.bold),
-        ),
-        ...draft.excludePatterns
-            .where((pattern) => !exclusionSuggestions.contains(pattern))
-            .map(
-              (pattern) => GestureDetector(
-                onTap: () =>
-                    setState(() => draft.excludePatterns.remove(pattern)),
-                child: Text('× $pattern', style: const TextStyle(color: _text)),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _SectionTitle(strings('exclusions'), strings('exclusionHelp')),
+          const SizedBox(height: 1),
+          _field(
+            strings('addPattern'),
+            exclusionPattern,
+            exclusionPatternFocus,
+            '**/private/**',
+            autofocus: true,
+            onSubmitted: (_) => _addExclusion(),
+          ),
+          _ActionButton(
+            label: strings('addPattern'),
+            onTap: _addExclusion,
+            muted: true,
+          ),
+          const SizedBox(height: 1),
+          Text(
+            'Detected project: ${draft.projectKind}',
+            style: const TextStyle(color: _muted),
+          ),
+          const SizedBox(height: 1),
+          ...exclusionSuggestions.asMap().entries.map(
+                (entry) => _OptionTile(
+                  selected: draft.excludePatterns.contains(entry.value),
+                  focused: cursor == entry.key,
+                  title: entry.value,
+                  subtitle: _exclusionDescription(entry.value),
+                  onTap: () => _activate(entry.key, continueAfter: false),
+                ),
               ),
+          if (draft.excludePatterns.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 1),
+            const Text(
+              'Selected policy',
+              style: TextStyle(color: _accent, fontWeight: FontWeight.bold),
             ),
-      ],
-    ],
-  );
+            ...draft.excludePatterns
+                .where((pattern) => !exclusionSuggestions.contains(pattern))
+                .map(
+                  (pattern) => GestureDetector(
+                    onTap: () =>
+                        setState(() => draft.excludePatterns.remove(pattern)),
+                    child: Text('× $pattern',
+                        style: const TextStyle(color: _text)),
+                  ),
+                ),
+          ],
+        ],
+      );
 
   String _exclusionDescription(String pattern) {
     if (pattern.contains('.env') ||
@@ -1212,15 +1207,15 @@ class _WizardScreenState extends State<_WizardScreen> {
           ),
         ),
         ...options.asMap().entries.map(
-          (entry) => _OptionTile(
-            selected: entry.value.selected,
-            focused: cursor == entry.key,
-            title: entry.value.title,
-            subtitle: entry.value.subtitle,
-            disabled: entry.key == 4 && !draft.zipPackage,
-            onTap: () => _activate(entry.key, continueAfter: false),
-          ),
-        ),
+              (entry) => _OptionTile(
+                selected: entry.value.selected,
+                focused: cursor == entry.key,
+                title: entry.value.title,
+                subtitle: entry.value.subtitle,
+                disabled: entry.key == 4 && !draft.zipPackage,
+                onTap: () => _activate(entry.key, continueAfter: false),
+              ),
+            ),
       ],
     );
   }
@@ -1413,9 +1408,8 @@ class _DashboardState extends State<_Dashboard> {
     }
     if (event.logicalKey == LogicalKey.arrowUp && widget.profiles.isNotEmpty) {
       setState(
-        () => selected = selected <= 0
-            ? widget.profiles.length - 1
-            : selected - 1,
+        () => selected =
+            selected <= 0 ? widget.profiles.length - 1 : selected - 1,
       );
       return true;
     }
@@ -1516,7 +1510,8 @@ class _DashboardState extends State<_Dashboard> {
         onProgress: (value) {
           if (mounted) setState(() => progress = value);
         },
-      )).manifest;
+      ))
+          .manifest;
       final diff = const ManifestComparator().compare(approved, current);
       if (!mounted) return;
       setState(() {
@@ -1536,9 +1531,8 @@ class _DashboardState extends State<_Dashboard> {
   void _saveSshCredentials() {
     widget.sshSecrets[profile.id] = SshConnectionSecrets(
       password: sshPassword.text.isEmpty ? null : sshPassword.text,
-      keyPassphrase: sshKeyPassphrase.text.isEmpty
-          ? null
-          : sshKeyPassphrase.text,
+      keyPassphrase:
+          sshKeyPassphrase.text.isEmpty ? null : sshKeyPassphrase.text,
     );
     setState(() => showSshCredentials = false);
     _startScan();
@@ -1587,57 +1581,57 @@ class _DashboardState extends State<_Dashboard> {
   }
 
   Widget _profileList() => Container(
-    decoration: BoxDecoration(
-      color: _surface,
-      border: BoxBorder.all(
-        color: const Color(0x27313D),
-        style: BoxBorderStyle.rounded,
-      ),
-      title: BorderTitle(
-        text: strings('profiles'),
-        style: const TextStyle(color: _muted),
-      ),
-    ),
-    padding: const EdgeInsets.all(1),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        ...widget.profiles.asMap().entries.map(
-          (entry) => GestureDetector(
-            onTap: () => setState(() => selected = entry.key),
-            child: Container(
-              color: selected == entry.key ? _surfaceStrong : null,
-              padding: const EdgeInsets.symmetric(horizontal: 1),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Text(
-                    '${selected == entry.key ? '›' : ' '} ${entry.value.name}',
-                    style: TextStyle(
-                      color: selected == entry.key ? _accent : _text,
-                      fontWeight: selected == entry.key
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  Text(
-                    '  ${entry.value.source.type.wireName}',
-                    style: const TextStyle(color: _muted),
-                  ),
-                ],
-              ),
-            ),
+        decoration: BoxDecoration(
+          color: _surface,
+          border: BoxBorder.all(
+            color: const Color(0x27313D),
+            style: BoxBorderStyle.rounded,
+          ),
+          title: BorderTitle(
+            text: strings('profiles'),
+            style: const TextStyle(color: _muted),
           ),
         ),
-        const SizedBox(height: 1),
-        _ActionButton(
-          label: '+ ${strings('newProfile')}',
-          onTap: widget.onNewProfile,
-          muted: true,
+        padding: const EdgeInsets.all(1),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            ...widget.profiles.asMap().entries.map(
+                  (entry) => GestureDetector(
+                    onTap: () => setState(() => selected = entry.key),
+                    child: Container(
+                      color: selected == entry.key ? _surfaceStrong : null,
+                      padding: const EdgeInsets.symmetric(horizontal: 1),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Text(
+                            '${selected == entry.key ? '›' : ' '} ${entry.value.name}',
+                            style: TextStyle(
+                              color: selected == entry.key ? _accent : _text,
+                              fontWeight: selected == entry.key
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          Text(
+                            '  ${entry.value.source.type.wireName}',
+                            style: const TextStyle(color: _muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            const SizedBox(height: 1),
+            _ActionButton(
+              label: '+ ${strings('newProfile')}',
+              onTap: widget.onNewProfile,
+              muted: true,
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      );
 
   Widget _details() {
     final algorithms = profile.algorithmIds
@@ -1886,22 +1880,23 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    color: _surface,
-    padding: const EdgeInsets.symmetric(horizontal: 1),
-    child: Row(
-      children: <Widget>[
-        Text(
-          title,
-          style: const TextStyle(color: _accent, fontWeight: FontWeight.bold),
+        color: _surface,
+        padding: const EdgeInsets.symmetric(horizontal: 1),
+        child: Row(
+          children: <Widget>[
+            Text(
+              title,
+              style:
+                  const TextStyle(color: _accent, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: Text(subtitle, style: const TextStyle(color: _muted)),
+            ),
+            Text(trailing, style: const TextStyle(color: _text)),
+          ],
         ),
-        const SizedBox(width: 2),
-        Expanded(
-          child: Text(subtitle, style: const TextStyle(color: _muted)),
-        ),
-        Text(trailing, style: const TextStyle(color: _text)),
-      ],
-    ),
-  );
+      );
 }
 
 class _Footer extends StatelessWidget {
@@ -1917,17 +1912,17 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    children: <Widget>[
-      Expanded(
-        child: Text(
-          left,
-          style: TextStyle(color: warning ? _warning : _muted),
-          maxLines: 1,
-        ),
-      ),
-      Text(right, style: const TextStyle(color: _muted)),
-    ],
-  );
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              left,
+              style: TextStyle(color: warning ? _warning : _muted),
+              maxLines: 1,
+            ),
+          ),
+          Text(right, style: const TextStyle(color: _muted)),
+        ],
+      );
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -1938,15 +1933,15 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: <Widget>[
-      Text(
-        title,
-        style: const TextStyle(color: _text, fontWeight: FontWeight.bold),
-      ),
-      Text(subtitle, style: const TextStyle(color: _muted)),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(color: _text, fontWeight: FontWeight.bold),
+          ),
+          Text(subtitle, style: const TextStyle(color: _muted)),
+        ],
+      );
 }
 
 class _OptionTile extends StatelessWidget {
@@ -1969,60 +1964,60 @@ class _OptionTile extends StatelessWidget {
   final bool disabled;
 
   Color get statusColor => switch (status) {
-    AlgorithmStatus.recommended => _success,
-    AlgorithmStatus.acceptable => const Color(0x58A6FF),
-    AlgorithmStatus.legacy => _warning,
-    AlgorithmStatus.obsolete => _danger,
-    AlgorithmStatus.checksum => const Color(0xBC8CFF),
-    AlgorithmStatus.custom => _accent,
-    null => _muted,
-  };
+        AlgorithmStatus.recommended => _success,
+        AlgorithmStatus.acceptable => const Color(0x58A6FF),
+        AlgorithmStatus.legacy => _warning,
+        AlgorithmStatus.obsolete => _danger,
+        AlgorithmStatus.checksum => const Color(0xBC8CFF),
+        AlgorithmStatus.custom => _accent,
+        null => _muted,
+      };
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: disabled ? null : onTap,
-    child: Container(
-      color: focused ? _surfaceStrong : null,
-      padding: const EdgeInsets.symmetric(horizontal: 1),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            disabled
-                ? '[-]'
-                : selected
-                ? '[✓]'
-                : '[ ]',
-            style: TextStyle(
-              color: disabled
-                  ? _muted
-                  : selected
-                  ? _accent
-                  : _muted,
-            ),
-          ),
-          const SizedBox(width: 1),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Text(title, style: TextStyle(color: disabled ? _muted : _text)),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: status == null
-                        ? FontWeight.normal
-                        : FontWeight.dim,
-                  ),
+        onTap: disabled ? null : onTap,
+        child: Container(
+          color: focused ? _surfaceStrong : null,
+          padding: const EdgeInsets.symmetric(horizontal: 1),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                disabled
+                    ? '[-]'
+                    : selected
+                        ? '[✓]'
+                        : '[ ]',
+                style: TextStyle(
+                  color: disabled
+                      ? _muted
+                      : selected
+                          ? _accent
+                          : _muted,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 1),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text(title,
+                        style: TextStyle(color: disabled ? _muted : _text)),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight:
+                            status == null ? FontWeight.normal : FontWeight.dim,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
 
 class _ActionButton extends StatelessWidget {
@@ -2040,27 +2035,27 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: disabled ? null : onTap,
-    child: Container(
-      color: disabled
-          ? const Color(0x27313D)
-          : muted
-          ? _surfaceStrong
-          : _accent,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Text(
-        label,
-        style: TextStyle(
+        onTap: disabled ? null : onTap,
+        child: Container(
           color: disabled
-              ? _muted
+              ? const Color(0x27313D)
               : muted
-              ? _text
-              : _background,
-          fontWeight: FontWeight.bold,
+                  ? _surfaceStrong
+                  : _accent,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: disabled
+                  ? _muted
+                  : muted
+                      ? _text
+                      : _background,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class _ReviewRow extends StatelessWidget {
@@ -2071,23 +2066,23 @@ class _ReviewRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 1),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        SizedBox(
-          width: 22,
-          child: Text(label, style: const TextStyle(color: _muted)),
+        padding: const EdgeInsets.only(bottom: 1),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 22,
+              child: Text(label, style: const TextStyle(color: _muted)),
+            ),
+            Expanded(
+              child: Text(
+                value.isEmpty ? '—' : value,
+                style: const TextStyle(color: _text),
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: Text(
-            value.isEmpty ? '—' : value,
-            style: const TextStyle(color: _text),
-          ),
-        ),
-      ],
-    ),
-  );
+      );
 }
 
 class _Notice extends StatelessWidget {
@@ -2098,11 +2093,11 @@ class _Notice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: _surfaceStrong,
-      border: BoxBorder.all(color: color, style: BoxBorderStyle.rounded),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 1),
-    child: Text(message, style: TextStyle(color: color)),
-  );
+        decoration: BoxDecoration(
+          color: _surfaceStrong,
+          border: BoxBorder.all(color: color, style: BoxBorderStyle.rounded),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 1),
+        child: Text(message, style: TextStyle(color: color)),
+      );
 }
