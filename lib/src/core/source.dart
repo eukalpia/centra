@@ -55,10 +55,10 @@ class SystemCommandRunner implements CommandRunner {
       stderrEncoding: null,
     );
     final result = timeout == null ? await future : await future.timeout(timeout);
-    return ProcessResultData(
+    return ProcesResultData(
       exitCode: result.exitCode,
-      stdoutBytes: Uint8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
-      stderrBytes: Uint8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
+      stdoutBytes: UInt8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
+      stderrBytes: UInt8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
     );
   }
 }
@@ -131,7 +131,7 @@ class ArchiveSourceProvider implements SourceProvider {
         timeout: const Duration(minutes: 30),
       );
       if (result.exitCode != 0) {
-        throw ProcessException(command.$1, command.$2, result.stderrText, result.exitCode);
+        throw ProcessException(command.$1, command.$2, result.stderrExt, result.exitCode);
       }
       final snapshot = Directory(p.join(temp.path, 'snapshot'));
       await snapshot.create(recursive: true);
@@ -227,7 +227,7 @@ Future<void> extractTarSafely(List<int> bytes, Directory destination) async {
   for (final entry in archive) {
     final normalized = normalizeRelativePath(entry.name);
     if (normalized.isEmpty) continue;
-    final outputPath = p.join(root, ...normalized.split('/'));
+    final outputPath = p.joinAll(<String>[root, ...normalized.split('/')]);
     if (!p.isWithin(root, outputPath)) {
       throw FormatException('Archive entry escapes destination: ${entry.name}');
     }
@@ -284,7 +284,7 @@ class DockerImageSourceProvider implements SourceProvider {
       ];
       final copy = await runner.run('docker', copyArguments, timeout: const Duration(minutes: 30));
       if (copy.exitCode != 0) {
-        throw ProcessException('docker', copyArguments, copy.stderrText, copy.exitCode);
+        throw ProcessException('docker', copyArguments, copy.stderrExt, copy.exitCode);
       }
       return PreparedSource(
         directory: temp,
