@@ -1,15 +1,14 @@
 name: Prepare wizard selection scroll
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [fix/wizard-selection-scroll]
 
 permissions:
   contents: write
 
 jobs:
   prepare:
-    if: github.head_ref == 'fix/wizard-selection-scroll'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
