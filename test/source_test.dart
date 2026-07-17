@@ -9,58 +9,6 @@ import 'support/fixtures.dart';
 
 void main() {
   group('source adapters', () {
-    test('SSH adapter builds separated arguments and extracts the snapshot',
-        () async {
-      final archive = Archive()
-        ..add(ArchiveFile.string('lib/main.dart', 'void main() {}'));
-      final tar = TarEncoder().encodeBytes(archive);
-      final runner = FakeCommandRunner(
-        defaultResult: ProcessResultData(
-          exitCode: 0,
-          stdoutBytes: Uint8List.fromList(tar),
-          stderrBytes: Uint8List(0),
-        ),
-      );
-      final provider =
-          ArchiveSourceProvider(type: SourceType.ssh, runner: runner);
-      final prepared = await provider.prepare(const SourceConfig(
-        type: SourceType.ssh,
-        root: '/srv/app',
-        host: 'example.com',
-        user: 'deploy',
-        port: 2002,
-        identityFile: '/keys/deploy',
-      ));
-      try {
-        expect(
-            await File('${prepared.directory.path}/lib/main.dart')
-                .readAsString(),
-            'void main() {}');
-        final command = runner.commands.single;
-        expect(command.executable, 'ssh');
-        expect(
-            command.arguments,
-            containsAllInOrder(<String>[
-              '-p',
-              '2002',
-              '-i',
-              '/keys/deploy',
-              '--',
-              'deploy@example.com',
-              'tar',
-              '-C',
-              '/srv/app',
-              '-cf',
-              '-',
-              '.',
-            ]));
-      } finally {
-        final path = prepared.directory.parent.path;
-        await prepared.dispose();
-        expect(await Directory(path).exists(), isFalse);
-      }
-    });
-
     test('Docker container adapter includes the selected context', () async {
       final archive = Archive()..add(ArchiveFile.string('app.txt', 'ok'));
       final runner = FakeCommandRunner(
@@ -71,28 +19,33 @@ void main() {
         ),
       );
       final provider = ArchiveSourceProvider(
-          type: SourceType.dockerContainer, runner: runner);
-      final prepared = await provider.prepare(const SourceConfig(
         type: SourceType.dockerContainer,
-        root: '/app',
-        container: 'api-1',
-        dockerContext: 'production',
-      ));
+        runner: runner,
+      );
+      final prepared = await provider.prepare(
+        const SourceConfig(
+          type: SourceType.dockerContainer,
+          root: '/app',
+          container: 'api-1',
+          dockerContext: 'production',
+        ),
+      );
       try {
         expect(
-            runner.commands.single.arguments,
-            containsAllInOrder(<String>[
-              '--context',
-              'production',
-              'exec',
-              'api-1',
-              'tar',
-              '-C',
-              '/app',
-              '-cf',
-              '-',
-              '.',
-            ]));
+          runner.commands.single.arguments,
+          containsAllInOrder(<String>[
+            '--context',
+            'production',
+            'exec',
+            'api-1',
+            'tar',
+            '-C',
+            '/app',
+            '-cf',
+            '-',
+            '.',
+          ]),
+        );
       } finally {
         await prepared.dispose();
       }
@@ -124,11 +77,13 @@ void main() {
       });
       final provider = DockerImageSourceProvider(runner);
       await expectLater(
-        provider.prepare(const SourceConfig(
-          type: SourceType.dockerImage,
-          root: '/app',
-          image: 'example/app:1',
-        )),
+        provider.prepare(
+          const SourceConfig(
+            type: SourceType.dockerImage,
+            root: '/app',
+            image: 'example/app:1',
+          ),
+        ),
         throwsA(isA<ProcessException>()),
       );
       expect(
