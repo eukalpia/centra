@@ -21,7 +21,8 @@ The connection screen supports:
 - configurable keepalive interval;
 - connection testing before a profile can be saved;
 - verified server fingerprints;
-- remote directory browsing with keyboard and mouse.
+- remote directory browsing with keyboard and mouse;
+- an interactive SSH terminal over the same authenticated connection.
 
 After authentication succeeds, Centra displays:
 
@@ -40,9 +41,11 @@ Keyboard controls in the remote browser:
 | `Backspace` / `Left` | Open the parent directory |
 | `Space` | Select the current directory |
 | `R` | Refresh the current directory |
+| `Page Up` / `Page Down` | Move by one visible page and keep the selection visible |
+| `Home` / `End` | Jump to the first or last entry |
 | `Esc` | Return to connection settings or cancel |
 
-Mouse selection and directory opening use the same navigation state as keyboard input.
+The browser automatically scrolls to keep the keyboard selection inside the visible viewport. Mouse selection and directory opening use the same navigation state as keyboard input.
 
 ## Host-key verification
 
@@ -130,3 +133,9 @@ Common failures:
 - **Connection timeout:** verify the address, port, firewall, VPN, and timeout value.
 - **Permission denied while browsing:** the SSH account cannot read the selected directory.
 - **Connection closed during snapshot:** check keepalive settings and server-side idle limits.
+
+## Interactive terminal
+
+After a connection succeeds, choose **Open terminal** from the remote browser. Centra opens a PTY-backed remote shell through the existing pure-Dart SSH transport; it does not start a local `ssh` process.
+
+The terminal supports ANSI applications, command history, cursor keys, resize notifications, UTF-8 output, and scrollback. Use `Ctrl+Shift+B` to return to the file browser without closing the SSH connection and `Ctrl+Shift+R` to restart only the remote shell session.

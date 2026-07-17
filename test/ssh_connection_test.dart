@@ -7,7 +7,7 @@ void main() {
       const config = SourceConfig(
         type: SourceType.ssh,
         root: '/srv/application',
-        host: '195.158.3.42',
+        host: 'server.example.com',
         user: 'deploy',
         port: 2862,
         sshAuthMethod: SshAuthMethod.password,
@@ -30,10 +30,7 @@ void main() {
         hostKeyFingerprint: 'SHA256:test-fingerprint',
       );
 
-      expect(
-        config.validate(),
-        contains('SSH private key file is required.'),
-      );
+      expect(config.validate(), contains('SSH private key file is required.'));
     });
 
     test('saved SSH profiles require a pinned host fingerprint', () {
