@@ -34,29 +34,49 @@ dart pub global activate --source git https://github.com/eukalpia/centra.git --o
 
 ## Installation guarantee
 
-Continuous integration installs Centra from its Git URL and executes `centra --version` through the global `PATH` on Ubuntu, macOS, and Windows. A change cannot pass the installation job when the `executables` entry, Git package activation, generated command wrapper, PATH exposure, or application entrypoint is broken.
+Continuous integration installs Centra from its Git URL into an isolated Dart Data Home and executes `centra --version` through `PATH` on Ubuntu, macOS, and Windows. A change cannot pass the installation job when the executable declaration, Git installation, native build, generated command wrapper, PATH exposure, or application entrypoint is broken.
 
 ## PATH troubleshooting
 
-Dart installs global command wrappers into its system cache. If `centra` is not found after a successful installation, add the cache directory to `PATH`.
+If installation succeeds but `centra` is not found, add the correct executable directory to `PATH`. The modern `dart install` command and legacy `dart pub global activate` use different locations.
 
-### Linux and macOS
+### Dart 3.10 or newer
+
+Linux:
+
+```bash
+export PATH="$PATH:${XDG_STATE_HOME:-$HOME/.local/state}/Dart/install/bin"
+```
+
+macOS:
+
+```bash
+export PATH="$PATH:$HOME/Library/Application Support/Dart/install/bin"
+```
+
+Windows:
+
+```text
+%LOCALAPPDATA%\Dart\install\bin
+```
+
+The modern install root can be overridden with the `DART_DATA_HOME` environment variable. In that case, add `%DART_DATA_HOME%\install\bin` on Windows or `$DART_DATA_HOME/install/bin` on Linux and macOS.
+
+### Dart 3.5 through 3.9
+
+Linux and macOS:
 
 ```bash
 export PATH="$PATH:$HOME/.pub-cache/bin"
 ```
 
-Persist that line in `~/.bashrc`, `~/.zshrc`, or the startup file used by your shell.
-
-### Windows
-
-Add this directory to the user `Path` environment variable:
+Windows:
 
 ```text
 %LOCALAPPDATA%\Pub\Cache\bin
 ```
 
-Open a new terminal after changing `Path`.
+Persist the applicable path in your shell startup file or user environment variables, then open a new terminal.
 
 ## Remove Centra
 
