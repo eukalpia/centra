@@ -6,49 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prepare-update:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - name: Apply wizard integration
-        run: python3 tool/apply_wizard_input_patch.py
-      - name: Remove one-time integration files
-        run: |
-          rm tool/apply_wizard_input_patch.py
-          rm tool/wizard-input-trigger.txt
-          rm .github/workflows/apply-wizard-input.yml
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-      - name: Format
-        run: dart format .
-      - name: Resolve dependencies
-        run: dart pub get
-      - name: Analyze
-        run: dart analyze --fatal-warnings
-      - name: Test
-        run: dart test --reporter expanded
-      - name: Compile
-        run: |
-          mkdir -p build
-          dart compile exe bin/centra.dart -o build/centra
-      - name: Commit verified update
-        run: |
-          git config user.name "Centra Maintainer"
-          git config user.email "maintainer@centra.local"
-          git add -A
-          git commit -m "Fix wizard input and add folder picker"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:
