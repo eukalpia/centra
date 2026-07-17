@@ -1,0 +1,40 @@
+name: Prepare isolated SSH terminal UI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.head_ref == 'feature/ssh-terminal-ui'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ssh-terminal-ui
+          fetch-depth: 0
+      - name: Copy reviewed SSH files only
+        run: |
+          git fetch origin feature/ssh-terminal-ux
+          for file in \
+            doc/ssh.md \
+            lib/src/core/ssh_connection.dart \
+            lib/src/tui/ssh_source_picker.dart \
+            lib/src/tui/ssh_terminal_controller.dart \
+            lib/src/tui/wizard_state.dart \
+            test/ssh_connection_test.dart
+          do
+            git show origin/feature/ssh-terminal-ux:$file > $file
+          done
+      - name: Remove preparation workflow
+        run: rm .github/workflows/prepare-ssh-terminal-ui.yml
+      - name: Commit isolated change
+        run: |
+          git config user.name "Centra CI"
+          git config user.email "ci@centra.local"
+          git add -A
+          git commit -m "Improve SSH navigation and terminal UI" || exit 0
+          git push origin HEAD:feature/ssh-terminal-ui
