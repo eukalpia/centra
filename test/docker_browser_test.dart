@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 import 'support/fixtures.dart';
 
 void main() {
-  group('DockerBrowserService', () {
+  group('Docker resource and filesystem navigation', () {
     test('lists running containers without invoking a shell', () async {
       final runner = FakeCommandRunner(
         defaultResult: textResult(
@@ -97,15 +97,14 @@ void main() {
       );
       expect(app.parentPath, '/');
       expect(
-        runner.commands.every(
-          (command) => !command.arguments.contains('sh'),
-        ),
+        runner.commands.every((command) => !command.arguments.contains('sh')),
         isTrue,
       );
     });
 
     test('temporary image container is removed when browsing closes', () async {
-      final archive = Archive()..add(ArchiveFile.string('app/main', 'binary'));
+      final archive = Archive()
+        ..add(ArchiveFile.string('app/main', 'binary'));
       final runner = FakeCommandRunner(handler: (executable, arguments) async {
         if (arguments.contains('create')) return textResult('temporary-123\n');
         if (arguments.contains('cp')) {
