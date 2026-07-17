@@ -46,7 +46,8 @@ void main() {
       await store.save(settings);
 
       expect((await store.load()).toJson(), settings.toJson());
-      expect(await paths.settingsFile.readAsString(), contains('centra.settings.v1'));
+      expect(await paths.settingsFile.readAsString(),
+          contains('centra.settings.v1'));
     });
 
     test('profile store saves, sorts, loads and deletes profiles', () async {
@@ -87,14 +88,15 @@ void main() {
     test('invalid stored profiles fail closed', () async {
       final store = ProfileStore(paths);
       await paths.ensure();
-      final json = testProfile(root: sandbox.path, id: 'broken-profile').toJson()
+      final json = testProfile(root: sandbox.path, id: 'broken-profile')
+          .toJson()
         ..['algorithmIds'] = <String>[];
       await store
           .fileFor('broken-profile')
           .writeAsString(jsonEncode(json), flush: true);
 
-      await expectLater(store.load('broken-profile'),
-          throwsA(isA<FormatException>()));
+      await expectLater(
+          store.load('broken-profile'), throwsA(isA<FormatException>()));
     });
 
     test('atomic writer replaces text without backup or temporary debris',

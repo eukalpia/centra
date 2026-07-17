@@ -11,6 +11,7 @@ Centra's test suite is organized around the failure modes that can invalidate an
 - First-run wizard state with no implicit algorithm or output selection.
 - Deterministic manifest encoding and file ordering.
 - Added, removed, modified, metadata-only, and unchanged comparisons.
+- Completeness of all ten interface locales and their safety messages.
 
 ## Integration tests
 
@@ -22,8 +23,10 @@ Centra's test suite is organized around the failure modes that can invalidate an
 - SSH, Docker container, Docker image, and Compose command construction.
 - Safe tar extraction and traversal rejection.
 - Canonical JSON, compatibility text, audit report, and encrypted ZIP outputs.
-- Ed25519 key generation, signing, verification, and tamper rejection.
-- Atomic settings and profile persistence.
+- MD5 obsolete status and warning propagation into audit reports.
+- Ed25519 key generation, signing, trusted-key verification, and tamper rejection.
+- Atomic settings, binary output, and profile persistence.
+- Profile identifier validation and storage path traversal rejection.
 
 ## CI matrix
 

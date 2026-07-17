@@ -44,15 +44,14 @@ void main() {
           final value = strings(key);
           expect(value.trim(), isNotEmpty,
               reason: '${locale.code} must define $key');
-          expect(value, isNot(key),
-              reason: '${locale.code} must resolve $key');
+          expect(value, isNot(key), reason: '${locale.code} must resolve $key');
         }
       }
     });
 
     test('unknown locales and unknown keys have predictable fallbacks', () {
-      expect(CentraStrings('unknown')('tagline'),
-          CentraStrings('en')('tagline'));
+      expect(
+          CentraStrings('unknown')('tagline'), CentraStrings('en')('tagline'));
       expect(CentraStrings('en')('missing-key'), 'missing-key');
     });
 
