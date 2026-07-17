@@ -7,7 +7,7 @@ void main() {
       const config = SourceConfig(
         type: SourceType.ssh,
         root: '/srv/application',
-        host: '195.158.3.42',
+        host: 'server.example.com',
         user: 'deploy',
         port: 2862,
         sshAuthMethod: SshAuthMethod.password,
