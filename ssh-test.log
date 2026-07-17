@@ -1,31 +1,33 @@
 00:00 +0: loading test/profile_test.dart
 00:00 +0: test/profile_test.dart: CentraProfile validation requires an explicit algorithm selection
-00:00 +1: test/profile_test.dart: CentraProfile validation requires an explicit output format
-00:00 +2: test/profile_test.dart: CentraProfile validation allows MD5 compatibility profile without hiding its status
-00:00 +3: test/profile_test.dart: CentraProfile validation validates source-specific required fields
-00:00 +4: test/profile_test.dart: CentraProfile validation round-trips through the versioned JSON schema
-00:00 +5: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
-00:00 +6: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +1: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +2: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +3: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +4: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +5: test/profile_test.dart: CentraProfile validation round-trips through the versioned JSON schema
+00:00 +6: test/profile_test.dart: CentraProfile validation custom algorithms must use a file placeholder
 00:00 +7: test/i18n_test.dart: CentraStrings ships exactly ten unique interface languages
 00:00 +8: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
 00:00 +9: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
 00:00 +10: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
 00:00 +11: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
+00:00 +12: loading test/folder_picker_test.dart
 00:00 +12: test/docker_browser_test.dart: Docker source and filesystem navigation lists tagged images and keeps untagged images addressable
 00:00 +13: test/docker_browser_test.dart: Docker source and filesystem navigation browses container directories from docker cp tar output
 00:00 +14: test/docker_browser_test.dart: Docker source and filesystem navigation temporary image container is removed when browsing closes
 00:00 +15: test/docker_browser_test.dart: Docker source and filesystem navigation compose service is created only when no container exists
 00:00 +16: test/docker_browser_test.dart: Docker paths normalizes paths as absolute POSIX container paths
 00:02 +17: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
-00:02 +18: test/manifest_test.dart: CentraManifest sorts file records and emits deterministic canonical JSON
-00:02 +19: test/manifest_test.dart: CentraManifest sorts file records and emits deterministic canonical JSON
-00:02 +20: test/manifest_test.dart: CentraManifest sorts file records and emits deterministic canonical JSON
-00:02 +21: test/folder_picker_test.dart: FolderBrowser directory navigation parent entry navigates to the actual parent directory
-00:02 +22: test/manifest_test.dart: CentraManifest preserves algorithm security status in the manifest
-00:02 +23: test/folder_picker_test.dart: FolderBrowser directory navigation all ten locales expose folder picker labels
-00:02 +24: test/manifest_test.dart: ManifestComparator classifies added, removed, modified and unchanged paths
-00:02 +25: test/manifest_test.dart: ManifestComparator separates metadata-only changes from content changes
-00:02 +26: test/manifest_test.dart: ManifestComparator treats a missing algorithm result as modification
+00:02 +18: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
+00:02 +19: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
+00:02 +20: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
+00:02 +21: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
+00:02 +22: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
+00:02 +23: loading test/scanner_test.dart
+00:02 +23: test/folder_picker_test.dart: FolderBrowser directory navigation hides dot-directories unless explicitly enabled
+00:02 +24: test/folder_picker_test.dart: FolderBrowser directory navigation falls back to the nearest existing parent
+00:02 +25: test/folder_picker_test.dart: FolderBrowser directory navigation parent entry navigates to the actual parent directory
+00:02 +26: test/folder_picker_test.dart: FolderBrowser directory navigation all ten locales expose folder picker labels
 00:02 +27: test/scanner_test.dart: IntegrityScanner hashes multiple algorithms while applying exclusions
 00:02 +28: test/scanner_test.dart: IntegrityScanner hashes multiple algorithms while applying exclusions
 00:02 +29: test/scanner_test.dart: IntegrityScanner produces the same content records regardless of worker count
