@@ -36,7 +36,7 @@ jobs:
         run: |
           git config user.name "Centra CI"
           git config user.email "ci@centra.local"
-          git add ssh-analyze.log
+          git add -f ssh-analyze.log
           git commit -m "Record SSH scan analyzer diagnostics"
           git push origin HEAD:fix/ssh-scan-performance
       - name: Test
