@@ -18,12 +18,22 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      - name: Allow optional source replacements
+      - name: Normalize preparation source
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path('.github/prepare_ssh_terminal_ux.py')
-          text = path.read_text(encoding='utf-8')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          for index, line in enumerate(lines):
+              if "195.158.3.42" in line:
+                  lines[index] = "    \"                    _field(strings('host'), host, hostFocus, '195.158.3.42')),\\n\"," 
+                  if index + 1 < len(lines) and lines[index + 1].strip() == '\",':
+                      lines[index + 1] = ''
+              if "server.example.com'))," in line and line.lstrip().startswith('\"'):
+                  lines[index] = "    \"                    _field(strings('host'), host, hostFocus, 'server.example.com')),\\n\"," 
+                  if index + 1 < len(lines) and lines[index + 1].strip() == '\",':
+                      lines[index + 1] = ''
+          text = '\n'.join(lines) + '\n'
           text = text.replace(
               "        raise SystemExit(f'Pattern not found in {path}: {old[:180]!r}')",
               "        print(f'Optional pattern not found in {path}: {old[:180]!r}')\n        return",
