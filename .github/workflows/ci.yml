@@ -71,4 +71,8 @@ jobs:
         shell: bash
         run: dart install https://github.com/eukalpia/centra.git --git-ref "$INSTALL_REF" --overwrite
       - name: Run installed command
-        run: dart run tool/install_smoke.dart
+        shell: bash
+        run: |
+          set -o pipefail
+          centra --version | tee installed-version.txt
+          grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' installed-version.txt
