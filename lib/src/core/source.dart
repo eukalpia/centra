@@ -56,12 +56,12 @@ class SystemCommandRunner implements CommandRunner {
     );
     final result =
         timeout == null ? await future : await future.timeout(timeout);
-    return ProcesResultData(
+    return ProcessResultData(
       exitCode: result.exitCode,
       stdoutBytes:
-          UInt8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
+          Uint8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
       stderrBytes:
-          UInt8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
+          Uint8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
     );
   }
 }
@@ -136,7 +136,7 @@ class ArchiveSourceProvider implements SourceProvider {
       );
       if (result.exitCode != 0) {
         throw ProcessException(
-            command.$1, command.$2, result.stderrExt, result.exitCode);
+            command.$1, command.$2, result.stderrText, result.exitCode);
       }
       final snapshot = Directory(p.join(temp.path, 'snapshot'));
       await snapshot.create(recursive: true);
@@ -304,7 +304,7 @@ class DockerImageSourceProvider implements SourceProvider {
           timeout: const Duration(minutes: 30));
       if (copy.exitCode != 0) {
         throw ProcessException(
-            'docker', copyArguments, copy.stderrExt, copy.exitCode);
+            'docker', copyArguments, copy.stderrText, copy.exitCode);
       }
       return PreparedSource(
         directory: temp,
