@@ -5,7 +5,8 @@ import 'package:yaml/yaml.dart';
 
 void main() {
   test('pubspec exposes the centra global executable', () async {
-    final pubspec = loadYaml(await File('pubspec.yaml').readAsString()) as YamlMap;
+    final pubspec =
+        loadYaml(await File('pubspec.yaml').readAsString()) as YamlMap;
     final executables = pubspec['executables'] as YamlMap;
 
     expect(pubspec['name'], 'centra');
