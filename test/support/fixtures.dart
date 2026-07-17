@@ -35,7 +35,8 @@ CentraProfile testProfile({
     captureModificationTimes: captureModificationTimes,
     workerCount: workerCount,
     failOnReadError: failOnReadError,
-    output: output ??
+    output:
+        output ??
         OutputConfig(
           directory: '$root/output',
           writeCanonicalJson: true,
@@ -56,7 +57,8 @@ CentraManifest testManifest({
   List<HashAlgorithmDescriptor>? algorithms,
   DateTime? generatedAt,
 }) {
-  final records = files ??
+  final records =
+      files ??
       <ManifestFileRecord>[
         const ManifestFileRecord(
           path: 'lib/main.dart',
@@ -72,7 +74,8 @@ CentraManifest testManifest({
     profileName: 'Test profile',
     projectKind: 'dart',
     source: const <String, Object?>{'type': 'local', 'root': '/tmp/project'},
-    algorithms: algorithms ??
+    algorithms:
+        algorithms ??
         <HashAlgorithmDescriptor>[AlgorithmRegistry().descriptor('sha256')],
     includePatterns: const <String>['**'],
     excludePatterns: const <String>['.git/**'],
@@ -99,18 +102,20 @@ class RecordedCommand {
 }
 
 class FakeCommandRunner implements CommandRunner {
-  FakeCommandRunner({
-    this.handler,
-    ProcessResultData? defaultResult,
-  }) : defaultResult = defaultResult ??
-            ProcessResultData(
-              exitCode: 0,
-              stdoutBytes: Uint8List(0),
-              stderrBytes: Uint8List(0),
-            );
+  FakeCommandRunner({this.handler, ProcessResultData? defaultResult})
+    : defaultResult =
+          defaultResult ??
+          ProcessResultData(
+            exitCode: 0,
+            stdoutBytes: Uint8List(0),
+            stderrBytes: Uint8List(0),
+          );
 
   final Future<ProcessResultData> Function(
-      String executable, List<String> arguments)? handler;
+    String executable,
+    List<String> arguments,
+  )?
+  handler;
   final ProcessResultData defaultResult;
   final List<RecordedCommand> commands = <RecordedCommand>[];
 
@@ -122,30 +127,35 @@ class FakeCommandRunner implements CommandRunner {
     Map<String, String>? environment,
     Duration? timeout,
   }) async {
-    commands.add(RecordedCommand(
-      executable: executable,
-      arguments: List<String>.unmodifiable(arguments),
-      workingDirectory: workingDirectory,
-      environment: environment == null
-          ? null
-          : Map<String, String>.unmodifiable(environment),
-      timeout: timeout,
-    ));
+    commands.add(
+      RecordedCommand(
+        executable: executable,
+        arguments: List<String>.unmodifiable(arguments),
+        workingDirectory: workingDirectory,
+        environment: environment == null
+            ? null
+            : Map<String, String>.unmodifiable(environment),
+        timeout: timeout,
+      ),
+    );
     return handler?.call(executable, arguments) ?? defaultResult;
   }
 }
 
-ProcessResultData textResult(String stdout,
-        {String stderr = '', int exitCode = 0}) =>
-    ProcessResultData(
-      exitCode: exitCode,
-      stdoutBytes: Uint8List.fromList(utf8.encode(stdout)),
-      stderrBytes: Uint8List.fromList(utf8.encode(stderr)),
-    );
+ProcessResultData textResult(
+  String stdout, {
+  String stderr = '',
+  int exitCode = 0,
+}) => ProcessResultData(
+  exitCode: exitCode,
+  stdoutBytes: Uint8List.fromList(utf8.encode(stdout)),
+  stderrBytes: Uint8List.fromList(utf8.encode(stderr)),
+);
 
 Future<Directory> createProject(Map<String, String> files) async {
-  final directory =
-      await Directory.systemTemp.createTemp('centra-test-project-');
+  final directory = await Directory.systemTemp.createTemp(
+    'centra-test-project-',
+  );
   for (final entry in files.entries) {
     final file = File('${directory.path}/${entry.key}');
     await file.parent.create(recursive: true);

@@ -19,8 +19,10 @@ Uint8List hexDecode(String value) {
   }
   final bytes = Uint8List(normalized.length ~/ 2);
   for (var index = 0; index < normalized.length; index += 2) {
-    bytes[index ~/ 2] =
-        int.parse(normalized.substring(index, index + 2), radix: 16);
+    bytes[index ~/ 2] = int.parse(
+      normalized.substring(index, index + 2),
+      radix: 16,
+    );
   }
   return bytes;
 }

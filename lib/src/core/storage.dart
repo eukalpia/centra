@@ -8,8 +8,8 @@ import 'profile.dart';
 
 class CentraPaths {
   CentraPaths({Directory? configDirectory, Directory? dataDirectory})
-      : configDirectory = configDirectory ?? _defaultConfigDirectory(),
-        dataDirectory = dataDirectory ?? _defaultDataDirectory();
+    : configDirectory = configDirectory ?? _defaultConfigDirectory(),
+      dataDirectory = dataDirectory ?? _defaultDataDirectory();
 
   final Directory configDirectory;
   final Directory dataDirectory;
@@ -30,12 +30,14 @@ class CentraPaths {
   static Directory _defaultConfigDirectory() {
     if (Platform.isWindows) {
       final appData = Platform.environment['APPDATA'];
-      return Directory(p.join(
-          appData ?? Platform.environment['USERPROFILE'] ?? '.', 'Centra'));
+      return Directory(
+        p.join(appData ?? Platform.environment['USERPROFILE'] ?? '.', 'Centra'),
+      );
     }
     if (Platform.isMacOS) {
       return Directory(
-          p.join(_home(), 'Library', 'Application Support', 'Centra'));
+        p.join(_home(), 'Library', 'Application Support', 'Centra'),
+      );
     }
     final xdg = Platform.environment['XDG_CONFIG_HOME'];
     return Directory(p.join(xdg ?? p.join(_home(), '.config'), 'centra'));
@@ -44,16 +46,22 @@ class CentraPaths {
   static Directory _defaultDataDirectory() {
     if (Platform.isWindows) {
       final localAppData = Platform.environment['LOCALAPPDATA'];
-      return Directory(p.join(
-          localAppData ?? Platform.environment['APPDATA'] ?? '.', 'Centra'));
+      return Directory(
+        p.join(
+          localAppData ?? Platform.environment['APPDATA'] ?? '.',
+          'Centra',
+        ),
+      );
     }
     if (Platform.isMacOS) {
       return Directory(
-          p.join(_home(), 'Library', 'Application Support', 'Centra'));
+        p.join(_home(), 'Library', 'Application Support', 'Centra'),
+      );
     }
     final xdg = Platform.environment['XDG_DATA_HOME'];
     return Directory(
-        p.join(xdg ?? p.join(_home(), '.local', 'share'), 'centra'));
+      p.join(xdg ?? p.join(_home(), '.local', 'share'), 'centra'),
+    );
   }
 
   static String _home() =>
@@ -80,11 +88,11 @@ class CentraSettings {
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'schema': 'centra.settings.v1',
-        'locale': locale,
-        'theme': theme,
-        'confirmDestructiveActions': confirmDestructiveActions,
-      };
+    'schema': 'centra.settings.v1',
+    'locale': locale,
+    'theme': theme,
+    'confirmDestructiveActions': confirmDestructiveActions,
+  };
 
   factory CentraSettings.fromJson(Map<String, Object?> json) {
     if (json['schema'] != 'centra.settings.v1') {
@@ -104,8 +112,9 @@ class AtomicFileWriter {
 
   Future<void> writeText(File file, String content) async {
     await file.parent.create(recursive: true);
-    final temporary =
-        File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
+    final temporary = File(
+      '${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}',
+    );
     await temporary.writeAsString(content, encoding: utf8, flush: true);
     if (await file.exists()) {
       final backup = File('${file.path}.bak');
@@ -129,8 +138,9 @@ class AtomicFileWriter {
 
   Future<void> writeBytes(File file, List<int> bytes) async {
     await file.parent.create(recursive: true);
-    final temporary =
-        File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
+    final temporary = File(
+      '${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}',
+    );
     await temporary.writeAsBytes(bytes, flush: true);
     if (await file.exists()) {
       await file.delete();
@@ -140,9 +150,10 @@ class AtomicFileWriter {
 }
 
 class SettingsStore {
-  SettingsStore(this.paths,
-      {AtomicFileWriter writer = const AtomicFileWriter()})
-      : _writer = writer;
+  SettingsStore(
+    this.paths, {
+    AtomicFileWriter writer = const AtomicFileWriter(),
+  }) : _writer = writer;
 
   final CentraPaths paths;
   final AtomicFileWriter _writer;
@@ -159,16 +170,19 @@ class SettingsStore {
   Future<void> save(CentraSettings settings) async {
     await paths.ensure();
     await _writer.writeText(
-        paths.settingsFile, '${prettyJson(settings.toJson())}\n');
+      paths.settingsFile,
+      '${prettyJson(settings.toJson())}\n',
+    );
   }
 }
 
 class ProfileStore {
   ProfileStore(this.paths, {AtomicFileWriter writer = const AtomicFileWriter()})
-      : _writer = writer;
+    : _writer = writer;
 
-  static final RegExp _profileIdPattern =
-      RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$');
+  static final RegExp _profileIdPattern = RegExp(
+    r'^[a-z0-9][a-z0-9._-]{1,63}$',
+  );
 
   final CentraPaths paths;
   final AtomicFileWriter _writer;
@@ -189,15 +203,18 @@ class ProfileStore {
   Future<List<CentraProfile>> list() async {
     await paths.ensure();
     final profiles = <CentraProfile>[];
-    await for (final entity
-        in paths.profilesDirectory.list(followLinks: false)) {
+    await for (final entity in paths.profilesDirectory.list(
+      followLinks: false,
+    )) {
       if (entity is! File || !entity.path.endsWith('.json')) {
         continue;
       }
       profiles.add(await loadFile(entity));
     }
-    profiles.sort((left, right) =>
-        left.name.toLowerCase().compareTo(right.name.toLowerCase()));
+    profiles.sort(
+      (left, right) =>
+          left.name.toLowerCase().compareTo(right.name.toLowerCase()),
+    );
     return profiles;
   }
 
@@ -219,7 +236,8 @@ class ProfileStore {
     final errors = profile.validate();
     if (errors.isNotEmpty) {
       throw FormatException(
-          'Invalid profile ${file.path}:\n${errors.join('\n')}');
+        'Invalid profile ${file.path}:\n${errors.join('\n')}',
+      );
     }
     return profile;
   }
@@ -231,7 +249,9 @@ class ProfileStore {
     }
     await paths.ensure();
     await _writer.writeText(
-        fileFor(profile.id), '${prettyJson(profile.toJson())}\n');
+      fileFor(profile.id),
+      '${prettyJson(profile.toJson())}\n',
+    );
   }
 
   Future<bool> delete(String id) async {

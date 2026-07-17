@@ -43,26 +43,30 @@ void main() {
       final profile = draft.toProfile();
       expect(profile.locale, 'ru');
       expect(
-          profile.algorithmIds, containsAllInOrder(<String>['sha256', 'md5']));
+        profile.algorithmIds,
+        containsAllInOrder(<String>['sha256', 'md5']),
+      );
       expect(profile.createdAt, fixed);
       expect(profile.validate(), isEmpty);
     });
 
-    test('requires ZIP mode before a password requirement can be serialized',
-        () {
-      final draft = WizardDraft()
-        ..locale = 'en'
-        ..sourceType = SourceType.local
-        ..profileName = 'Test'
-        ..profileId = 'test-profile'
-        ..root = '/tmp/project'
-        ..algorithmIds.add('sha256')
-        ..canonicalJson = true
-        ..outputDirectory = '/tmp/output'
-        ..requireZipPassword = true;
-      final profile = draft.toProfile();
-      expect(profile.output.createZip, isFalse);
-      expect(profile.output.requireZipPassword, isFalse);
-    });
+    test(
+      'requires ZIP mode before a password requirement can be serialized',
+      () {
+        final draft = WizardDraft()
+          ..locale = 'en'
+          ..sourceType = SourceType.local
+          ..profileName = 'Test'
+          ..profileId = 'test-profile'
+          ..root = '/tmp/project'
+          ..algorithmIds.add('sha256')
+          ..canonicalJson = true
+          ..outputDirectory = '/tmp/output'
+          ..requireZipPassword = true;
+        final profile = draft.toProfile();
+        expect(profile.output.createZip, isFalse);
+        expect(profile.output.requireZipPassword, isFalse);
+      },
+    );
   });
 }

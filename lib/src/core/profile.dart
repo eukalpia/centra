@@ -1,41 +1,31 @@
 import 'algorithm_registry.dart';
 
-enum SourceType {
-  local,
-  ssh,
-  dockerContainer,
-  dockerImage,
-  dockerCompose,
-}
+enum SourceType { local, ssh, dockerContainer, dockerImage, dockerCompose }
 
 extension SourceTypeName on SourceType {
   String get wireName => switch (this) {
-        SourceType.local => 'local',
-        SourceType.ssh => 'ssh',
-        SourceType.dockerContainer => 'docker-container',
-        SourceType.dockerImage => 'docker-image',
-        SourceType.dockerCompose => 'docker-compose',
-      };
+    SourceType.local => 'local',
+    SourceType.ssh => 'ssh',
+    SourceType.dockerContainer => 'docker-container',
+    SourceType.dockerImage => 'docker-image',
+    SourceType.dockerCompose => 'docker-compose',
+  };
 
   static SourceType parse(String value) => SourceType.values.firstWhere(
-        (type) => type.wireName == value,
-        orElse: () => throw FormatException('Unknown source type: $value'),
-      );
+    (type) => type.wireName == value,
+    orElse: () => throw FormatException('Unknown source type: $value'),
+  );
 }
 
-enum SymlinkPolicy {
-  skip,
-  record,
-  follow,
-}
+enum SymlinkPolicy { skip, record, follow }
 
 extension SymlinkPolicyName on SymlinkPolicy {
   String get wireName => name;
 
   static SymlinkPolicy parse(String value) => SymlinkPolicy.values.firstWhere(
-        (policy) => policy.name == value,
-        orElse: () => throw FormatException('Unknown symlink policy: $value'),
-      );
+    (policy) => policy.name == value,
+    orElse: () => throw FormatException('Unknown symlink policy: $value'),
+  );
 }
 
 class SourceConfig {
@@ -94,32 +84,32 @@ class SourceConfig {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'type': type.wireName,
-        'root': root,
-        'port': port,
-        if (host != null) 'host': host,
-        if (user != null) 'user': user,
-        if (identityFile != null) 'identityFile': identityFile,
-        if (container != null) 'container': container,
-        if (image != null) 'image': image,
-        if (service != null) 'service': service,
-        if (composeFile != null) 'composeFile': composeFile,
-        if (dockerContext != null) 'dockerContext': dockerContext,
-      };
+    'type': type.wireName,
+    'root': root,
+    'port': port,
+    if (host != null) 'host': host,
+    if (user != null) 'user': user,
+    if (identityFile != null) 'identityFile': identityFile,
+    if (container != null) 'container': container,
+    if (image != null) 'image': image,
+    if (service != null) 'service': service,
+    if (composeFile != null) 'composeFile': composeFile,
+    if (dockerContext != null) 'dockerContext': dockerContext,
+  };
 
   factory SourceConfig.fromJson(Map<String, Object?> json) => SourceConfig(
-        type: SourceTypeName.parse(json['type']! as String),
-        root: json['root']! as String,
-        host: json['host'] as String?,
-        user: json['user'] as String?,
-        port: json['port'] as int? ?? 22,
-        identityFile: json['identityFile'] as String?,
-        container: json['container'] as String?,
-        image: json['image'] as String?,
-        service: json['service'] as String?,
-        composeFile: json['composeFile'] as String?,
-        dockerContext: json['dockerContext'] as String?,
-      );
+    type: SourceTypeName.parse(json['type']! as String),
+    root: json['root']! as String,
+    host: json['host'] as String?,
+    user: json['user'] as String?,
+    port: json['port'] as int? ?? 22,
+    identityFile: json['identityFile'] as String?,
+    container: json['container'] as String?,
+    image: json['image'] as String?,
+    service: json['service'] as String?,
+    composeFile: json['composeFile'] as String?,
+    dockerContext: json['dockerContext'] as String?,
+  );
 }
 
 class OutputConfig {
@@ -154,23 +144,22 @@ class OutputConfig {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'directory': directory,
-        'writeCanonicalJson': writeCanonicalJson,
-        'writeCompatibilityText': writeCompatibilityText,
-        'createZip': createZip,
-        'requireZipPassword': requireZipPassword,
-        'includeMetadataReport': includeMetadataReport,
-      };
+    'directory': directory,
+    'writeCanonicalJson': writeCanonicalJson,
+    'writeCompatibilityText': writeCompatibilityText,
+    'createZip': createZip,
+    'requireZipPassword': requireZipPassword,
+    'includeMetadataReport': includeMetadataReport,
+  };
 
   factory OutputConfig.fromJson(Map<String, Object?> json) => OutputConfig(
-        directory: json['directory']! as String,
-        writeCanonicalJson: json['writeCanonicalJson'] as bool? ?? false,
-        writeCompatibilityText:
-            json['writeCompatibilityText'] as bool? ?? false,
-        createZip: json['createZip'] as bool? ?? false,
-        requireZipPassword: json['requireZipPassword'] as bool? ?? false,
-        includeMetadataReport: json['includeMetadataReport'] as bool? ?? false,
-      );
+    directory: json['directory']! as String,
+    writeCanonicalJson: json['writeCanonicalJson'] as bool? ?? false,
+    writeCompatibilityText: json['writeCompatibilityText'] as bool? ?? false,
+    createZip: json['createZip'] as bool? ?? false,
+    requireZipPassword: json['requireZipPassword'] as bool? ?? false,
+    includeMetadataReport: json['includeMetadataReport'] as bool? ?? false,
+  );
 }
 
 class CentraProfile {
@@ -218,7 +207,8 @@ class CentraProfile {
     final errors = <String>[];
     if (!RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(id)) {
       errors.add(
-          'Profile ID must be 2-64 lowercase letters, numbers, dots, dashes, or underscores.');
+        'Profile ID must be 2-64 lowercase letters, numbers, dots, dashes, or underscores.',
+      );
     }
     if (name.trim().isEmpty) errors.add('Profile name is required.');
     if (algorithmIds.isEmpty)
@@ -244,40 +234,43 @@ class CentraProfile {
       }
       if (!algorithm.arguments.any((argument) => argument.contains('{file}'))) {
         errors.add(
-            'Custom algorithm ${algorithm.id} must include {file} in its arguments.');
+          'Custom algorithm ${algorithm.id} must include {file} in its arguments.',
+        );
       }
       try {
         RegExp(algorithm.outputPattern);
       } on FormatException {
         errors.add(
-            'Custom algorithm ${algorithm.id} has an invalid output pattern.');
+          'Custom algorithm ${algorithm.id} has an invalid output pattern.',
+        );
       }
     }
     return errors;
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'schema': 'centra.profile.v1',
-        'id': id,
-        'name': name,
-        'locale': locale,
-        'source': source.toJson(),
-        'algorithmIds': algorithmIds,
-        'includePatterns': includePatterns,
-        'excludePatterns': excludePatterns,
-        'customAlgorithms':
-            customAlgorithms.map((algorithm) => algorithm.toJson()).toList(),
-        'symlinkPolicy': symlinkPolicy.wireName,
-        'includeHiddenFiles': includeHiddenFiles,
-        'capturePermissions': capturePermissions,
-        'captureModificationTimes': captureModificationTimes,
-        'workerCount': workerCount,
-        'failOnReadError': failOnReadError,
-        'output': output.toJson(),
-        'projectKind': projectKind,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'updatedAt': updatedAt.toUtc().toIso8601String(),
-      };
+    'schema': 'centra.profile.v1',
+    'id': id,
+    'name': name,
+    'locale': locale,
+    'source': source.toJson(),
+    'algorithmIds': algorithmIds,
+    'includePatterns': includePatterns,
+    'excludePatterns': excludePatterns,
+    'customAlgorithms': customAlgorithms
+        .map((algorithm) => algorithm.toJson())
+        .toList(),
+    'symlinkPolicy': symlinkPolicy.wireName,
+    'includeHiddenFiles': includeHiddenFiles,
+    'capturePermissions': capturePermissions,
+    'captureModificationTimes': captureModificationTimes,
+    'workerCount': workerCount,
+    'failOnReadError': failOnReadError,
+    'output': output.toJson(),
+    'projectKind': projectKind,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
 
   factory CentraProfile.fromJson(Map<String, Object?> json) {
     if (json['schema'] != 'centra.profile.v1') {
@@ -288,7 +281,8 @@ class CentraProfile {
       name: json['name']! as String,
       locale: json['locale'] as String? ?? 'en',
       source: SourceConfig.fromJson(
-          (json['source']! as Map).cast<String, Object?>()),
+        (json['source']! as Map).cast<String, Object?>(),
+      ),
       algorithmIds: (json['algorithmIds']! as List<Object?>).cast<String>(),
       includePatterns:
           (json['includePatterns'] as List<Object?>? ?? const <Object?>['**'])
@@ -298,11 +292,15 @@ class CentraProfile {
               .cast<String>(),
       customAlgorithms:
           (json['customAlgorithms'] as List<Object?>? ?? const <Object?>[])
-              .map((value) => CustomHashAlgorithm.fromJson(
-                  (value! as Map).cast<String, Object?>()))
+              .map(
+                (value) => CustomHashAlgorithm.fromJson(
+                  (value! as Map).cast<String, Object?>(),
+                ),
+              )
               .toList(growable: false),
-      symlinkPolicy:
-          SymlinkPolicyName.parse(json['symlinkPolicy'] as String? ?? 'skip'),
+      symlinkPolicy: SymlinkPolicyName.parse(
+        json['symlinkPolicy'] as String? ?? 'skip',
+      ),
       includeHiddenFiles: json['includeHiddenFiles'] as bool? ?? true,
       capturePermissions: json['capturePermissions'] as bool? ?? true,
       captureModificationTimes:
@@ -310,7 +308,8 @@ class CentraProfile {
       workerCount: json['workerCount'] as int? ?? 4,
       failOnReadError: json['failOnReadError'] as bool? ?? true,
       output: OutputConfig.fromJson(
-          (json['output']! as Map).cast<String, Object?>()),
+        (json['output']! as Map).cast<String, Object?>(),
+      ),
       projectKind: json['projectKind'] as String? ?? 'generic',
       createdAt: DateTime.parse(json['createdAt']! as String),
       updatedAt: DateTime.parse(json['updatedAt']! as String),

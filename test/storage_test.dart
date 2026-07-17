@@ -46,8 +46,10 @@ void main() {
       await store.save(settings);
 
       expect((await store.load()).toJson(), settings.toJson());
-      expect(await paths.settingsFile.readAsString(),
-          contains('centra.settings.v1'));
+      expect(
+        await paths.settingsFile.readAsString(),
+        contains('centra.settings.v1'),
+      );
     });
 
     test('profile store saves, sorts, loads and deletes profiles', () async {
@@ -62,8 +64,10 @@ void main() {
       await store.save(second);
 
       final profiles = await store.list();
-      expect(profiles.map((profile) => profile.id),
-          <String>['alpha-profile', 'zeta-profile']);
+      expect(profiles.map((profile) => profile.id), <String>[
+        'alpha-profile',
+        'zeta-profile',
+      ]);
       expect((await store.load('alpha-profile'))?.name, 'Alpha profile');
       expect(await store.delete('alpha-profile'), isTrue);
       expect(await store.delete('alpha-profile'), isFalse);
@@ -88,32 +92,37 @@ void main() {
     test('invalid stored profiles fail closed', () async {
       final store = ProfileStore(paths);
       await paths.ensure();
-      final json = testProfile(root: sandbox.path, id: 'broken-profile')
-          .toJson()
-        ..['algorithmIds'] = <String>[];
+      final json = testProfile(
+        root: sandbox.path,
+        id: 'broken-profile',
+      ).toJson()..['algorithmIds'] = <String>[];
       await store
           .fileFor('broken-profile')
           .writeAsString(jsonEncode(json), flush: true);
 
       await expectLater(
-          store.load('broken-profile'), throwsA(isA<FormatException>()));
+        store.load('broken-profile'),
+        throwsA(isA<FormatException>()),
+      );
     });
 
-    test('atomic writer replaces text without backup or temporary debris',
-        () async {
-      const writer = AtomicFileWriter();
-      final file = File('${sandbox.path}/nested/value.txt');
+    test(
+      'atomic writer replaces text without backup or temporary debris',
+      () async {
+        const writer = AtomicFileWriter();
+        final file = File('${sandbox.path}/nested/value.txt');
 
-      await writer.writeText(file, 'first');
-      await writer.writeText(file, 'second');
+        await writer.writeText(file, 'first');
+        await writer.writeText(file, 'second');
 
-      expect(await file.readAsString(), 'second');
-      final names = await file.parent
-          .list()
-          .map((entity) => entity.uri.pathSegments.last)
-          .toList();
-      expect(names, <String>['value.txt']);
-    });
+        expect(await file.readAsString(), 'second');
+        final names = await file.parent
+            .list()
+            .map((entity) => entity.uri.pathSegments.last)
+            .toList();
+        expect(names, <String>['value.txt']);
+      },
+    );
 
     test('atomic writer persists binary data exactly', () async {
       const writer = AtomicFileWriter();

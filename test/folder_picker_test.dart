@@ -38,12 +38,12 @@ void main() {
       await Directory(p.join(sandbox.path, 'visible')).create();
 
       final hidden = await FolderBrowser.read(sandbox.path);
-      final visible = await FolderBrowser.read(
-        sandbox.path,
-        showHidden: true,
-      );
+      final visible = await FolderBrowser.read(sandbox.path, showHidden: true);
 
-      expect(hidden.entries.map((entry) => entry.name), isNot(contains('.private')));
+      expect(
+        hidden.entries.map((entry) => entry.name),
+        isNot(contains('.private')),
+      );
       expect(visible.entries.map((entry) => entry.name), contains('.private'));
     });
 

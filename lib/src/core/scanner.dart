@@ -36,10 +36,7 @@ class ScanProgress {
 typedef ScanProgressCallback = void Function(ScanProgress progress);
 
 class ScanResult {
-  const ScanResult({
-    required this.manifest,
-    required this.duration,
-  });
+  const ScanResult({required this.manifest, required this.duration});
 
   final CentraManifest manifest;
   final Duration duration;
@@ -104,11 +101,11 @@ class IntegrityScanner {
     CommandRunner commandRunner = const SystemCommandRunner(),
     DateTime Function()? clock,
     Random? random,
-  })  : _sourceRegistry =
-            sourceRegistry ?? SourceRegistry(runner: commandRunner),
-        _commandRunner = commandRunner,
-        _clock = clock ?? DateTime.now,
-        _random = random ?? Random.secure();
+  }) : _sourceRegistry =
+           sourceRegistry ?? SourceRegistry(runner: commandRunner),
+       _commandRunner = commandRunner,
+       _clock = clock ?? DateTime.now,
+       _random = random ?? Random.secure();
 
   final SourceRegistry _sourceRegistry;
   final CommandRunner _commandRunner;
@@ -128,19 +125,31 @@ class IntegrityScanner {
         .provider(profile.source.type)
         .prepare(profile.source);
     try {
-      final registry =
-          AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
-      final descriptors =
-          profile.algorithmIds.map(registry.descriptor).toList(growable: false);
+      final registry = AlgorithmRegistry(
+        customAlgorithms: profile.customAlgorithms,
+      );
+      final descriptors = profile.algorithmIds
+          .map(registry.descriptor)
+          .toList(growable: false);
       final policy = PathPolicy(
         includes: profile.includePatterns,
         excludes: profile.excludePatterns,
         includeHiddenFiles: profile.includeHiddenFiles,
       );
-      onProgress?.call(const ScanProgress(
-          phase: 'inventory', discovered: 0, completed: 0, totalBytes: 0));
-      final inventory =
-          await _inventory(prepared.directory, profile, policy, onProgress);
+      onProgress?.call(
+        const ScanProgress(
+          phase: 'inventory',
+          discovered: 0,
+          completed: 0,
+          totalBytes: 0,
+        ),
+      );
+      final inventory = await _inventory(
+        prepared.directory,
+        profile,
+        policy,
+        onProgress,
+      );
       final files = <ManifestFileRecord>[];
       final errors = <ManifestReadError>[];
       var nextIndex = 0;
@@ -163,27 +172,32 @@ class IntegrityScanner {
             files.add(record);
             totalBytes += record.size;
           } on Object catch (error) {
-            errors.add(ManifestReadError(
-              path: entry.path,
-              code: error.runtimeType.toString(),
-              message: error.toString(),
-            ));
+            errors.add(
+              ManifestReadError(
+                path: entry.path,
+                code: error.runtimeType.toString(),
+                message: error.toString(),
+              ),
+            );
             if (profile.failOnReadError) rethrow;
           } finally {
             completed++;
-            onProgress?.call(ScanProgress(
-              phase: 'hashing',
-              discovered: inventory.length,
-              completed: completed,
-              totalBytes: totalBytes,
-              currentPath: entry.path,
-            ));
+            onProgress?.call(
+              ScanProgress(
+                phase: 'hashing',
+                discovered: inventory.length,
+                completed: completed,
+                totalBytes: totalBytes,
+                currentPath: entry.path,
+              ),
+            );
           }
         }
       }
 
       await Future.wait(
-          List<Future<void>>.generate(profile.workerCount, (_) => worker()));
+        List<Future<void>>.generate(profile.workerCount, (_) => worker()),
+      );
       files.sort((left, right) => left.path.compareTo(right.path));
       errors.sort((left, right) => left.path.compareTo(right.path));
       final generatedAt = _clock().toUtc();
@@ -202,12 +216,14 @@ class IntegrityScanner {
         errors: errors,
         totalBytes: totalBytes,
       );
-      onProgress?.call(ScanProgress(
-        phase: 'complete',
-        discovered: inventory.length,
-        completed: completed,
-        totalBytes: totalBytes,
-      ));
+      onProgress?.call(
+        ScanProgress(
+          phase: 'complete',
+          discovered: inventory.length,
+          completed: completed,
+          totalBytes: totalBytes,
+        ),
+      );
       stopwatch.stop();
       return ScanResult(manifest: manifest, duration: stopwatch.elapsed);
     } finally {
@@ -223,28 +239,42 @@ class IntegrityScanner {
   ) async {
     final entries = <_InventoryEntry>[];
     await for (final entity in root.list(
-        recursive: true,
-        followLinks: profile.symlinkPolicy == SymlinkPolicy.follow)) {
-      final relative =
-          normalizeRelativePath(p.relative(entity.path, from: root.path));
+      recursive: true,
+      followLinks: profile.symlinkPolicy == SymlinkPolicy.follow,
+    )) {
+      final relative = normalizeRelativePath(
+        p.relative(entity.path, from: root.path),
+      );
       if (!policy.allows(relative)) continue;
       final type = await FileSystemEntity.type(entity.path, followLinks: false);
       if (type == FileSystemEntityType.file) {
-        entries.add(_InventoryEntry(
-            entity: File(entity.path), path: relative, isLink: false));
+        entries.add(
+          _InventoryEntry(
+            entity: File(entity.path),
+            path: relative,
+            isLink: false,
+          ),
+        );
       } else if (type == FileSystemEntityType.link &&
           profile.symlinkPolicy == SymlinkPolicy.record) {
-        entries.add(_InventoryEntry(
-            entity: Link(entity.path), path: relative, isLink: true));
+        entries.add(
+          _InventoryEntry(
+            entity: Link(entity.path),
+            path: relative,
+            isLink: true,
+          ),
+        );
       }
       if (entries.length % 250 == 0 && entries.isNotEmpty) {
-        onProgress?.call(ScanProgress(
-          phase: 'inventory',
-          discovered: entries.length,
-          completed: 0,
-          totalBytes: 0,
-          currentPath: relative,
-        ));
+        onProgress?.call(
+          ScanProgress(
+            phase: 'inventory',
+            discovered: entries.length,
+            completed: 0,
+            totalBytes: 0,
+            currentPath: relative,
+          ),
+        );
       }
     }
     entries.sort((left, right) => left.path.compareTo(right.path));
@@ -295,19 +325,23 @@ class IntegrityScanner {
     return ManifestFileRecord(
       path: entry.path,
       size: entry.isLink ? utf8.encode(symlinkTarget!).length : stat.size,
-      modifiedAt:
-          profile.captureModificationTimes ? stat.modified.toUtc() : null,
+      modifiedAt: profile.captureModificationTimes
+          ? stat.modified.toUtc()
+          : null,
       mode: profile.capturePermissions ? stat.mode : null,
       symlinkTarget: symlinkTarget,
       digests: Map<String, String>.fromEntries(
-        profile.algorithmIds
-            .map((id) => MapEntry<String, String>(id, digests[id]!)),
+        profile.algorithmIds.map(
+          (id) => MapEntry<String, String>(id, digests[id]!),
+        ),
       ),
     );
   }
 
   Future<String> _runCustom(
-      CustomHashAlgorithm algorithm, String filePath) async {
+    CustomHashAlgorithm algorithm,
+    String filePath,
+  ) async {
     final arguments = algorithm.arguments
         .map((argument) => argument.replaceAll('{file}', filePath))
         .toList(growable: false);
@@ -318,18 +352,26 @@ class IntegrityScanner {
     );
     if (result.exitCode != 0) {
       throw ProcessException(
-          algorithm.executable, arguments, result.stderrText, result.exitCode);
+        algorithm.executable,
+        arguments,
+        result.stderrText,
+        result.exitCode,
+      );
     }
-    final match = RegExp(algorithm.outputPattern, multiLine: true)
-        .firstMatch(result.stdoutText);
+    final match = RegExp(
+      algorithm.outputPattern,
+      multiLine: true,
+    ).firstMatch(result.stdoutText);
     if (match == null || algorithm.outputGroup > match.groupCount) {
       throw FormatException(
-          'Custom algorithm ${algorithm.id} output did not match its configured pattern.');
+        'Custom algorithm ${algorithm.id} output did not match its configured pattern.',
+      );
     }
     final value = match.group(algorithm.outputGroup)!.trim().toLowerCase();
     if (!RegExp(r'^[0-9a-f]+$').hasMatch(value)) {
       throw FormatException(
-          'Custom algorithm ${algorithm.id} returned non-hexadecimal output.');
+        'Custom algorithm ${algorithm.id} returned non-hexadecimal output.',
+      );
     }
     if (algorithm.outputBits > 0 && value.length * 4 != algorithm.outputBits) {
       throw FormatException(

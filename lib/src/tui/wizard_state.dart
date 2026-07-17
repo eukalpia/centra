@@ -60,12 +60,16 @@ class WizardDraft {
             : const <String>[];
       case WizardStep.details:
         return _sourceConfig().validate()
-          ..addAll(profileName.trim().isEmpty
-              ? <String>['Profile name is required.']
-              : const <String>[])
-          ..addAll(RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(profileId)
-              ? const <String>[]
-              : <String>['Profile ID is invalid.']);
+          ..addAll(
+            profileName.trim().isEmpty
+                ? <String>['Profile name is required.']
+                : const <String>[],
+          )
+          ..addAll(
+            RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(profileId)
+                ? const <String>[]
+                : <String>['Profile ID is invalid.'],
+          );
       case WizardStep.algorithms:
         return algorithmIds.isEmpty
             ? <String>['Select at least one algorithm.']
@@ -101,8 +105,9 @@ class WizardDraft {
       algorithmIds: algorithmIds.toList(growable: false),
       includePatterns: const <String>['**'],
       excludePatterns: excludePatterns.toList(growable: false)..sort(),
-      customAlgorithms:
-          List<CustomHashAlgorithm>.unmodifiable(customAlgorithms),
+      customAlgorithms: List<CustomHashAlgorithm>.unmodifiable(
+        customAlgorithms,
+      ),
       symlinkPolicy: symlinkPolicy,
       includeHiddenFiles: includeHiddenFiles,
       capturePermissions: capturePermissions,
@@ -117,26 +122,25 @@ class WizardDraft {
   }
 
   SourceConfig _sourceConfig() => SourceConfig(
-        type: sourceType ?? SourceType.local,
-        root: root.trim(),
-        host: host.trim().isEmpty ? null : host.trim(),
-        user: user.trim().isEmpty ? null : user.trim(),
-        port: int.tryParse(port) ?? 0,
-        identityFile: identityFile.trim().isEmpty ? null : identityFile.trim(),
-        container: container.trim().isEmpty ? null : container.trim(),
-        image: image.trim().isEmpty ? null : image.trim(),
-        service: service.trim().isEmpty ? null : service.trim(),
-        composeFile: composeFile.trim().isEmpty ? null : composeFile.trim(),
-        dockerContext:
-            dockerContext.trim().isEmpty ? null : dockerContext.trim(),
-      );
+    type: sourceType ?? SourceType.local,
+    root: root.trim(),
+    host: host.trim().isEmpty ? null : host.trim(),
+    user: user.trim().isEmpty ? null : user.trim(),
+    port: int.tryParse(port) ?? 0,
+    identityFile: identityFile.trim().isEmpty ? null : identityFile.trim(),
+    container: container.trim().isEmpty ? null : container.trim(),
+    image: image.trim().isEmpty ? null : image.trim(),
+    service: service.trim().isEmpty ? null : service.trim(),
+    composeFile: composeFile.trim().isEmpty ? null : composeFile.trim(),
+    dockerContext: dockerContext.trim().isEmpty ? null : dockerContext.trim(),
+  );
 
   OutputConfig _outputConfig() => OutputConfig(
-        directory: outputDirectory.trim(),
-        writeCanonicalJson: canonicalJson,
-        writeCompatibilityText: compatibilityText,
-        createZip: zipPackage,
-        requireZipPassword: zipPackage && requireZipPassword,
-        includeMetadataReport: metadataReport,
-      );
+    directory: outputDirectory.trim(),
+    writeCanonicalJson: canonicalJson,
+    writeCompatibilityText: compatibilityText,
+    createZip: zipPackage,
+    requireZipPassword: zipPackage && requireZipPassword,
+    includeMetadataReport: metadataReport,
+  );
 }

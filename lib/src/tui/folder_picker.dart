@@ -31,8 +31,7 @@ class FolderPickerStrings {
   String get refresh => _value('refresh');
   String get help => _value('help');
 
-  String _value(String key) =>
-      _values[key] ?? _translations['en']![key] ?? key;
+  String _value(String key) => _values[key] ?? _translations['en']![key] ?? key;
 
   factory FolderPickerStrings.forLocale(String locale) {
     return FolderPickerStrings._(
@@ -55,7 +54,8 @@ class FolderPickerStrings {
       'home': 'Home',
       'roots': 'Locations',
       'refresh': 'Refresh',
-      'help': '↑↓ move  Enter open  Backspace parent  Space choose  H hidden  Esc cancel',
+      'help':
+          '↑↓ move  Enter open  Backspace parent  Space choose  H hidden  Esc cancel',
     },
     'ru': <String, String>{
       'browse': 'Обзор…',
@@ -70,7 +70,8 @@ class FolderPickerStrings {
       'home': 'Домашняя',
       'roots': 'Расположения',
       'refresh': 'Обновить',
-      'help': '↑↓ выбор  Enter открыть  Backspace вверх  Space выбрать  H скрытые  Esc отмена',
+      'help':
+          '↑↓ выбор  Enter открыть  Backspace вверх  Space выбрать  H скрытые  Esc отмена',
     },
     'uz': <String, String>{
       'browse': 'Ko‘rish…',
@@ -85,7 +86,8 @@ class FolderPickerStrings {
       'home': 'Bosh papka',
       'roots': 'Joylashuvlar',
       'refresh': 'Yangilash',
-      'help': '↑↓ tanlash  Enter ochish  Backspace yuqoriga  Space tanlash  H yashirin  Esc bekor',
+      'help':
+          '↑↓ tanlash  Enter ochish  Backspace yuqoriga  Space tanlash  H yashirin  Esc bekor',
     },
     'uz-Cyrl': <String, String>{
       'browse': 'Кўриш…',
@@ -100,7 +102,8 @@ class FolderPickerStrings {
       'home': 'Бош папка',
       'roots': 'Жойлашувлар',
       'refresh': 'Янгилаш',
-      'help': '↑↓ танлаш  Enter очиш  Backspace юқорига  Space танлаш  H яширин  Esc бекор',
+      'help':
+          '↑↓ танлаш  Enter очиш  Backspace юқорига  Space танлаш  H яширин  Esc бекор',
     },
     'tr': <String, String>{
       'browse': 'Gözat…',
@@ -115,7 +118,8 @@ class FolderPickerStrings {
       'home': 'Ana klasör',
       'roots': 'Konumlar',
       'refresh': 'Yenile',
-      'help': '↑↓ seç  Enter aç  Backspace üst  Space kullan  H gizli  Esc iptal',
+      'help':
+          '↑↓ seç  Enter aç  Backspace üst  Space kullan  H gizli  Esc iptal',
     },
     'kk': <String, String>{
       'browse': 'Шолу…',
@@ -130,7 +134,8 @@ class FolderPickerStrings {
       'home': 'Үй қалтасы',
       'roots': 'Орындар',
       'refresh': 'Жаңарту',
-      'help': '↑↓ таңдау  Enter ашу  Backspace жоғары  Space таңдау  H жасырын  Esc бас тарту',
+      'help':
+          '↑↓ таңдау  Enter ашу  Backspace жоғары  Space таңдау  H жасырын  Esc бас тарту',
     },
     'ky': <String, String>{
       'browse': 'Кароо…',
@@ -145,7 +150,8 @@ class FolderPickerStrings {
       'home': 'Үй папкасы',
       'roots': 'Жайлар',
       'refresh': 'Жаңыртуу',
-      'help': '↑↓ тандоо  Enter ачуу  Backspace өйдө  Space тандоо  H жашыруун  Esc жокко чыгаруу',
+      'help':
+          '↑↓ тандоо  Enter ачуу  Backspace өйдө  Space тандоо  H жашыруун  Esc жокко чыгаруу',
     },
     'tg': <String, String>{
       'browse': 'Дидан…',
@@ -160,7 +166,8 @@ class FolderPickerStrings {
       'home': 'Ҷузвдони хонагӣ',
       'roots': 'Ҷойҳо',
       'refresh': 'Навсозӣ',
-      'help': '↑↓ интихоб  Enter кушодан  Backspace боло  Space интихоб  H пинҳонӣ  Esc бекор',
+      'help':
+          '↑↓ интихоб  Enter кушодан  Backspace боло  Space интихоб  H пинҳонӣ  Esc бекор',
     },
     'az': <String, String>{
       'browse': 'Baxış…',
@@ -175,7 +182,8 @@ class FolderPickerStrings {
       'home': 'Ev qovluğu',
       'roots': 'Məkanlar',
       'refresh': 'Yenilə',
-      'help': '↑↓ seçim  Enter aç  Backspace yuxarı  Space seç  H gizli  Esc ləğv',
+      'help':
+          '↑↓ seçim  Enter aç  Backspace yuxarı  Space seç  H gizli  Esc ləğv',
     },
     'de': <String, String>{
       'browse': 'Durchsuchen…',
@@ -190,7 +198,8 @@ class FolderPickerStrings {
       'home': 'Persönlicher Ordner',
       'roots': 'Orte',
       'refresh': 'Aktualisieren',
-      'help': '↑↓ wählen  Enter öffnen  Backspace hoch  Space verwenden  H versteckt  Esc abbrechen',
+      'help':
+          '↑↓ wählen  Enter öffnen  Backspace hoch  Space verwenden  H versteckt  Esc abbrechen',
     },
   };
 }
@@ -295,7 +304,8 @@ class FolderBrowser {
 
   static List<FolderBrowserShortcut> shortcuts(FolderPickerStrings strings) {
     final shortcuts = <FolderBrowserShortcut>[];
-    final home = Platform.environment['USERPROFILE'] ??
+    final home =
+        Platform.environment['USERPROFILE'] ??
         Platform.environment['HOME'] ??
         Platform.environment['HOMEPATH'];
     if (home != null && Directory(home).existsSync()) {
@@ -314,12 +324,14 @@ class FolderBrowser {
     }
 
     final seen = <String>{};
-    return shortcuts.where((shortcut) {
-      final key = Platform.isWindows
-          ? shortcut.path.toLowerCase()
-          : shortcut.path;
-      return seen.add(key);
-    }).toList(growable: false);
+    return shortcuts
+        .where((shortcut) {
+          final key = Platform.isWindows
+              ? shortcut.path.toLowerCase()
+              : shortcut.path;
+          return seen.add(key);
+        })
+        .toList(growable: false);
   }
 
   static bool _samePath(String left, String right) {
@@ -488,8 +500,10 @@ class _FolderPickerState extends State<FolderPicker> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text(strings.currentFolder,
-                  style: const TextStyle(color: _pickerMuted)),
+              Text(
+                strings.currentFolder,
+                style: const TextStyle(color: _pickerMuted),
+              ),
               Container(
                 color: _pickerSurfaceStrong,
                 padding: const EdgeInsets.symmetric(horizontal: 1),
@@ -562,63 +576,60 @@ class _FolderPickerState extends State<FolderPicker> {
                                 ),
                               )
                             : error != null
-                                ? Center(
-                                    child: Text(
-                                      error!,
-                                      style:
-                                          const TextStyle(color: _pickerDanger),
-                                    ),
-                                  )
-                                : entries.isEmpty
-                                    ? Center(
-                                        child: Text(
-                                          strings.empty,
-                                          style: const TextStyle(
-                                            color: _pickerMuted,
+                            ? Center(
+                                child: Text(
+                                  error!,
+                                  style: const TextStyle(color: _pickerDanger),
+                                ),
+                              )
+                            : entries.isEmpty
+                            ? Center(
+                                child: Text(
+                                  strings.empty,
+                                  style: const TextStyle(color: _pickerMuted),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: entries
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (entry) => GestureDetector(
+                                          onTap: () {
+                                            setState(
+                                              () => selected = entry.key,
+                                            );
+                                            _reload(entry.value.path);
+                                          },
+                                          child: Container(
+                                            color: selected == entry.key
+                                                ? _pickerSurfaceStrong
+                                                : null,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 1,
+                                            ),
+                                            child: Text(
+                                              '${entry.value.isParent ? '↰' : '▸'} ${entry.value.name}',
+                                              maxLines: 1,
+                                              style: TextStyle(
+                                                color: selected == entry.key
+                                                    ? _pickerAccent
+                                                    : _pickerText,
+                                                fontWeight:
+                                                    selected == entry.key
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       )
-                                    : SingleChildScrollView(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
-                                          children: entries
-                                              .asMap()
-                                              .entries
-                                              .map(
-                                                (entry) => GestureDetector(
-                                                  onTap: () {
-                                                    setState(() =>
-                                                        selected = entry.key);
-                                                    _reload(entry.value.path);
-                                                  },
-                                                  child: Container(
-                                                    color: selected == entry.key
-                                                        ? _pickerSurfaceStrong
-                                                        : null,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(horizontal: 1),
-                                                    child: Text(
-                                                      '${entry.value.isParent ? '↰' : '▸'} ${entry.value.name}',
-                                                      maxLines: 1,
-                                                      style: TextStyle(
-                                                        color:
-                                                            selected == entry.key
-                                                                ? _pickerAccent
-                                                                : _pickerText,
-                                                        fontWeight:
-                                                            selected == entry.key
-                                                                ? FontWeight.bold
-                                                                : FontWeight
-                                                                    .normal,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(growable: false),
-                                        ),
-                                      ),
+                                      .toList(growable: false),
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -684,17 +695,17 @@ class _FolderPickerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          color: muted ? _pickerSurfaceStrong : _pickerAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: muted ? _pickerText : _pickerBackground,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+    onTap: onTap,
+    child: Container(
+      color: muted ? _pickerSurfaceStrong : _pickerAccent,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: muted ? _pickerText : _pickerBackground,
+          fontWeight: FontWeight.bold,
         ),
-      );
+      ),
+    ),
+  );
 }
