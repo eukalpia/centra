@@ -73,10 +73,21 @@ jobs:
       - name: Install from Git repository
         shell: bash
         run: dart install https://github.com/eukalpia/centra.git --git-ref "$INSTALL_REF" --overwrite
-      - name: Run installed command
+      - name: Run installed command on Unix
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           set -o pipefail
           export PATH="$PATH:$DART_DATA_HOME/install/bin"
           centra --version | tee installed-version.txt
           grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' installed-version.txt
+      - name: Run installed command on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:Path = "$env:Path;$env:DART_DATA_HOME\install\bin"
+          $version = (centra --version).Trim()
+          Write-Output $version
+          if ($version -notmatch '^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$') {
+            throw "Unexpected Centra version: $version"
+          }
