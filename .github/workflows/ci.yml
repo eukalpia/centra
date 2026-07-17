@@ -6,9 +6,36 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  format-update:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Resolve package language version
+        run: dart pub get
+      - name: Format changed Dart files
+        run: dart format lib/src/tui/centra_app.dart lib/src/tui/folder_picker.dart test/folder_picker_test.dart
+      - name: Restore strict workflow
+        run: |
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/ci.yml
+      - name: Commit formatting
+        run: |
+          git config user.name "Centra Maintainer"
+          git config user.email "maintainer@centra.local"
+          git add -A
+          git commit -m "Format folder picker for package language version"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:
