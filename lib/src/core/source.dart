@@ -54,14 +54,11 @@ class SystemCommandRunner implements CommandRunner {
       stdoutEncoding: null,
       stderrEncoding: null,
     );
-    final result =
-        timeout == null ? await future : await future.timeout(timeout);
-    return ProcesResultData(
+    final result = timeout == null ? await future : await future.timeout(timeout);
+    return ProcessResultData(
       exitCode: result.exitCode,
-      stdoutBytes:
-          UInt8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
-      stderrBytes:
-          UInt8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
+      stdoutBytes: Uint8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
+      stderrBytes: Uint8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
     );
   }
 }
@@ -101,8 +98,7 @@ class LocalSourceProvider implements SourceProvider {
   Future<PreparedSource> prepare(SourceConfig config) async {
     final directory = Directory(config.root).absolute;
     if (!await directory.exists()) {
-      throw FileSystemException(
-          'Local source directory does not exist.', directory.path);
+      throw FileSystemException('Local source directory does not exist.', directory.path);
     }
     return PreparedSource(
       directory: directory,
@@ -135,8 +131,7 @@ class ArchiveSourceProvider implements SourceProvider {
         timeout: const Duration(minutes: 30),
       );
       if (result.exitCode != 0) {
-        throw ProcessException(
-            command.$1, command.$2, result.stderrExt, result.exitCode);
+        throw ProcessException(command.$1, command.$2, result.stderrText, result.exitCode);
       }
       final snapshot = Directory(p.join(temp.path, 'snapshot'));
       await snapshot.create(recursive: true);
@@ -159,10 +154,7 @@ class ArchiveSourceProvider implements SourceProvider {
         final args = <String>[
           '-p',
           config.port.toString(),
-          if ((config.identityFile ?? '').isNotEmpty) ...<String>[
-            '-i',
-            config.identityFile!
-          ],
+          if ((config.identityFile ?? '').isNotEmpty) ...<String>['-i', config.identityFile!],
           '--',
           target,
           'tar',
@@ -194,10 +186,7 @@ class ArchiveSourceProvider implements SourceProvider {
           <String>[
             ...dockerContextArguments(config),
             'compose',
-            if ((config.composeFile ?? '').isNotEmpty) ...<String>[
-              '-f',
-              config.composeFile!
-            ],
+            if ((config.composeFile ?? '').isNotEmpty) ...<String>['-f', config.composeFile!],
             'exec',
             '-T',
             config.service!,
@@ -210,11 +199,9 @@ class ArchiveSourceProvider implements SourceProvider {
           ],
         );
       case SourceType.dockerImage:
-        throw UnsupportedError(
-            'Docker image snapshots are prepared by DockerImageSourceProvider.');
+        throw UnsupportedError('Docker image snapshots are prepared by DockerImageSourceProvider.');
       case SourceType.local:
-        throw UnsupportedError(
-            'Local sources do not use ArchiveSourceProvider.');
+        throw UnsupportedError('Local sources do not use ArchiveSourceProvider.');
     }
   }
 
@@ -226,122 +213,4 @@ class ArchiveSourceProvider implements SourceProvider {
         if (type == SourceType.ssh) 'port': config.port,
         if (config.container != null) 'container': config.container,
         if (config.service != null) 'service': config.service,
-        if (config.composeFile != null) 'composeFile': config.composeFile,
-        if (config.dockerContext != null) 'dockerContext': config.dockerContext,
-      };
-}
-
-List<String> dockerContextArguments(SourceConfig config) =>
-    (config.dockerContext ?? '').isEmpty
-        ? const <String>[]
-        : <String>['--context', config.dockerContext!];
-
-Future<void> extractTarSafely(List<int> bytes, Directory destination) async {
-  final archive = TarDecoder().decodeBytes(bytes);
-  final root = destination.absolute.path;
-  for (final entry in archive) {
-    final normalized = normalizeRelativePath(entry.name);
-    if (normalized.isEmpty) continue;
-    final outputPath = p.joinAll(<String>[root, ...normalized.split('/')]);
-    if (!p.isWithin(root, outputPath)) {
-      throw FormatException('Archive entry escapes destination: ${entry.name}');
-    }
-    if (entry.isDirectory) {
-      await Directory(outputPath).create(recursive: true);
-    } else if (entry.isFile) {
-      final content = entry.readBytes();
-      if (content == null) {
-        throw FormatException(
-            'Archive file has no readable content: ${entry.name}');
-      }
-      await File(outputPath).parent.create(recursive: true);
-      await File(outputPath).writeAsBytes(content, flush: true);
-    }
-  }
-}
-
-class DockerImageSourceProvider implements SourceProvider {
-  DockerImageSourceProvider(this.runner);
-
-  final CommandRunner runner;
-
-  @override
-  SourceType get type => SourceType.dockerImage;
-
-  @override
-  Future<PreparedSource> prepare(SourceConfig config) async {
-    final createArguments = <String>[
-      ...dockerContextArguments(config),
-      'create',
-      config.image!,
-    ];
-    final create = await runner.run('docker', createArguments,
-        timeout: const Duration(minutes: 10));
-    if (create.exitCode != 0) {
-      throw ProcessException(
-          'docker', createArguments, create.stderrText, create.exitCode);
-    }
-    final containerId = create.stdoutText.trim();
-    if (containerId.isEmpty) {
-      throw StateError('Docker create returned an empty container ID.');
-    }
-    final temp = await Directory.systemTemp.createTemp('centra-image-');
-    Future<void> removeContainer() async {
-      await runner.run(
-        'docker',
-        <String>[...dockerContextArguments(config), 'rm', '-f', containerId],
-      );
-    }
-
-    try {
-      final copyArguments = <String>[
-        ...dockerContextArguments(config),
-        'cp',
-        '$containerId:${config.root}/.',
-        temp.path,
-      ];
-      final copy = await runner.run('docker', copyArguments,
-          timeout: const Duration(minutes: 30));
-      if (copy.exitCode != 0) {
-        throw ProcessException(
-            'docker', copyArguments, copy.stderrExt, copy.exitCode);
-      }
-      return PreparedSource(
-        directory: temp,
-        metadata: <String, Object?>{
-          'type': type.wireName,
-          'image': config.image,
-          'root': config.root,
-          if (config.dockerContext != null)
-            'dockerContext': config.dockerContext,
-        },
-        dispose: () async {
-          await removeContainer();
-          if (await temp.exists()) await temp.delete(recursive: true);
-        },
-      );
-    } catch (_) {
-      await removeContainer();
-      if (await temp.exists()) await temp.delete(recursive: true);
-      rethrow;
-    }
-  }
-}
-
-class SourceRegistry {
-  SourceRegistry({CommandRunner runner = const SystemCommandRunner()})
-      : _providers = <SourceType, SourceProvider>{
-          SourceType.local: const LocalSourceProvider(),
-          SourceType.ssh:
-              ArchiveSourceProvider(type: SourceType.ssh, runner: runner),
-          SourceType.dockerContainer: ArchiveSourceProvider(
-              type: SourceType.dockerContainer, runner: runner),
-          SourceType.dockerImage: DockerImageSourceProvider(runner),
-          SourceType.dockerCompose: ArchiveSourceProvider(
-              type: SourceType.dockerCompose, runner: runner),
-        };
-
-  final Map<SourceType, SourceProvider> _providers;
-
-  SourceProvider provider(SourceType type) => _providers[type]!;
-}
+        if (config.composeFile != null¤€½µÁ½Í•¥±”œè½¹™¥œ¹½µÁ½Í•¥±”°(€€€€€€€¥˜€¡½¹™¥œ¹‘½­•É½¹Ñ•áĞ€„ô¹Õ±°¤€‘½­•É½¹Ñ•áĞœè½¹™¥œ¹‘½­•É½¹Ñ•áĞ°(€€€€€ôì)ô()1¥ÍĞñMÑÉ¥¹œø‘½­•É½¹Ñ•áÑÉÕµ•¹ÑÌ¡M½ÕÉ•½¹™¥œ½¹™¥œ¤€ôø(€€€€¡½¹™¥œ¹‘½­•É½¹Ñ•áĞ€üü€œœ¤¹¥ÍµÁÑä€ü½¹ÍĞ€ñMÑÉ¥¹œùmt€è€ñMÑÉ¥¹œùlœ´µ½¹Ñ•áĞœ°½¹™¥œ¹‘½­•É½¹Ñ•áĞ…tì()ÕÑÕÉ”ñÙ½¥ø•áÑÉ…ÑQ…ÉM…™•±ä¡1¥ÍĞñ¥¹Ğø‰åÑ•Ì°¥É•Ñ½Éä‘•ÍÑ¥¹…Ñ¥½¸¤…Íå¹Œì(€™¥¹…°…É¡¥Ù”€ôQ…É•½‘•È ¤¹‘•½‘•	åÑ•Ì¡‰åÑ•Ì¤ì(€™¥¹…°É½½Ğ€ô‘•ÍÑ¥¹…Ñ¥½¸¹…‰Í½±ÕÑ”¹Á…Ñ ì(€™½È€¡™¥¹…°•¹ÑÉä¥¸…É¡¥Ù”¤ì(€€€™¥¹…°¹½Éµ…±¥é•€ô¹½Éµ…±¥é•I•±…Ñ¥Ù•A…Ñ ¡•¹ÑÉä¹¹…µ”¤ì(€€€¥˜€¡¹½Éµ…±¥é•¹¥ÍµÁÑä¤½¹Ñ¥¹Õ”ì(€€€™¥¹…°½ÕÑÁÕÑA…Ñ €ôÀ¹©½¥¹±° ñMÑÉ¥¹œùmÉ½½Ğ°€¸¸¹¹½Éµ…±¥é•¹ÍÁ±¥Ğ œ¼œ¥t¤ì(€€€¥˜€ …À¹¥Í]¥Ñ¡¥¸¡É½½Ğ°½ÕÑÁÕÑA…Ñ ¤¤ì(€€€€€Ñ¡É½Ü½Éµ…Ñá•ÁÑ¥½¸ É¡¥Ù”•¹ÑÉä•Í…Á•Ì‘•ÍÑ¥¹…Ñ¥½¸è€‘í•¹ÑÉä¹¹…µ•ôœ¤ì(€€€ô(€€€¥˜€¡•¹ÑÉä¹¥Í¥É•Ñ½Éä¤ì(€€€€€…İ…¥Ğ¥É•Ñ½Éä¡½ÕÑÁÕÑA…Ñ ¤¹É•…Ñ”¡É•ÕÉÍ¥Ù”èÑÉÕ”¤ì(€€€ô•±Í”¥˜€¡•¹ÑÉä¹¥Í¥±”¤ì(€€€€€™¥¹…°½¹Ñ•¹Ğ€ô•¹ÑÉä¹É•…‘	åÑ•Ì ¤ì(€€€€€¥˜€¡½¹Ñ•¹Ğ€ôô¹Õ±°¤ì(€€€€€€€Ñ¡É½Ü½Éµ…Ñá•ÁÑ¥½¸ É¡¥Ù”™¥±”¡…Ì¹¼É•…‘…‰±”½¹Ñ•¹Ğè€‘í•¹ÑÉä¹¹…µ•ôœ¤ì(€€€€€ô(€€€€€…İ…¥Ğ¥±”¡½ÕÑÁÕÑA…Ñ ¤¹Á…É•¹Ğ¹É•…Ñ”¡É•ÕÉÍ¥Ù”èÑÉÕ”¤ì(€€€€€…İ…¥Ğ¥±”¡½ÕÑÁÕÑA…Ñ ¤¹İÉ¥Ñ•Í	åÑ•Ì¡½¹Ñ•¹Ğ°™±ÕÍ èÑÉÕ”¤ì(€€€ô(€ô)ô()±…ÍÌ½­•É%µ…•M½ÕÉ•AÉ½Ù¥‘•È¥µÁ±•µ•¹ÑÌM½ÕÉ•AÉ½Ù¥‘•Èì(€½­•É%µ…•M½ÕÉ•AÉ½Ù¥‘•È¡Ñ¡¥Ì¹ÉÕ¹¹•È¤ì((€™¥¹…°½µµ…¹‘IÕ¹¹•ÈÉÕ¹¹•Èì((€½Ù•ÉÉ¥‘”(€M½ÕÉ•QåÁ”•ĞÑåÁ”€ôøM½ÕÉ•QåÁ”¹‘½­•É%µ…”ì((€½Ù•ÉÉ¥‘”(€ÕÑÕÉ”ñAÉ•Á…É•‘M½ÕÉ”øÁÉ•Á…É”¡M½ÕÉ•½¹™¥œ½¹™¥œ¤…Íå¹Œì(€€€™¥¹…°É•…Ñ•ÉÕµ•¹ÑÌ€ô€ñMÑÉ¥¹œùl(€€€€€€¸¸¹‘½­•É½¹Ñ•áÑÉÕµ•¹ÑÌ¡½¹™¥œ¤°(€€€€€€É•…Ñ”œ°(€€€€€½¹™¥œ¹¥µ…”„°(€€€tì(€€€™¥¹…°É•…Ñ”€ô…İ…¥ĞÉÕ¹¹•È¹ÉÕ¸ ‘½­•Èœ°É•…Ñ•ÉÕµ•¹ÑÌ°Ñ¥µ•½ÕĞè½¹ÍĞÕÉ…Ñ¥½¸¡µ¥¹ÕÑ•Ìè€ÄÀ¤¤ì(€€€¥˜€¡É•…Ñ”¹•á¥Ñ½‘”€„ô€À¤ì(€€€€€Ñ¡É½ÜAÉ½•ÍÍá•ÁÑ¥½¸ ‘½­•Èœ°É•…Ñ•ÉÕµ•¹ÑÌ°É•…Ñ”¹ÍÑ‘•ÉÉQ•áĞ°É•…Ñ”¹•á¥Ñ½‘”¤ì(€€€ô(€€€™¥¹…°½¹Ñ…¥¹•É%€ôÉ•…Ñ”¹ÍÑ‘½ÕÑQ•áĞ¹ÑÉ¥´ ¤ì(€€€¥˜€¡½¹Ñ…¥¹•É%¹¥ÍµÁÑä¤ì(€€€€€Ñ¡É½ÜMÑ…Ñ•ÉÉ½È ½­•ÈÉ•…Ñ”É•ÑÕÉ¹•…¸•µÁÑä½¹Ñ…¥¹•È%¸œ¤ì(€€€ô(€€€™¥¹…°Ñ•µÀ€ô…İ…¥Ğ¥É•Ñ½Éä¹ÍåÍÑ•µQ•µÀ¹É•…Ñ•Q•µÀ •¹ÑÉ„µ¥µ…”´œ¤ì(€€€ÕÑÕÉ”ñÙ½¥øÉ•µ½Ù•½¹Ñ…¥¹•È ¤…Íå¹Œì(€€€€€…İ…¥ĞÉÕ¹¹•È¹ÉÕ¸ (€€€€€€€€‘½­•Èœ°(€€€€€€€€ñMÑÉ¥¹œùl¸¸¹‘½­•É½¹Ñ•áÑÉÕµ•¹ÑÌ¡½¹™¥œ¤°€É´œ°€œµ˜œ°½¹Ñ…¥¹•É%‘t°(€€€€€€¤ì(€€€ô((€€€ÑÉäì(€€€€€™¥¹…°½ÁåÉÕµ•¹ÑÌ€ô€ñMÑÉ¥¹œùl(€€€€€€€€¸¸¹‘½­•É½¹Ñ•áÑÉÕµ•¹ÑÌ¡½¹™¥œ¤°(€€€€€€€€Àœ°(€€€€€€€€œ‘½¹Ñ…¥¹•É%è‘í½¹™¥œ¹É½½Ñô¼¸œ°(€€€€€€€Ñ•µÀ¹Á…Ñ °(€€€€€tì(€€€€€™¥¹…°½Áä€ô…İ…¥ĞÉÕ¹¹•È¹ÉÕ¸ ‘½­•Èœ°½ÁåÉÕµ•¹ÑÌ°Ñ¥µ•½ÕĞè½¹ÍĞÕÉ…Ñ¥½¸¡µ¥¹ÕÑ•Ìè€ÌÀ¤¤ì(€€€€€¥˜€¡½Áä¹•á¥Ñ½‘”€„ô€À¤ì(€€€€€€€Ñ¡É½ÜAÉ½•ÍÍá•ÁÑ¥½¸ ‘½­•Èœ°½ÁåÉÕµ•¹ÑÌ°½Áä¹ÍÑ‘•ÉÉQ•áĞ°½Áä¹•á¥Ñ½‘”¤ì(€€€€€ô(€€€€€É•ÑÕÉ¸AÉ•Á…É•‘M½ÕÉ” (€€€€€€€‘¥É•Ñ½ÉäèÑ•µÀ°(€€€€€€€µ•Ñ…‘…Ñ„è€ñMÑÉ¥¹œ°=‰©•Ğüùì(€€€€€€€€€€ÑåÁ”œèÑåÁ”¹İ¥É•9…µ”°(€€€€€€€€€€¥µ…”œè½¹™¥œ¹¥µ…”°(€€€€€€€€€€É½½Ğœè½¹™¥œ¹É½½Ğ°(€€€€€€€€€¥˜€¡½¹™¥œ¹‘½­•É½¹Ñ•áĞ€„ô¹Õ±°¤€‘½­•É½¹Ñ•áĞœè½¹™¥œ¹‘½­•É½¹Ñ•áĞ°(€€€€€€€ô°(€€€€€€€‘¥ÍÁ½Í”è€ ¤…Íå¹Œì(€€€€€€€€€…İ…¥ĞÉ•µ½Ù•½¹Ñ…¥¹•È ¤ì(€€€€€€€€€¥˜€¡…İ…¥ĞÑ•µÀ¹•á¥ÍÑÌ ¤¤…İ…¥ĞÑ•µÀ¹‘•±•Ñ”¡É•ÕÉÍ¥Ù”èÑÉÕ”¤ì(€€€€€€€ô°(€€€€€€¤ì(€€€ô…Ñ €¡|¤ì(€€€€€…İ…¥ĞÉ•µ½Ù•½¹Ñ…¥¹•È ¤ì(€€€€€¥˜€¡…İ…¥ĞÑ•µÀ¹•á¥ÍÑÌ ¤¤…İ…¥ĞÑ•µÀ¹‘•±•Ñ”¡É•ÕÉÍ¥Ù”èÑÉÕ”¤ì(€€€€€É•Ñ¡É½Üì(€€€ô(€ô)ô()±…ÍÌM½ÕÉ•I•¥ÍÑÉäì(€M½ÕÉ•I•¥ÍÑÉä¡í½µµ…¹‘IÕ¹¹•ÈÉÕ¹¹•È€ô½¹ÍĞMåÍÑ•µ½µµ…¹‘IÕ¹¹•È ¥ô¤(€€€€€€è}ÁÉ½Ù¥‘•ÉÌ€ô€ñM½ÕÉ•QåÁ”°M½ÕÉ•AÉ½Ù¥‘•Èùì(€€€€€€€€€M½ÕÉ•QåÁ”¹±½…°è½¹ÍĞ1½…±M½ÕÉ•AÉ½Ù¥‘•È ¤°(€€€€€€€€€M½ÕÉ•QåÁ”¹ÍÍ èÉ¡¥Ù•M½ÕÉ•AÉ½Ù¥‘•È¡ÑåÁ”èM½ÕÉ•QåÁ”¹ÍÍ °ÉÕ¹¹•ÈèÉÕ¹¹•È¤°(€€€€€€€€€M½ÕÉ•QåÁ”¹‘½­•É½¹Ñ…¥¹•ÈèÉ¡¥Ù•M½ÕÉ•AÉ½Ù¥‘•È¡ÑåÁ”èM½ÕÉ•QåÁ”¹‘½­•É½¹Ñ…¥¹•È°ÉÕ¹¹•ÈèÉÕ¹¹•È¤°(€€€€€€€€€M½ÕÉ•QåÁ”¹‘½­•É%µ…”è½­•É%µ…•M½ÕÉ•AÉ½Ù¥‘•È¡ÉÕ¹¹•È¤°(€€€€€€€€€M½ÕÉ•QåÁ”¹‘½­•É½µÁ½Í”èÉ¡¥Ù•M½ÕÉ•AÉ½Ù¥‘•È¡ÑåÁ”èM½ÕÉ•QåÁ”¹‘½­•É½µÁ½Í”°ÉÕ¹¹•ÈèÉÕ¹¹•È¤°(€€€€€€€ôì((€™¥¹…°5…ÀñM½ÕÉ•QåÁ”°M½ÕÉ•AÉ½Ù¥‘•Èø}ÁÉ½Ù¥‘•ÉÌì((€M½ÕÉ•AÉ½Ù¥‘•ÈÁÉ½Ù¥‘•È¡M½ÕÉ•QåÁ”ÑåÁ”¤€ôø}ÁÉ½Ù¥‘•ÉÍmÑåÁ•t„ì)ô
