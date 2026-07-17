@@ -1,0 +1,30 @@
+name: Capture analyzer diagnostics
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    if: github.head_ref == 'feature/ssh-terminal-ux'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ssh-terminal-ux
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - name: Capture analyzer output
+        run: dart analyze > .github/analyze-output.txt 2>&1 || true
+      - name: Commit diagnostics
+        run: |
+          git config user.name "Centra CI"
+          git config user.email "ci@centra.local"
+          git add .github/analyze-output.txt
+          git commit -m "Capture analyzer diagnostics" || exit 0
+          git push origin HEAD:feature/ssh-terminal-ux
