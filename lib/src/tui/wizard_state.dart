@@ -26,7 +26,7 @@ class WizardDraft {
   String user = '';
   String port = '22';
   String identityFile = '';
-  SshAuthMethod sshAuthMethod = SshAuthMethod.privateKey;
+  SshAuthMethod sshAuthMethod = SshAuthMethod.password;
   SshHostKeyPolicy sshHostKeyPolicy = SshHostKeyPolicy.trustOnFirstUse;
   String hostKeyType = '';
   String hostKeyFingerprint = '';
