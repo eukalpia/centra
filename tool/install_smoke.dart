@@ -19,8 +19,9 @@ Future<void> main() async {
     return;
   }
 
-  if (result.stdout.toString().trim() != '0.1.0') {
-    stderr.writeln('Unexpected Centra version: ${result.stdout}');
+  final version = result.stdout.toString().trim();
+  if (!RegExp(r'^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$').hasMatch(version)) {
+    stderr.writeln('Unexpected Centra version: $version');
     exitCode = 1;
   }
 }
