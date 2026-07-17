@@ -29,16 +29,13 @@ void main() {
         'worker-1',
       ]);
       expect(resources.first.reference, 'abc123');
-      expect(
-        runner.commands.single.arguments,
-        <String>[
-          '--context',
-          'production',
-          'ps',
-          '--format',
-          '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}',
-        ],
-      );
+      expect(runner.commands.single.arguments, <String>[
+        '--context',
+        'production',
+        'ps',
+        '--format',
+        '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}',
+      ]);
     });
 
     test('lists tagged images and keeps untagged images addressable', () async {
@@ -64,37 +61,30 @@ void main() {
       final appArchive = Archive()
         ..add(ArchiveFile.string('lib/main.dart', 'void main() {}'))
         ..add(ArchiveFile.string('pubspec.yaml', 'name: app'));
-      final runner = FakeCommandRunner(handler: (executable, arguments) async {
-        final source = arguments[arguments.indexOf('cp') + 1];
-        final archive = source.contains(':/app/.') ? appArchive : rootArchive;
-        return ProcessResultData(
-          exitCode: 0,
-          stdoutBytes: Uint8List.fromList(TarEncoder().encodeBytes(archive)),
-          stderrBytes: Uint8List(0),
-        );
-      });
+      final runner = FakeCommandRunner(
+        handler: (executable, arguments) async {
+          final source = arguments[arguments.indexOf('cp') + 1];
+          final archive = source.contains(':/app/.') ? appArchive : rootArchive;
+          return ProcessResultData(
+            exitCode: 0,
+            stdoutBytes: Uint8List.fromList(TarEncoder().encodeBytes(archive)),
+            stderrBytes: Uint8List(0),
+          );
+        },
+      );
       final service = DockerBrowserService(runner: runner);
       const resource = DockerResource(
         reference: 'abc123',
         title: 'api-1',
         subtitle: 'example/api:1',
       );
-      final session = await service.open(
-        SourceType.dockerContainer,
-        resource,
-      );
+      final session = await service.open(SourceType.dockerContainer, resource);
 
       final root = await session.listDirectories('/');
       final app = await session.listDirectories('/app');
 
-      expect(
-        root.entries.map((entry) => entry.name),
-        <String>['app', 'usr'],
-      );
-      expect(
-        app.entries.map((entry) => entry.name),
-        <String>['..', 'lib'],
-      );
+      expect(root.entries.map((entry) => entry.name), <String>['app', 'usr']);
+      expect(app.entries.map((entry) => entry.name), <String>['..', 'lib']);
       expect(app.parentPath, '/');
       expect(
         runner.commands.every((command) => !command.arguments.contains('sh')),
@@ -104,17 +94,22 @@ void main() {
 
     test('temporary image container is removed when browsing closes', () async {
       final archive = Archive()..add(ArchiveFile.string('app/main', 'binary'));
-      final runner = FakeCommandRunner(handler: (executable, arguments) async {
-        if (arguments.contains('create')) return textResult('temporary-123\n');
-        if (arguments.contains('cp')) {
-          return ProcessResultData(
-            exitCode: 0,
-            stdoutBytes: Uint8List.fromList(TarEncoder().encodeBytes(archive)),
-            stderrBytes: Uint8List(0),
-          );
-        }
-        return textResult('');
-      });
+      final runner = FakeCommandRunner(
+        handler: (executable, arguments) async {
+          if (arguments.contains('create'))
+            return textResult('temporary-123\n');
+          if (arguments.contains('cp')) {
+            return ProcessResultData(
+              exitCode: 0,
+              stdoutBytes: Uint8List.fromList(
+                TarEncoder().encodeBytes(archive),
+              ),
+              stderrBytes: Uint8List(0),
+            );
+          }
+          return textResult('');
+        },
+      );
       final service = DockerBrowserService(runner: runner);
       const resource = DockerResource(
         reference: 'example/api:1',
@@ -140,13 +135,15 @@ void main() {
 
     test('compose service is created only when no container exists', () async {
       var psCalls = 0;
-      final runner = FakeCommandRunner(handler: (executable, arguments) async {
-        if (arguments.contains('ps')) {
-          psCalls++;
-          return textResult(psCalls == 1 ? '' : 'compose-container\n');
-        }
-        return textResult('');
-      });
+      final runner = FakeCommandRunner(
+        handler: (executable, arguments) async {
+          if (arguments.contains('ps')) {
+            psCalls++;
+            return textResult(psCalls == 1 ? '' : 'compose-container\n');
+          }
+          return textResult('');
+        },
+      );
       final service = DockerBrowserService(runner: runner);
       const resource = DockerResource(
         reference: 'api',

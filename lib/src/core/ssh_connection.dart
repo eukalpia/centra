@@ -7,10 +7,7 @@ import 'package:path/path.dart' as p;
 import 'profile.dart';
 
 class SshConnectionSecrets {
-  const SshConnectionSecrets({
-    this.password,
-    this.keyPassphrase,
-  });
+  const SshConnectionSecrets({this.password, this.keyPassphrase});
 
   final String? password;
   final String? keyPassphrase;
@@ -94,8 +91,8 @@ class SshConnection {
     required this.config,
     required this.hostKeyType,
     required this.hostKeyFingerprint,
-  })  : _client = client,
-        _sftp = sftp;
+  }) : _client = client,
+       _sftp = sftp;
 
   final SSHClient _client;
   final SftpClient _sftp;
@@ -129,8 +126,7 @@ class SshConnection {
         try {
           directory = (await _sftp.stat(
             p.posix.join(normalized, name),
-          ))
-              .isDirectory;
+          )).isDirectory;
         } on Object {
           directory = false;
         }
@@ -188,9 +184,7 @@ class SshConnection {
       for (final name in names) {
         if (name.filename == '.' || name.filename == '..') continue;
         if (!_safeRemoteName(name.filename)) {
-          throw FormatException(
-            'Unsafe SFTP entry name: ${name.filename}',
-          );
+          throw FormatException('Unsafe SFTP entry name: ${name.filename}');
         }
         entries++;
         if (entries > maximumEntries) {
@@ -199,8 +193,9 @@ class SshConnection {
             root,
           );
         }
-        final remotePath =
-            normalizeSshPath(p.posix.join(remoteDirectory, name.filename));
+        final remotePath = normalizeSshPath(
+          p.posix.join(remoteDirectory, name.filename),
+        );
         final relativePath = relativeDirectory.isEmpty
             ? name.filename
             : p.posix.join(relativeDirectory, name.filename);
@@ -228,11 +223,7 @@ class SshConnection {
         await Directory(p.dirname(localPath)).create(recursive: true);
         final sink = File(localPath).openWrite();
         try {
-          await _sftp.download(
-            remotePath,
-            sink,
-            closeDestination: true,
-          );
+          await _sftp.download(remotePath, sink, closeDestination: true);
         } catch (_) {
           await sink.close();
           rethrow;
@@ -284,7 +275,10 @@ class SshConnectionService {
   }) async {
     if (config.type != SourceType.ssh) {
       throw ArgumentError.value(
-          config.type, 'config.type', 'Expected SSH source.');
+        config.type,
+        'config.type',
+        'Expected SSH source.',
+      );
     }
     final validation = config.validate();
     final connectionErrors = validation
@@ -297,7 +291,8 @@ class SshConnectionService {
     final identities = await _loadIdentities(config, secrets);
     if (config.sshAuthMethod.usesPassword && !secrets.hasPassword) {
       throw const FormatException(
-          'SSH password is required for this connection.');
+        'SSH password is required for this connection.',
+      );
     }
 
     String? observedKeyType;
@@ -313,13 +308,14 @@ class SshConnectionService {
         socket,
         username: config.user!,
         identities: identities.isEmpty ? null : identities,
-        onPasswordRequest:
-            config.sshAuthMethod.usesPassword ? () => secrets.password : null,
+        onPasswordRequest: config.sshAuthMethod.usesPassword
+            ? () => secrets.password
+            : null,
         onUserInfoRequest: config.sshAuthMethod.usesPassword
             ? (request) => List<String>.filled(
-                  request.prompts.length,
-                  secrets.password ?? '',
-                )
+                request.prompts.length,
+                secrets.password ?? '',
+              )
             : null,
         onVerifyHostKey: (type, fingerprintBytes) {
           final fingerprint = utf8.decode(fingerprintBytes);
@@ -366,7 +362,9 @@ class SshConnectionService {
     final file = File(identityPath);
     if (!await file.exists()) {
       throw FileSystemException(
-          'SSH private key file does not exist.', identityPath);
+        'SSH private key file does not exist.',
+        identityPath,
+      );
     }
     final pem = await file.readAsString();
     if (SSHKeyPair.isEncryptedPem(pem) && !secrets.hasKeyPassphrase) {
@@ -430,7 +428,8 @@ String _safeLocalPath(String root, String relative) {
   final output = p.joinAll(<String>[root, ...segments]);
   if (!p.isWithin(root, output)) {
     throw FormatException(
-        'Remote snapshot path escapes destination: $relative');
+      'Remote snapshot path escapes destination: $relative',
+    );
   }
   return output;
 }

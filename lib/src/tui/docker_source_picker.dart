@@ -363,39 +363,44 @@ class _DockerSourcePickerState extends State<DockerSourcePicker> {
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: resources.asMap().entries.map((entry) {
-            final focused = selected == entry.key;
-            return GestureDetector(
-              onTap: () {
-                setState(() => selected = entry.key);
-                _openResource(entry.value);
-              },
-              child: Container(
-                color: focused ? _surfaceStrong : null,
-                padding: const EdgeInsets.symmetric(horizontal: 1),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Text(
-                      '${focused ? '›' : ' '} ${entry.value.title}',
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: focused ? _accent : _text,
-                        fontWeight:
-                            focused ? FontWeight.bold : FontWeight.normal,
-                      ),
+          children: resources
+              .asMap()
+              .entries
+              .map((entry) {
+                final focused = selected == entry.key;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => selected = entry.key);
+                    _openResource(entry.value);
+                  },
+                  child: Container(
+                    color: focused ? _surfaceStrong : null,
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          '${focused ? '›' : ' '} ${entry.value.title}',
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: focused ? _accent : _text,
+                            fontWeight: focused
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        if (entry.value.subtitle.isNotEmpty)
+                          Text(
+                            '  ${entry.value.subtitle}',
+                            maxLines: 1,
+                            style: const TextStyle(color: _muted),
+                          ),
+                      ],
                     ),
-                    if (entry.value.subtitle.isNotEmpty)
-                      Text(
-                        '  ${entry.value.subtitle}',
-                        maxLines: 1,
-                        style: const TextStyle(color: _muted),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(growable: false),
+                  ),
+                );
+              })
+              .toList(growable: false),
         ),
       ),
     );
@@ -420,27 +425,33 @@ class _DockerSourcePickerState extends State<DockerSourcePicker> {
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: entries.asMap().entries.map((entry) {
-            final focused = selected == entry.key;
-            return GestureDetector(
-              onTap: () {
-                setState(() => selected = entry.key);
-                _loadDirectory(entry.value.path);
-              },
-              child: Container(
-                color: focused ? _surfaceStrong : null,
-                padding: const EdgeInsets.symmetric(horizontal: 1),
-                child: Text(
-                  '${focused ? '›' : ' '} ${entry.value.isParent ? '↰' : '▸'} ${entry.value.name}',
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: focused ? _accent : _text,
-                    fontWeight: focused ? FontWeight.bold : FontWeight.normal,
+          children: entries
+              .asMap()
+              .entries
+              .map((entry) {
+                final focused = selected == entry.key;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => selected = entry.key);
+                    _loadDirectory(entry.value.path);
+                  },
+                  child: Container(
+                    color: focused ? _surfaceStrong : null,
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: Text(
+                      '${focused ? '›' : ' '} ${entry.value.isParent ? '↰' : '▸'} ${entry.value.name}',
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: focused ? _accent : _text,
+                        fontWeight: focused
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          }).toList(growable: false),
+                );
+              })
+              .toList(growable: false),
         ),
       ),
     );
@@ -526,12 +537,12 @@ class DockerPickerStrings {
       '${value('chooseResource')} ${_typeName(type)}';
 
   String _typeName(SourceType type) => switch (type) {
-        SourceType.dockerContainer => value('container'),
-        SourceType.dockerImage => value('image'),
-        SourceType.dockerCompose => value('service'),
-        SourceType.local => value('folder'),
-        SourceType.ssh => value('remote'),
-      };
+    SourceType.dockerContainer => value('container'),
+    SourceType.dockerImage => value('image'),
+    SourceType.dockerCompose => value('service'),
+    SourceType.local => value('folder'),
+    SourceType.ssh => value('remote'),
+  };
 
   static const _translations = <String, Map<String, String>>{
     'en': <String, String>{

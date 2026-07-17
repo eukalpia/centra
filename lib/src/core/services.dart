@@ -19,8 +19,11 @@ class ManifestCodec {
   Future<CentraManifest> read(File file) async =>
       decode(await file.readAsString());
 
-  Future<void> write(File file, CentraManifest manifest,
-      {bool pretty = true}) async {
+  Future<void> write(
+    File file,
+    CentraManifest manifest, {
+    bool pretty = true,
+  }) async {
     await const AtomicFileWriter().writeText(
       file,
       '${pretty ? manifest.encodePretty() : manifest.encodeCanonical()}\n',
@@ -41,10 +44,7 @@ class OutputArtifact {
 }
 
 class ScanArtifacts {
-  const ScanArtifacts({
-    required this.artifacts,
-    this.archive,
-  });
+  const ScanArtifacts({required this.artifacts, this.archive});
 
   final List<OutputArtifact> artifacts;
   final OutputArtifact? archive;
@@ -52,7 +52,7 @@ class ScanArtifacts {
 
 class OutputService {
   OutputService({AtomicFileWriter writer = const AtomicFileWriter()})
-      : _writer = writer;
+    : _writer = writer;
 
   final AtomicFileWriter _writer;
 
@@ -64,29 +64,39 @@ class OutputService {
     final directory = Directory(profile.output.directory).absolute;
     await directory.create(recursive: true);
     final baseName = _safeBaseName(
-        '${profile.id}-${manifest.generatedAt.toUtc().toIso8601String()}');
+      '${profile.id}-${manifest.generatedAt.toUtc().toIso8601String()}',
+    );
     final artifacts = <OutputArtifact>[];
 
     if (profile.output.writeCanonicalJson) {
       final file = File(p.join(directory.path, '$baseName.centra.json'));
       final content = '${manifest.encodePretty()}\n';
       await _writer.writeText(file, content);
-      artifacts.add(OutputArtifact(
-          kind: 'manifest', file: file, bytes: utf8.encode(content).length));
+      artifacts.add(
+        OutputArtifact(
+          kind: 'manifest',
+          file: file,
+          bytes: utf8.encode(content).length,
+        ),
+      );
     }
 
     if (profile.output.writeCompatibilityText) {
       final multiple = manifest.algorithms.length > 1;
       for (final algorithm in manifest.algorithms) {
-        final fileName =
-            multiple ? 'hash_values.${algorithm.id}.txt' : 'hash_values.txt';
+        final fileName = multiple
+            ? 'hash_values.${algorithm.id}.txt'
+            : 'hash_values.txt';
         final file = File(p.join(directory.path, fileName));
         final content = _compatibilityText(manifest, algorithm.id);
         await _writer.writeText(file, content);
-        artifacts.add(OutputArtifact(
+        artifacts.add(
+          OutputArtifact(
             kind: 'compatibility:${algorithm.id}',
             file: file,
-            bytes: utf8.encode(content).length));
+            bytes: utf8.encode(content).length,
+          ),
+        );
       }
     }
 
@@ -94,8 +104,13 @@ class OutputService {
       final file = File(p.join(directory.path, '$baseName.report.json'));
       final content = '${prettyJson(_report(profile, manifest))}\n';
       await _writer.writeText(file, content);
-      artifacts.add(OutputArtifact(
-          kind: 'report', file: file, bytes: utf8.encode(content).length));
+      artifacts.add(
+        OutputArtifact(
+          kind: 'report',
+          file: file,
+          bytes: utf8.encode(content).length,
+        ),
+      );
     }
 
     OutputArtifact? zipArtifact;
@@ -106,14 +121,21 @@ class OutputService {
       }
       final archive = Archive();
       for (final artifact in artifacts) {
-        archive.add(ArchiveFile.bytes(
-            p.basename(artifact.file.path), await artifact.file.readAsBytes()));
+        archive.add(
+          ArchiveFile.bytes(
+            p.basename(artifact.file.path),
+            await artifact.file.readAsBytes(),
+          ),
+        );
       }
       final zipBytes = ZipEncoder(password: zipPassword).encodeBytes(archive);
       final zipFile = File(p.join(directory.path, '$baseName.zip'));
       await _writer.writeBytes(zipFile, zipBytes);
-      zipArtifact =
-          OutputArtifact(kind: 'zip', file: zipFile, bytes: zipBytes.length);
+      zipArtifact = OutputArtifact(
+        kind: 'zip',
+        file: zipFile,
+        bytes: zipBytes.length,
+      );
     }
     return ScanArtifacts(artifacts: artifacts, archive: zipArtifact);
   }
@@ -132,30 +154,33 @@ class OutputService {
   }
 
   Map<String, Object?> _report(
-          CentraProfile profile, CentraManifest manifest) =>
-      <String, Object?>{
-        'schema': 'centra.report.v1',
-        'manifestId': manifest.id,
-        'profile': <String, Object?>{'id': profile.id, 'name': profile.name},
-        'generatedAt': manifest.generatedAt.toUtc().toIso8601String(),
-        'source': manifest.source,
-        'summary': <String, Object?>{
-          'files': manifest.files.length,
-          'bytes': manifest.totalBytes,
-          'readErrors': manifest.errors.length,
-        },
-        'algorithms': manifest.algorithms
-            .map((algorithm) => <String, Object?>{
-                  ...algorithm.toJson(),
-                  'securityWarningRequired': algorithm.warning != null,
-                })
-            .toList(growable: false),
-        'policy': <String, Object?>{
-          'includes': profile.includePatterns,
-          'excludes': profile.excludePatterns,
-          'symlinkPolicy': profile.symlinkPolicy.wireName,
-        },
-      };
+    CentraProfile profile,
+    CentraManifest manifest,
+  ) => <String, Object?>{
+    'schema': 'centra.report.v1',
+    'manifestId': manifest.id,
+    'profile': <String, Object?>{'id': profile.id, 'name': profile.name},
+    'generatedAt': manifest.generatedAt.toUtc().toIso8601String(),
+    'source': manifest.source,
+    'summary': <String, Object?>{
+      'files': manifest.files.length,
+      'bytes': manifest.totalBytes,
+      'readErrors': manifest.errors.length,
+    },
+    'algorithms': manifest.algorithms
+        .map(
+          (algorithm) => <String, Object?>{
+            ...algorithm.toJson(),
+            'securityWarningRequired': algorithm.warning != null,
+          },
+        )
+        .toList(growable: false),
+    'policy': <String, Object?>{
+      'includes': profile.includePatterns,
+      'excludes': profile.excludePatterns,
+      'symlinkPolicy': profile.symlinkPolicy.wireName,
+    },
+  };
 
   String _safeBaseName(String value) => value
       .replaceAll(':', '-')
@@ -177,21 +202,21 @@ class SigningKeyDocument {
   final DateTime createdAt;
 
   Map<String, Object?> toPrivateJson() => <String, Object?>{
-        'schema': 'centra.ed25519.private.v1',
-        'id': id,
-        'algorithm': 'Ed25519',
-        'privateKey': base64Encode(privateKey),
-        'publicKey': base64Encode(publicKey),
-        'createdAt': createdAt.toUtc().toIso8601String(),
-      };
+    'schema': 'centra.ed25519.private.v1',
+    'id': id,
+    'algorithm': 'Ed25519',
+    'privateKey': base64Encode(privateKey),
+    'publicKey': base64Encode(publicKey),
+    'createdAt': createdAt.toUtc().toIso8601String(),
+  };
 
   Map<String, Object?> toPublicJson() => <String, Object?>{
-        'schema': 'centra.ed25519.public.v1',
-        'id': id,
-        'algorithm': 'Ed25519',
-        'publicKey': base64Encode(publicKey),
-        'createdAt': createdAt.toUtc().toIso8601String(),
-      };
+    'schema': 'centra.ed25519.public.v1',
+    'id': id,
+    'algorithm': 'Ed25519',
+    'publicKey': base64Encode(publicKey),
+    'createdAt': createdAt.toUtc().toIso8601String(),
+  };
 }
 
 class ManifestSignatureDocument {
@@ -210,14 +235,14 @@ class ManifestSignatureDocument {
   final DateTime signedAt;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'schema': 'centra.signature.v1',
-        'algorithm': 'Ed25519',
-        'keyId': keyId,
-        'manifestId': manifestId,
-        'signature': base64Encode(signature),
-        'publicKey': base64Encode(publicKey),
-        'signedAt': signedAt.toUtc().toIso8601String(),
-      };
+    'schema': 'centra.signature.v1',
+    'algorithm': 'Ed25519',
+    'keyId': keyId,
+    'manifestId': manifestId,
+    'signature': base64Encode(signature),
+    'publicKey': base64Encode(publicKey),
+    'signedAt': signedAt.toUtc().toIso8601String(),
+  };
 
   factory ManifestSignatureDocument.fromJson(Map<String, Object?> json) {
     if (json['schema'] != 'centra.signature.v1' ||
@@ -239,9 +264,9 @@ class SignatureService {
     Ed25519? algorithm,
     AtomicFileWriter writer = const AtomicFileWriter(),
     DateTime Function()? clock,
-  })  : _algorithm = algorithm ?? Ed25519(),
-        _writer = writer,
-        _clock = clock ?? DateTime.now;
+  }) : _algorithm = algorithm ?? Ed25519(),
+       _writer = writer,
+       _clock = clock ?? DateTime.now;
 
   final Ed25519 _algorithm;
   final AtomicFileWriter _writer;
@@ -268,23 +293,33 @@ class SignatureService {
   }
 
   Future<void> writeKeyPair(
-      SigningKeyDocument key, File privateFile, File publicFile) async {
+    SigningKeyDocument key,
+    File privateFile,
+    File publicFile,
+  ) async {
     await _writer.writeText(
-        privateFile, '${prettyJson(key.toPrivateJson())}\n');
+      privateFile,
+      '${prettyJson(key.toPrivateJson())}\n',
+    );
     await _writer.writeText(publicFile, '${prettyJson(key.toPublicJson())}\n');
     if (!Platform.isWindows) {
-      final result = await Process.run(
-          'chmod', <String>['600', privateFile.path],
-          runInShell: false);
+      final result = await Process.run('chmod', <String>[
+        '600',
+        privateFile.path,
+      ], runInShell: false);
       if (result.exitCode != 0) {
         throw FileSystemException(
-            'Unable to restrict private key permissions.', privateFile.path);
+          'Unable to restrict private key permissions.',
+          privateFile.path,
+        );
       }
     }
   }
 
   Future<ManifestSignatureDocument> sign(
-      CentraManifest manifest, SigningKeyDocument key) async {
+    CentraManifest manifest,
+    SigningKeyDocument key,
+  ) async {
     final publicKey = SimplePublicKey(key.publicKey, type: KeyPairType.ed25519);
     final keyPair = SimpleKeyPairData(
       key.privateKey,
@@ -313,14 +348,20 @@ class SignatureService {
   }
 
   Future<bool> verify(
-      CentraManifest manifest, ManifestSignatureDocument document,
-      {List<int>? publicKey}) async {
+    CentraManifest manifest,
+    ManifestSignatureDocument document, {
+    List<int>? publicKey,
+  }) async {
     if (document.manifestId != manifest.id) return false;
-    final key = SimplePublicKey(publicKey ?? document.publicKey,
-        type: KeyPairType.ed25519);
+    final key = SimplePublicKey(
+      publicKey ?? document.publicKey,
+      type: KeyPairType.ed25519,
+    );
     final signature = Signature(document.signature, publicKey: key);
-    return _algorithm.verify(utf8.encode(manifest.encodeCanonical()),
-        signature: signature);
+    return _algorithm.verify(
+      utf8.encode(manifest.encodeCanonical()),
+      signature: signature,
+    );
   }
 
   SigningKeyDocument decodePrivateKey(String source) {

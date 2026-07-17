@@ -52,8 +52,9 @@ void main() {
     });
 
     test('safe tar extraction rejects parent traversal', () async {
-      final directory =
-          await Directory.systemTemp.createTemp('centra-tar-test-');
+      final directory = await Directory.systemTemp.createTemp(
+        'centra-tar-test-',
+      );
       final archive = Archive()
         ..add(ArchiveFile.string('../escape.txt', 'bad'));
       try {
@@ -66,36 +67,41 @@ void main() {
       }
     });
 
-    test('Docker image provider removes its temporary container on failure',
-        () async {
-      final runner = FakeCommandRunner(handler: (executable, arguments) async {
-        if (arguments.contains('create')) return textResult('container-123\n');
-        if (arguments.contains('cp')) {
-          return textResult('', stderr: 'copy failed', exitCode: 1);
-        }
-        return textResult('');
-      });
-      final provider = DockerImageSourceProvider(runner);
-      await expectLater(
-        provider.prepare(
-          const SourceConfig(
-            type: SourceType.dockerImage,
-            root: '/app',
-            image: 'example/app:1',
+    test(
+      'Docker image provider removes its temporary container on failure',
+      () async {
+        final runner = FakeCommandRunner(
+          handler: (executable, arguments) async {
+            if (arguments.contains('create'))
+              return textResult('container-123\n');
+            if (arguments.contains('cp')) {
+              return textResult('', stderr: 'copy failed', exitCode: 1);
+            }
+            return textResult('');
+          },
+        );
+        final provider = DockerImageSourceProvider(runner);
+        await expectLater(
+          provider.prepare(
+            const SourceConfig(
+              type: SourceType.dockerImage,
+              root: '/app',
+              image: 'example/app:1',
+            ),
           ),
-        ),
-        throwsA(isA<ProcessException>()),
-      );
-      expect(
-        runner.commands.any(
-          (command) =>
-              command.arguments.length >= 3 &&
-              command.arguments[0] == 'rm' &&
-              command.arguments[1] == '-f' &&
-              command.arguments[2] == 'container-123',
-        ),
-        isTrue,
-      );
-    });
+          throwsA(isA<ProcessException>()),
+        );
+        expect(
+          runner.commands.any(
+            (command) =>
+                command.arguments.length >= 3 &&
+                command.arguments[0] == 'rm' &&
+                command.arguments[1] == '-f' &&
+                command.arguments[2] == 'container-123',
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 }

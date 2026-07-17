@@ -69,8 +69,8 @@ class PathPolicy {
     required Iterable<String> includes,
     required Iterable<String> excludes,
     required this.includeHiddenFiles,
-  })  : includePatterns = includes.map(GlobPattern.new).toList(growable: false),
-        excludePatterns = excludes.map(GlobPattern.new).toList(growable: false);
+  }) : includePatterns = includes.map(GlobPattern.new).toList(growable: false),
+       excludePatterns = excludes.map(GlobPattern.new).toList(growable: false);
 
   final List<GlobPattern> includePatterns;
   final List<GlobPattern> excludePatterns;
@@ -83,7 +83,8 @@ class PathPolicy {
         path.split('/').any((segment) => segment.startsWith('.'))) {
       return false;
     }
-    final included = includePatterns.isEmpty ||
+    final included =
+        includePatterns.isEmpty ||
         includePatterns.any((pattern) => pattern.matches(path));
     if (!included) return false;
     return !excludePatterns.any((pattern) => pattern.matches(path));
@@ -127,12 +128,12 @@ class ProjectDetector {
       (
         kind: 'flutter',
         markers: {'pubspec.yaml', 'lib', 'android', 'ios'},
-        excludes: ['.dart_tool/**', 'build/**', '**/.flutter-plugins*']
+        excludes: ['.dart_tool/**', 'build/**', '**/.flutter-plugins*'],
       ),
       (
         kind: 'dart',
         markers: {'pubspec.yaml'},
-        excludes: ['.dart_tool/**', 'build/**']
+        excludes: ['.dart_tool/**', 'build/**'],
       ),
       (
         kind: 'node',
@@ -142,8 +143,8 @@ class ProjectDetector {
           '.next/**',
           '.turbo/**',
           'dist/**',
-          'coverage/**'
-        ]
+          'coverage/**',
+        ],
       ),
       (
         kind: 'python',
@@ -153,31 +154,31 @@ class ProjectDetector {
           'venv/**',
           '__pycache__/**',
           '**/*.pyc',
-          '.pytest_cache/**'
-        ]
+          '.pytest_cache/**',
+        ],
       ),
       (
         kind: 'elixir',
         markers: {'mix.exs'},
-        excludes: ['_build/**', 'deps/**', 'cover/**']
+        excludes: ['_build/**', 'deps/**', 'cover/**'],
       ),
       (kind: 'rust', markers: {'cargo.toml'}, excludes: ['target/**']),
       (kind: 'go', markers: {'go.mod'}, excludes: ['vendor/**']),
       (
         kind: 'java',
         markers: {'pom.xml'},
-        excludes: ['target/**', '.gradle/**', 'build/**']
+        excludes: ['target/**', '.gradle/**', 'build/**'],
       ),
       (
         kind: 'dotnet',
         markers: {'global.json'},
-        excludes: ['**/bin/**', '**/obj/**']
+        excludes: ['**/bin/**', '**/obj/**'],
       ),
       (kind: 'php', markers: {'composer.json'}, excludes: ['vendor/**']),
       (
         kind: 'ruby',
         markers: {'gemfile'},
-        excludes: ['vendor/bundle/**', '.bundle/**']
+        excludes: ['vendor/bundle/**', '.bundle/**'],
       ),
     ];
     for (final rule in rules) {
@@ -187,8 +188,11 @@ class ProjectDetector {
         return ProjectDetection(
           kind: rule.kind,
           evidence: evidence,
-          suggestedExcludes:
-              <String>{'.git/**', ..._commonSecrets, ...rule.excludes}.toList(),
+          suggestedExcludes: <String>{
+            '.git/**',
+            ..._commonSecrets,
+            ...rule.excludes,
+          }.toList(),
         );
       }
     }

@@ -26,8 +26,8 @@ class CentraStrings {
   String call(String key) =>
       _messages[locale]?[key] ?? _messages['en']![key] ?? key;
 
-  static const Map<String, Map<String, String>> _messages =
-      <String, Map<String, String>>{
+  static const Map<String, Map<String, String>>
+  _messages = <String, Map<String, String>>{
     'en': <String, String>{
       'tagline': 'File integrity and deployment verification',
       'chooseLanguage': 'Choose interface language',

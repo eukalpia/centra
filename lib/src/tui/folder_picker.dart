@@ -304,7 +304,8 @@ class FolderBrowser {
 
   static List<FolderBrowserShortcut> shortcuts(FolderPickerStrings strings) {
     final shortcuts = <FolderBrowserShortcut>[];
-    final home = Platform.environment['USERPROFILE'] ??
+    final home =
+        Platform.environment['USERPROFILE'] ??
         Platform.environment['HOME'] ??
         Platform.environment['HOMEPATH'];
     if (home != null && Directory(home).existsSync()) {
@@ -323,11 +324,14 @@ class FolderBrowser {
     }
 
     final seen = <String>{};
-    return shortcuts.where((shortcut) {
-      final key =
-          Platform.isWindows ? shortcut.path.toLowerCase() : shortcut.path;
-      return seen.add(key);
-    }).toList(growable: false);
+    return shortcuts
+        .where((shortcut) {
+          final key = Platform.isWindows
+              ? shortcut.path.toLowerCase()
+              : shortcut.path;
+          return seen.add(key);
+        })
+        .toList(growable: false);
   }
 
   static bool _samePath(String left, String right) {
@@ -572,65 +576,60 @@ class _FolderPickerState extends State<FolderPicker> {
                                 ),
                               )
                             : error != null
-                                ? Center(
-                                    child: Text(
-                                      error!,
-                                      style:
-                                          const TextStyle(color: _pickerDanger),
-                                    ),
-                                  )
-                                : entries.isEmpty
-                                    ? Center(
-                                        child: Text(
-                                          strings.empty,
-                                          style: const TextStyle(
-                                              color: _pickerMuted),
+                            ? Center(
+                                child: Text(
+                                  error!,
+                                  style: const TextStyle(color: _pickerDanger),
+                                ),
+                              )
+                            : entries.isEmpty
+                            ? Center(
+                                child: Text(
+                                  strings.empty,
+                                  style: const TextStyle(color: _pickerMuted),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: entries
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (entry) => GestureDetector(
+                                          onTap: () {
+                                            setState(
+                                              () => selected = entry.key,
+                                            );
+                                            _reload(entry.value.path);
+                                          },
+                                          child: Container(
+                                            color: selected == entry.key
+                                                ? _pickerSurfaceStrong
+                                                : null,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 1,
+                                            ),
+                                            child: Text(
+                                              '${entry.value.isParent ? '↰' : '▸'} ${entry.value.name}',
+                                              maxLines: 1,
+                                              style: TextStyle(
+                                                color: selected == entry.key
+                                                    ? _pickerAccent
+                                                    : _pickerText,
+                                                fontWeight:
+                                                    selected == entry.key
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       )
-                                    : SingleChildScrollView(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
-                                          children: entries
-                                              .asMap()
-                                              .entries
-                                              .map(
-                                                (entry) => GestureDetector(
-                                                  onTap: () {
-                                                    setState(
-                                                      () =>
-                                                          selected = entry.key,
-                                                    );
-                                                    _reload(entry.value.path);
-                                                  },
-                                                  child: Container(
-                                                    color: selected == entry.key
-                                                        ? _pickerSurfaceStrong
-                                                        : null,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 1,
-                                                    ),
-                                                    child: Text(
-                                                      '${entry.value.isParent ? '↰' : '▸'} ${entry.value.name}',
-                                                      maxLines: 1,
-                                                      style: TextStyle(
-                                                        color: selected ==
-                                                                entry.key
-                                                            ? _pickerAccent
-                                                            : _pickerText,
-                                                        fontWeight: selected ==
-                                                                entry.key
-                                                            ? FontWeight.bold
-                                                            : FontWeight.normal,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(growable: false),
-                                        ),
-                                      ),
+                                      .toList(growable: false),
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -696,17 +695,17 @@ class _FolderPickerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          color: muted ? _pickerSurfaceStrong : _pickerAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: muted ? _pickerText : _pickerBackground,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+    onTap: onTap,
+    child: Container(
+      color: muted ? _pickerSurfaceStrong : _pickerAccent,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: muted ? _pickerText : _pickerBackground,
+          fontWeight: FontWeight.bold,
         ),
-      );
+      ),
+    ),
+  );
 }

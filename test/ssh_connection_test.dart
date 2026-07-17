@@ -30,10 +30,7 @@ void main() {
         hostKeyFingerprint: 'SHA256:test-fingerprint',
       );
 
-      expect(
-        config.validate(),
-        contains('SSH private key file is required.'),
-      );
+      expect(config.validate(), contains('SSH private key file is required.'));
     });
 
     test('saved SSH profiles require a pinned host fingerprint', () {

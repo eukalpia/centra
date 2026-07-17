@@ -315,15 +315,15 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
   bool get browsing => connection != null;
 
   List<FocusNode> get fieldFocusNodes => <FocusNode>[
-        hostFocus,
-        portFocus,
-        userFocus,
-        passwordFocus,
-        identityFocus,
-        passphraseFocus,
-        timeoutFocus,
-        keepAliveFocus,
-      ];
+    hostFocus,
+    portFocus,
+    userFocus,
+    passwordFocus,
+    identityFocus,
+    passphraseFocus,
+    timeoutFocus,
+    keepAliveFocus,
+  ];
 
   @override
   void initState() {
@@ -331,12 +331,15 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
     host = TextEditingController(text: widget.initialHost);
     port = TextEditingController(text: widget.initialPort.toString());
     user = TextEditingController(text: widget.initialUser);
-    password =
-        TextEditingController(text: widget.initialSecrets.password ?? '');
-    identityFile =
-        TextEditingController(text: widget.initialIdentityFile ?? '');
-    passphrase =
-        TextEditingController(text: widget.initialSecrets.keyPassphrase ?? '');
+    password = TextEditingController(
+      text: widget.initialSecrets.password ?? '',
+    );
+    identityFile = TextEditingController(
+      text: widget.initialIdentityFile ?? '',
+    );
+    passphrase = TextEditingController(
+      text: widget.initialSecrets.keyPassphrase ?? '',
+    );
     timeout = TextEditingController(
       text: widget.initialConnectTimeoutSeconds.toString(),
     );
@@ -370,24 +373,23 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
   }
 
   SourceConfig _config() => SourceConfig(
-        type: SourceType.ssh,
-        root: widget.initialPath,
-        host: host.text.trim(),
-        user: user.text.trim(),
-        port: int.tryParse(port.text.trim()) ?? 0,
-        identityFile:
-            authMethod.usesPrivateKey ? identityFile.text.trim() : null,
-        sshAuthMethod: authMethod,
-        sshHostKeyPolicy: SshHostKeyPolicy.trustOnFirstUse,
-        hostKeyFingerprint: widget.initialFingerprint,
-        connectTimeoutSeconds: int.tryParse(timeout.text.trim()) ?? 0,
-        keepAliveSeconds: int.tryParse(keepAlive.text.trim()) ?? -1,
-      );
+    type: SourceType.ssh,
+    root: widget.initialPath,
+    host: host.text.trim(),
+    user: user.text.trim(),
+    port: int.tryParse(port.text.trim()) ?? 0,
+    identityFile: authMethod.usesPrivateKey ? identityFile.text.trim() : null,
+    sshAuthMethod: authMethod,
+    sshHostKeyPolicy: SshHostKeyPolicy.trustOnFirstUse,
+    hostKeyFingerprint: widget.initialFingerprint,
+    connectTimeoutSeconds: int.tryParse(timeout.text.trim()) ?? 0,
+    keepAliveSeconds: int.tryParse(keepAlive.text.trim()) ?? -1,
+  );
 
   SshConnectionSecrets _secrets() => SshConnectionSecrets(
-        password: authMethod.usesPassword ? password.text : null,
-        keyPassphrase: authMethod.usesPrivateKey ? passphrase.text : null,
-      );
+    password: authMethod.usesPassword ? password.text : null,
+    keyPassphrase: authMethod.usesPrivateKey ? passphrase.text : null,
+  );
 
   Future<void> _connect() async {
     if (connecting) return;
@@ -399,7 +401,8 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
       final next = await service.connect(
         _config(),
         secrets: _secrets(),
-        acceptUnknownHost: widget.initialFingerprint == null ||
+        acceptUnknownHost:
+            widget.initialFingerprint == null ||
             widget.initialFingerprint!.isEmpty,
       );
       final first = await next.listDirectories(widget.initialPath);
@@ -662,8 +665,8 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
           child: terminalMode
               ? _terminal()
               : browsing
-                  ? _browser()
-                  : _form(),
+              ? _browser()
+              : _form(),
         ),
       ),
     );
@@ -677,12 +680,18 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
         Row(
           children: <Widget>[
             Expanded(
-                child: _field(
-                    strings('host'), host, hostFocus, 'server.example.com')),
+              child: _field(
+                strings('host'),
+                host,
+                hostFocus,
+                'server.example.com',
+              ),
+            ),
             const SizedBox(width: 1),
             SizedBox(
-                width: 14,
-                child: _field(strings('port'), port, portFocus, '22')),
+              width: 14,
+              child: _field(strings('port'), port, portFocus, '22'),
+            ),
           ],
         ),
         _field(strings('user'), user, userFocus, 'deploy'),
@@ -815,8 +824,10 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
           style: const TextStyle(color: _sshWarning),
         ),
         const SizedBox(height: 1),
-        Text(strings('currentFolder'),
-            style: const TextStyle(color: _sshMuted)),
+        Text(
+          strings('currentFolder'),
+          style: const TextStyle(color: _sshMuted),
+        ),
         Container(
           color: _sshSurfaceStrong,
           padding: const EdgeInsets.symmetric(horizontal: 1),
@@ -845,55 +856,49 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
                     ),
                   )
                 : error != null
-                    ? Center(
-                        child: Text(
-                          error!,
-                          style: const TextStyle(color: _sshDanger),
-                        ),
-                      )
-                    : entries.isEmpty
-                        ? Center(
-                            child: Text(
-                              strings('empty'),
-                              style: const TextStyle(color: _sshMuted),
+                ? Center(
+                    child: Text(
+                      error!,
+                      style: const TextStyle(color: _sshDanger),
+                    ),
+                  )
+                : entries.isEmpty
+                ? Center(
+                    child: Text(
+                      strings('empty'),
+                      style: const TextStyle(color: _sshMuted),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: directoryScroll,
+                    itemCount: entries.length,
+                    itemExtent: 1,
+                    lazy: false,
+                    itemBuilder: (context, index) {
+                      final entry = entries[index];
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => selected = index);
+                          _ensureSelectedVisible();
+                          _loadDirectory(entry.path);
+                        },
+                        child: Container(
+                          color: selected == index ? _sshSurfaceStrong : null,
+                          padding: const EdgeInsets.symmetric(horizontal: 1),
+                          child: Text(
+                            '${entry.isParent ? '↰' : '▸'} ${entry.name}',
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: selected == index ? _sshAccent : _sshText,
+                              fontWeight: selected == index
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
-                          )
-                        : ListView.builder(
-                            controller: directoryScroll,
-                            itemCount: entries.length,
-                            itemExtent: 1,
-                            lazy: false,
-                            itemBuilder: (context, index) {
-                              final entry = entries[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() => selected = index);
-                                  _ensureSelectedVisible();
-                                  _loadDirectory(entry.path);
-                                },
-                                child: Container(
-                                  color: selected == index
-                                      ? _sshSurfaceStrong
-                                      : null,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 1,
-                                  ),
-                                  child: Text(
-                                    '${entry.isParent ? '↰' : '▸'} ${entry.name}',
-                                    maxLines: 1,
-                                    style: TextStyle(
-                                      color: selected == index
-                                          ? _sshAccent
-                                          : _sshText,
-                                      fontWeight: selected == index
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
                           ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ),
         const SizedBox(height: 1),
@@ -935,8 +940,10 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
                 ),
               ),
             ),
-            Text(strings('terminal'),
-                style: const TextStyle(color: _sshAccent)),
+            Text(
+              strings('terminal'),
+              style: const TextStyle(color: _sshAccent),
+            ),
           ],
         ),
         const SizedBox(height: 1),
@@ -964,8 +971,10 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
           children: <Widget>[
             _button(strings('files'), _closeTerminal, muted: true),
             const Spacer(),
-            Text(strings('terminalHelp'),
-                style: const TextStyle(color: _sshMuted)),
+            Text(
+              strings('terminalHelp'),
+              style: const TextStyle(color: _sshMuted),
+            ),
           ],
         ),
       ],
@@ -1035,10 +1044,10 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
   }
 
   String _authLabel(SshAuthMethod method) => switch (method) {
-        SshAuthMethod.password => strings('password'),
-        SshAuthMethod.privateKey => strings('privateKey'),
-        SshAuthMethod.passwordAndKey => strings('passwordAndKey'),
-      };
+    SshAuthMethod.password => strings('password'),
+    SshAuthMethod.privateKey => strings('privateKey'),
+    SshAuthMethod.passwordAndKey => strings('passwordAndKey'),
+  };
 
   Widget _button(
     String label,
@@ -1052,8 +1061,8 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
         color: disabled
             ? _sshSurface
             : muted
-                ? _sshSurfaceStrong
-                : _sshAccent,
+            ? _sshSurfaceStrong
+            : _sshAccent,
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Text(
           label,
@@ -1061,8 +1070,8 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
             color: disabled
                 ? _sshMuted
                 : muted
-                    ? _sshText
-                    : _sshBackground,
+                ? _sshText
+                : _sshBackground,
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -15,13 +15,13 @@ enum AlgorithmStatus {
 
 extension AlgorithmStatusName on AlgorithmStatus {
   String get wireName => switch (this) {
-        AlgorithmStatus.recommended => 'recommended',
-        AlgorithmStatus.acceptable => 'acceptable',
-        AlgorithmStatus.legacy => 'legacy',
-        AlgorithmStatus.obsolete => 'obsolete',
-        AlgorithmStatus.checksum => 'checksum',
-        AlgorithmStatus.custom => 'custom',
-      };
+    AlgorithmStatus.recommended => 'recommended',
+    AlgorithmStatus.acceptable => 'acceptable',
+    AlgorithmStatus.legacy => 'legacy',
+    AlgorithmStatus.obsolete => 'obsolete',
+    AlgorithmStatus.checksum => 'checksum',
+    AlgorithmStatus.custom => 'custom',
+  };
 
   static AlgorithmStatus parse(String value) =>
       AlgorithmStatus.values.firstWhere(
@@ -53,14 +53,14 @@ class HashAlgorithmDescriptor {
       status == AlgorithmStatus.legacy || status == AlgorithmStatus.obsolete;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'id': id,
-        'displayName': displayName,
-        'outputBits': outputBits,
-        'status': status.wireName,
-        'summary': summary,
-        if (registryName != null) 'registryName': registryName,
-        if (warning != null) 'warning': warning,
-      };
+    'id': id,
+    'displayName': displayName,
+    'outputBits': outputBits,
+    'status': status.wireName,
+    'summary': summary,
+    if (registryName != null) 'registryName': registryName,
+    if (warning != null) 'warning': warning,
+  };
 
   factory HashAlgorithmDescriptor.fromJson(Map<String, Object?> json) {
     return HashAlgorithmDescriptor(
@@ -97,23 +97,23 @@ class CustomHashAlgorithm {
   final int timeoutSeconds;
 
   HashAlgorithmDescriptor get descriptor => HashAlgorithmDescriptor(
-        id: id,
-        displayName: displayName,
-        outputBits: outputBits,
-        status: AlgorithmStatus.custom,
-        summary: 'External hash command configured by the user.',
-      );
+    id: id,
+    displayName: displayName,
+    outputBits: outputBits,
+    status: AlgorithmStatus.custom,
+    summary: 'External hash command configured by the user.',
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'id': id,
-        'displayName': displayName,
-        'executable': executable,
-        'arguments': arguments,
-        'outputPattern': outputPattern,
-        'outputGroup': outputGroup,
-        'outputBits': outputBits,
-        'timeoutSeconds': timeoutSeconds,
-      };
+    'id': id,
+    'displayName': displayName,
+    'executable': executable,
+    'arguments': arguments,
+    'outputPattern': outputPattern,
+    'outputGroup': outputGroup,
+    'outputBits': outputBits,
+    'timeoutSeconds': timeoutSeconds,
+  };
 
   factory CustomHashAlgorithm.fromJson(Map<String, Object?> json) {
     return CustomHashAlgorithm(
@@ -133,14 +133,14 @@ typedef DigestFactory = Digest Function();
 
 class AlgorithmRegistry {
   AlgorithmRegistry({Iterable<CustomHashAlgorithm> customAlgorithms = const []})
-      : _customAlgorithms = <String, CustomHashAlgorithm>{
-          for (final algorithm in customAlgorithms) algorithm.id: algorithm,
-        };
+    : _customAlgorithms = <String, CustomHashAlgorithm>{
+        for (final algorithm in customAlgorithms) algorithm.id: algorithm,
+      };
 
   final Map<String, CustomHashAlgorithm> _customAlgorithms;
 
-  static final List<HashAlgorithmDescriptor> builtIns =
-      <HashAlgorithmDescriptor>[
+  static final List<HashAlgorithmDescriptor>
+  builtIns = <HashAlgorithmDescriptor>[
     const HashAlgorithmDescriptor(
       id: 'sha256',
       displayName: 'SHA-256',
@@ -346,9 +346,9 @@ class AlgorithmRegistry {
   ];
 
   List<HashAlgorithmDescriptor> get all => <HashAlgorithmDescriptor>[
-        ...builtIns,
-        ..._customAlgorithms.values.map((algorithm) => algorithm.descriptor),
-      ];
+    ...builtIns,
+    ..._customAlgorithms.values.map((algorithm) => algorithm.descriptor),
+  ];
 
   HashAlgorithmDescriptor descriptor(String id) {
     for (final descriptor in builtIns) {

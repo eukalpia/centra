@@ -63,9 +63,9 @@ class DockerBrowseSession {
     required this.containerId,
     required List<String> contextArguments,
     Future<void> Function()? dispose,
-  })  : _runner = runner,
-        _contextArguments = List<String>.unmodifiable(contextArguments),
-        _dispose = dispose;
+  }) : _runner = runner,
+       _contextArguments = List<String>.unmodifiable(contextArguments),
+       _dispose = dispose;
 
   final CommandRunner _runner;
   final List<String> _contextArguments;
@@ -112,7 +112,8 @@ class DockerBrowseSession {
     }
 
     final selectedBaseName = p.posix.basename(normalizedPath);
-    final stripSelectedPrefix = selectedBaseName.isNotEmpty &&
+    final stripSelectedPrefix =
+        selectedBaseName.isNotEmpty &&
         selectedBaseName != '/' &&
         archiveNames.isNotEmpty &&
         archiveNames.every(
@@ -138,9 +139,9 @@ class DockerBrowseSession {
       }
     }
 
-    final sorted = directoryNames.toList(growable: false)
-      ..sort(
-          (left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
+    final sorted = directoryNames.toList(
+      growable: false,
+    )..sort((left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
     final parentPath = dockerParentPath(normalizedPath);
     final entries = <DockerDirectoryEntry>[
       if (parentPath != null)
@@ -170,7 +171,7 @@ class DockerBrowseSession {
 
 class DockerBrowserService {
   DockerBrowserService({CommandRunner runner = const SystemCommandRunner()})
-      : _runner = runner;
+    : _runner = runner;
 
   final CommandRunner _runner;
 
@@ -245,10 +246,11 @@ class DockerBrowserService {
           resource.reference,
         );
         if (containerId.isEmpty) {
-          await _run(
-            'docker',
-            <String>[...composeArguments, 'create', resource.reference],
-          );
+          await _run('docker', <String>[
+            ...composeArguments,
+            'create',
+            resource.reference,
+          ]);
           createdForBrowsing = true;
           containerId = await _composeContainerId(
             composeArguments,
@@ -281,15 +283,12 @@ class DockerBrowserService {
   }
 
   Future<List<DockerResource>> _listContainers(String? dockerContext) async {
-    final result = await _run(
-      'docker',
-      <String>[
-        ..._dockerContextArguments(dockerContext),
-        'ps',
-        '--format',
-        '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}',
-      ],
-    );
+    final result = await _run('docker', <String>[
+      ..._dockerContextArguments(dockerContext),
+      'ps',
+      '--format',
+      '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}',
+    ]);
     final resources = <DockerResource>[];
     for (final line in const LineSplitter().convert(result.stdoutText)) {
       final fields = line.split('\t');
@@ -302,9 +301,10 @@ class DockerBrowserService {
         DockerResource(
           reference: id,
           title: name.isEmpty ? id : name,
-          subtitle: <String>[image, status]
-              .where((value) => value.isNotEmpty)
-              .join(' · '),
+          subtitle: <String>[
+            image,
+            status,
+          ].where((value) => value.isNotEmpty).join(' · '),
         ),
       );
     }
@@ -312,16 +312,13 @@ class DockerBrowserService {
   }
 
   Future<List<DockerResource>> _listImages(String? dockerContext) async {
-    final result = await _run(
-      'docker',
-      <String>[
-        ..._dockerContextArguments(dockerContext),
-        'image',
-        'ls',
-        '--format',
-        '{{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}',
-      ],
-    );
+    final result = await _run('docker', <String>[
+      ..._dockerContextArguments(dockerContext),
+      'image',
+      'ls',
+      '--format',
+      '{{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}',
+    ]);
     final resources = <DockerResource>[];
     final seen = <String>{};
     for (final line in const LineSplitter().convert(result.stdoutText)) {
@@ -332,7 +329,8 @@ class DockerBrowserService {
       final id = fields[2].trim();
       final size = fields.length > 3 ? fields[3].trim() : '';
       if (id.isEmpty) continue;
-      final hasNamedReference = repository.isNotEmpty &&
+      final hasNamedReference =
+          repository.isNotEmpty &&
           repository != '<none>' &&
           tag.isNotEmpty &&
           tag != '<none>';
@@ -342,8 +340,10 @@ class DockerBrowserService {
         DockerResource(
           reference: reference,
           title: reference,
-          subtitle:
-              <String>[id, size].where((value) => value.isNotEmpty).join(' · '),
+          subtitle: <String>[
+            id,
+            size,
+          ].where((value) => value.isNotEmpty).join(' · '),
         ),
       );
     }
@@ -354,17 +354,14 @@ class DockerBrowserService {
     String? dockerContext,
     String? composeFile,
   }) async {
-    final result = await _run(
-      'docker',
-      <String>[
-        ..._composeArguments(
-          dockerContext: dockerContext,
-          composeFile: composeFile,
-        ),
-        'config',
-        '--services',
-      ],
-    );
+    final result = await _run('docker', <String>[
+      ..._composeArguments(
+        dockerContext: dockerContext,
+        composeFile: composeFile,
+      ),
+      'config',
+      '--services',
+    ]);
     final services = const LineSplitter()
         .convert(result.stdoutText)
         .map((value) => value.trim())
@@ -385,10 +382,13 @@ class DockerBrowserService {
     List<String> composeArguments,
     String service,
   ) async {
-    final result = await _run(
-      'docker',
-      <String>[...composeArguments, 'ps', '-a', '-q', service],
-    );
+    final result = await _run('docker', <String>[
+      ...composeArguments,
+      'ps',
+      '-a',
+      '-q',
+      service,
+    ]);
     return const LineSplitter()
         .convert(result.stdoutText)
         .map((value) => value.trim())
@@ -399,11 +399,12 @@ class DockerBrowserService {
     String containerId,
     List<String> contextArguments,
   ) async {
-    await _runner.run(
-      'docker',
-      <String>[...contextArguments, 'rm', '-f', containerId],
-      timeout: const Duration(minutes: 2),
-    );
+    await _runner.run('docker', <String>[
+      ...contextArguments,
+      'rm',
+      '-f',
+      containerId,
+    ], timeout: const Duration(minutes: 2));
   }
 
   Future<ProcessResultData> _run(
@@ -458,10 +459,7 @@ List<String> _dockerContextArguments(String? dockerContext) {
   return value.isEmpty ? const <String>[] : <String>['--context', value];
 }
 
-List<String> _composeArguments({
-  String? dockerContext,
-  String? composeFile,
-}) {
+List<String> _composeArguments({String? dockerContext, String? composeFile}) {
   final file = composeFile?.trim() ?? '';
   return <String>[
     ..._dockerContextArguments(dockerContext),
