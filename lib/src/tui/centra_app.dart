@@ -10,6 +10,7 @@ import '../core/scanner.dart';
 import '../core/services.dart';
 import '../core/storage.dart';
 import '../i18n/messages.dart';
+import 'folder_picker.dart';
 import 'wizard_state.dart';
 
 const _accent = Color(0x64D8CB);
@@ -174,8 +175,46 @@ class _WizardScreenState extends State<_WizardScreen> {
   final outputDirectory = TextEditingController();
   final exclusionPattern = TextEditingController();
 
-  CentraStrings get strings =>
-      CentraStrings(draft.locale ?? widget.initialLocale ?? 'en');
+  final wizardFocus = FocusNode(debugLabel: 'Centra wizard');
+  final profileNameFocus = FocusNode(debugLabel: 'Profile name');
+  final profileIdFocus = FocusNode(debugLabel: 'Profile ID');
+  final rootFocus = FocusNode(debugLabel: 'Source root');
+  final hostFocus = FocusNode(debugLabel: 'SSH host');
+  final userFocus = FocusNode(debugLabel: 'SSH user');
+  final portFocus = FocusNode(debugLabel: 'SSH port');
+  final identityFileFocus = FocusNode(debugLabel: 'SSH identity file');
+  final containerFocus = FocusNode(debugLabel: 'Docker container');
+  final imageFocus = FocusNode(debugLabel: 'Docker image');
+  final serviceFocus = FocusNode(debugLabel: 'Compose service');
+  final composeFileFocus = FocusNode(debugLabel: 'Compose file');
+  final dockerContextFocus = FocusNode(debugLabel: 'Docker context');
+  final outputDirectoryFocus = FocusNode(debugLabel: 'Output directory');
+  final exclusionPatternFocus = FocusNode(debugLabel: 'Exclusion pattern');
+
+  TextEditingController? folderPickerController;
+  FocusNode? folderPickerReturnFocus;
+
+  String get locale => draft.locale ?? widget.initialLocale ?? 'en';
+  CentraStrings get strings => CentraStrings(locale);
+  FolderPickerStrings get folderStrings =>
+      FolderPickerStrings.forLocale(locale);
+
+  List<FocusNode> get _textFieldFocusNodes => <FocusNode>[
+        profileNameFocus,
+        profileIdFocus,
+        rootFocus,
+        hostFocus,
+        userFocus,
+        portFocus,
+        identityFileFocus,
+        containerFocus,
+        imageFocus,
+        serviceFocus,
+        composeFileFocus,
+        dockerContextFocus,
+        outputDirectoryFocus,
+        exclusionPatternFocus,
+      ];
 
   @override
   void dispose() {
@@ -197,6 +236,9 @@ class _WizardScreenState extends State<_WizardScreen> {
     ]) {
       controller.dispose();
     }
+    for (final focusNode in <FocusNode>[wizardFocus, ..._textFieldFocusNodes]) {
+      focusNode.dispose();
+    }
     super.dispose();
   }
 
@@ -217,6 +259,44 @@ class _WizardScreenState extends State<_WizardScreen> {
       ..outputDirectory = outputDirectory.text;
   }
 
+  void _openFolderPicker(
+    TextEditingController controller,
+    FocusNode returnFocus,
+  ) {
+    setState(() {
+      error = null;
+      folderPickerController = controller;
+      folderPickerReturnFocus = returnFocus;
+    });
+  }
+
+  void _closeFolderPicker() {
+    final returnFocus = folderPickerReturnFocus;
+    setState(() {
+      folderPickerController = null;
+      folderPickerReturnFocus = null;
+    });
+    returnFocus?.requestFocus();
+  }
+
+  void _selectFolder(String path) {
+    final controller = folderPickerController;
+    final returnFocus = folderPickerReturnFocus;
+    if (controller != null) controller.text = path;
+    _syncDraft();
+    setState(() {
+      error = null;
+      folderPickerController = null;
+      folderPickerReturnFocus = null;
+    });
+    returnFocus?.requestFocus();
+  }
+
+  bool _stepHasTextField(WizardStep candidate) =>
+      candidate == WizardStep.details ||
+      candidate == WizardStep.exclusions ||
+      candidate == WizardStep.output;
+
   List<Object> get _itemsForStep => switch (step) {
         WizardStep.language => CentraStrings.locales,
         WizardStep.source => SourceType.values,
@@ -227,16 +307,25 @@ class _WizardScreenState extends State<_WizardScreen> {
             'text',
             'zip',
             'report',
-            'zip-password'
+            'zip-password',
           ],
         _ => const <Object>[],
       };
 
   bool _handleKey(KeyboardEvent event) {
+    if (folderPickerController != null) return false;
     if (event.matches(LogicalKey.keyC, ctrl: true) ||
         event.matches(LogicalKey.keyQ, ctrl: true)) {
       widget.onCancel();
       return true;
+    }
+    if (_textFieldFocusNodes.any((node) => node.hasPrimaryFocus)) {
+      if (event.logicalKey == LogicalKey.escape) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        wizardFocus.requestFocus();
+        return true;
+      }
+      return false;
     }
     if (event.logicalKey == LogicalKey.escape) {
       _back();
@@ -257,9 +346,11 @@ class _WizardScreenState extends State<_WizardScreen> {
     }
     if (event.logicalKey == LogicalKey.enter) {
       if (items.isNotEmpty) {
-        _activate(cursor,
-            continueAfter:
-                step == WizardStep.language || step == WizardStep.source);
+        _activate(
+          cursor,
+          continueAfter:
+              step == WizardStep.language || step == WizardStep.source,
+        );
       } else {
         _next();
       }
@@ -359,11 +450,13 @@ class _WizardScreenState extends State<_WizardScreen> {
       }
       return;
     }
+    final nextStep = WizardStep.values[step.index + 1];
     setState(() {
-      step = WizardStep.values[step.index + 1];
+      step = nextStep;
       cursor = 0;
       error = null;
     });
+    if (!_stepHasTextField(nextStep)) wizardFocus.requestFocus();
   }
 
   void _back() {
@@ -371,11 +464,13 @@ class _WizardScreenState extends State<_WizardScreen> {
       widget.onCancel();
       return;
     }
+    final previousStep = WizardStep.values[step.index - 1];
     setState(() {
-      step = WizardStep.values[step.index - 1];
+      step = previousStep;
       cursor = 0;
       error = null;
     });
+    if (!_stepHasTextField(previousStep)) wizardFocus.requestFocus();
   }
 
   void _addExclusion() {
@@ -389,8 +484,10 @@ class _WizardScreenState extends State<_WizardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
+    final screen = Focus(
+      focusNode: wizardFocus,
       autofocus: true,
+      skipTraversal: true,
       onKeyEvent: _handleKey,
       child: Container(
         color: _background,
@@ -426,6 +523,28 @@ class _WizardScreenState extends State<_WizardScreen> {
         ),
       ),
     );
+
+    final pickerController = folderPickerController;
+    if (pickerController == null) return screen;
+
+    return Stack(
+      children: <Widget>[
+        screen,
+        ModalBarrier(
+          color: const Color(0x000000).withAlpha(196),
+          obscure: false,
+          onDismiss: _closeFolderPicker,
+        ),
+        Center(
+          child: FolderPicker(
+            initialPath: pickerController.text,
+            locale: locale,
+            onSelected: _selectFolder,
+            onCancel: _closeFolderPicker,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _stepRail() {
@@ -433,9 +552,13 @@ class _WizardScreenState extends State<_WizardScreen> {
       decoration: BoxDecoration(
         color: _surface,
         border: BoxBorder.all(
-            color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+          color: const Color(0x27313D),
+          style: BoxBorderStyle.rounded,
+        ),
         title: BorderTitle(
-            text: strings('setup'), style: const TextStyle(color: _muted)),
+          text: strings('setup'),
+          style: const TextStyle(color: _muted),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
       child: Column(
@@ -452,6 +575,9 @@ class _WizardScreenState extends State<_WizardScreen> {
                   cursor = 0;
                   error = null;
                 });
+                if (!_stepHasTextField(candidate)) {
+                  wizardFocus.requestFocus();
+                }
               }
             },
             child: Container(
@@ -489,7 +615,9 @@ class _WizardScreenState extends State<_WizardScreen> {
       decoration: BoxDecoration(
         color: _surface,
         border: BoxBorder.all(
-            color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+          color: const Color(0x27313D),
+          style: BoxBorderStyle.rounded,
+        ),
       ),
       padding: const EdgeInsets.all(1),
       child: Column(
@@ -522,13 +650,15 @@ class _WizardScreenState extends State<_WizardScreen> {
           _SectionTitle(
               strings('chooseLanguage'), strings('noAlgorithmDefault')),
           const SizedBox(height: 1),
-          ...CentraStrings.locales.asMap().entries.map((entry) => _OptionTile(
-                selected: draft.locale == entry.value.code,
-                focused: cursor == entry.key,
-                title: entry.value.nativeName,
-                subtitle: entry.value.code,
-                onTap: () => _activate(entry.key, continueAfter: true),
-              )),
+          ...CentraStrings.locales.asMap().entries.map(
+                (entry) => _OptionTile(
+                  selected: draft.locale == entry.value.code,
+                  focused: cursor == entry.key,
+                  title: entry.value.nativeName,
+                  subtitle: entry.value.code,
+                  onTap: () => _activate(entry.key, continueAfter: true),
+                ),
+              ),
         ],
       );
 
@@ -543,54 +673,109 @@ class _WizardScreenState extends State<_WizardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _SectionTitle(strings('chooseSource'),
-            'Local, SSH, Docker and Compose use the same manifest pipeline.'),
+        _SectionTitle(
+          strings('chooseSource'),
+          'Local, SSH, Docker and Compose use the same manifest pipeline.',
+        ),
         const SizedBox(height: 1),
-        ...SourceType.values.asMap().entries.map((entry) => _OptionTile(
-              selected: draft.sourceType == entry.value,
-              focused: cursor == entry.key,
-              title: sourceLabels[entry.value]!,
-              subtitle: entry.value.wireName,
-              onTap: () => _activate(entry.key, continueAfter: true),
-            )),
+        ...SourceType.values.asMap().entries.map(
+              (entry) => _OptionTile(
+                selected: draft.sourceType == entry.value,
+                focused: cursor == entry.key,
+                title: sourceLabels[entry.value]!,
+                subtitle: entry.value.wireName,
+                onTap: () => _activate(entry.key, continueAfter: true),
+              ),
+            ),
       ],
     );
   }
 
   Widget _detailsStep() {
     final fields = <Widget>[
-      _field(strings('profileName'), profileName, 'Production application'),
-      _field(strings('profileId'), profileId, 'production-app'),
-      _field(strings('rootPath'), root,
-          draft.sourceType == SourceType.local ? '/srv/application' : '/app'),
+      _field(
+        strings('profileName'),
+        profileName,
+        profileNameFocus,
+        'Production application',
+        autofocus: true,
+      ),
+      _field(strings('profileId'), profileId, profileIdFocus, 'production-app'),
+      _field(
+        strings('rootPath'),
+        root,
+        rootFocus,
+        draft.sourceType == SourceType.local ? Directory.current.path : '/app',
+        trailing: draft.sourceType == SourceType.local
+            ? _ActionButton(
+                label: folderStrings.browse,
+                onTap: () => _openFolderPicker(root, rootFocus),
+                muted: true,
+              )
+            : null,
+      ),
     ];
     switch (draft.sourceType) {
       case SourceType.ssh:
         fields.addAll(<Widget>[
-          _field(strings('host'), host, 'server.example.com'),
-          _field(strings('user'), user, 'deploy'),
-          _field(strings('port'), port, '22'),
-          _field(strings('identityFile'), identityFile, '~/.ssh/id_ed25519'),
+          _field(strings('host'), host, hostFocus, 'server.example.com'),
+          _field(strings('user'), user, userFocus, 'deploy'),
+          _field(strings('port'), port, portFocus, '22'),
+          _field(
+            strings('identityFile'),
+            identityFile,
+            identityFileFocus,
+            '~/.ssh/id_ed25519',
+          ),
         ]);
         break;
       case SourceType.dockerContainer:
         fields.addAll(<Widget>[
-          _field(strings('container'), container, 'application-1'),
-          _field(strings('dockerContext'), dockerContext, 'default'),
+          _field(
+            strings('container'),
+            container,
+            containerFocus,
+            'application-1',
+          ),
+          _field(
+            strings('dockerContext'),
+            dockerContext,
+            dockerContextFocus,
+            'default',
+          ),
         ]);
         break;
       case SourceType.dockerImage:
         fields.addAll(<Widget>[
-          _field(strings('image'), image,
-              'registry.example.com/application:1.0.0'),
-          _field(strings('dockerContext'), dockerContext, 'default'),
+          _field(
+            strings('image'),
+            image,
+            imageFocus,
+            'registry.example.com/application:1.0.0',
+          ),
+          _field(
+            strings('dockerContext'),
+            dockerContext,
+            dockerContextFocus,
+            'default',
+          ),
         ]);
         break;
       case SourceType.dockerCompose:
         fields.addAll(<Widget>[
-          _field(strings('service'), service, 'api'),
-          _field(strings('composeFile'), composeFile, 'compose.production.yml'),
-          _field(strings('dockerContext'), dockerContext, 'default'),
+          _field(strings('service'), service, serviceFocus, 'api'),
+          _field(
+            strings('composeFile'),
+            composeFile,
+            composeFileFocus,
+            'compose.production.yml',
+          ),
+          _field(
+            strings('dockerContext'),
+            dockerContext,
+            dockerContextFocus,
+            'default',
+          ),
         ]);
         break;
       case SourceType.local:
@@ -600,8 +785,10 @@ class _WizardScreenState extends State<_WizardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _SectionTitle(strings('details'),
-            'Secrets and passwords are never stored in the profile.'),
+        _SectionTitle(
+          strings('details'),
+          'Secrets and passwords are never stored in the profile.',
+        ),
         const SizedBox(height: 1),
         ...fields,
       ],
@@ -637,25 +824,40 @@ class _WizardScreenState extends State<_WizardScreen> {
         children: <Widget>[
           _SectionTitle(strings('exclusions'), strings('exclusionHelp')),
           const SizedBox(height: 1),
-          _field(strings('addPattern'), exclusionPattern, '**/private/**',
-              onSubmitted: (_) => _addExclusion()),
+          _field(
+            strings('addPattern'),
+            exclusionPattern,
+            exclusionPatternFocus,
+            '**/private/**',
+            autofocus: true,
+            onSubmitted: (_) => _addExclusion(),
+          ),
           _ActionButton(
-              label: strings('addPattern'), onTap: _addExclusion, muted: true),
+            label: strings('addPattern'),
+            onTap: _addExclusion,
+            muted: true,
+          ),
           const SizedBox(height: 1),
-          Text('Detected project: ${draft.projectKind}',
-              style: const TextStyle(color: _muted)),
+          Text(
+            'Detected project: ${draft.projectKind}',
+            style: const TextStyle(color: _muted),
+          ),
           const SizedBox(height: 1),
-          ...exclusionSuggestions.asMap().entries.map((entry) => _OptionTile(
-                selected: draft.excludePatterns.contains(entry.value),
-                focused: cursor == entry.key,
-                title: entry.value,
-                subtitle: _exclusionDescription(entry.value),
-                onTap: () => _activate(entry.key, continueAfter: false),
-              )),
+          ...exclusionSuggestions.asMap().entries.map(
+                (entry) => _OptionTile(
+                  selected: draft.excludePatterns.contains(entry.value),
+                  focused: cursor == entry.key,
+                  title: entry.value,
+                  subtitle: _exclusionDescription(entry.value),
+                  onTap: () => _activate(entry.key, continueAfter: false),
+                ),
+              ),
           if (draft.excludePatterns.isNotEmpty) ...<Widget>[
             const SizedBox(height: 1),
-            const Text('Selected policy',
-                style: TextStyle(color: _accent, fontWeight: FontWeight.bold)),
+            const Text(
+              'Selected policy',
+              style: TextStyle(color: _accent, fontWeight: FontWeight.bold),
+            ),
             ...draft.excludePatterns
                 .where((pattern) => !exclusionSuggestions.contains(pattern))
                 .map(
@@ -691,27 +893,27 @@ class _WizardScreenState extends State<_WizardScreen> {
       (
         title: strings('canonicalJson'),
         subtitle: '*.centra.json',
-        selected: draft.canonicalJson
+        selected: draft.canonicalJson,
       ),
       (
         title: strings('compatibilityText'),
         subtitle: 'hash_values.txt',
-        selected: draft.compatibilityText
+        selected: draft.compatibilityText,
       ),
       (
         title: strings('zipPackage'),
         subtitle: '*.zip',
-        selected: draft.zipPackage
+        selected: draft.zipPackage,
       ),
       (
         title: strings('metadataReport'),
         subtitle: '*.report.json',
-        selected: draft.metadataReport
+        selected: draft.metadataReport,
       ),
       (
         title: strings('requireZipPassword'),
         subtitle: 'Password is requested only when scanning',
-        selected: draft.requireZipPassword
+        selected: draft.requireZipPassword,
       ),
     ];
     return Column(
@@ -719,15 +921,29 @@ class _WizardScreenState extends State<_WizardScreen> {
       children: <Widget>[
         _SectionTitle(strings('output'), strings('outputHelp')),
         const SizedBox(height: 1),
-        _field(strings('outputDirectory'), outputDirectory, './centra-output'),
-        ...options.asMap().entries.map((entry) => _OptionTile(
-              selected: entry.value.selected,
-              focused: cursor == entry.key,
-              title: entry.value.title,
-              subtitle: entry.value.subtitle,
-              disabled: entry.key == 4 && !draft.zipPackage,
-              onTap: () => _activate(entry.key, continueAfter: false),
-            )),
+        _field(
+          strings('outputDirectory'),
+          outputDirectory,
+          outputDirectoryFocus,
+          './centra-output',
+          autofocus: true,
+          trailing: _ActionButton(
+            label: folderStrings.browse,
+            onTap: () =>
+                _openFolderPicker(outputDirectory, outputDirectoryFocus),
+            muted: true,
+          ),
+        ),
+        ...options.asMap().entries.map(
+              (entry) => _OptionTile(
+                selected: entry.value.selected,
+                focused: cursor == entry.key,
+                title: entry.value.title,
+                subtitle: entry.value.subtitle,
+                disabled: entry.key == 4 && !draft.zipPackage,
+                onTap: () => _activate(entry.key, continueAfter: false),
+              ),
+            ),
       ],
     );
   }
@@ -735,26 +951,33 @@ class _WizardScreenState extends State<_WizardScreen> {
   Widget _reviewStep() {
     _syncDraft();
     final profileErrors = draft.validateStep(WizardStep.review);
-    final algorithms = draft.algorithmIds.map((id) =>
-        AlgorithmRegistry(customAlgorithms: draft.customAlgorithms)
-            .descriptor(id));
+    final algorithms = draft.algorithmIds.map(
+      (id) => AlgorithmRegistry(
+        customAlgorithms: draft.customAlgorithms,
+      ).descriptor(id),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         _SectionTitle(
-            strings('review'), 'Review every policy choice before saving.'),
+          strings('review'),
+          'Review every policy choice before saving.',
+        ),
         const SizedBox(height: 1),
         _ReviewRow('Profile', '${draft.profileName} (${draft.profileId})'),
         _ReviewRow(strings('language'), draft.locale ?? '—'),
         _ReviewRow(strings('source'), draft.sourceType?.wireName ?? '—'),
         _ReviewRow(strings('rootPath'), draft.root),
-        _ReviewRow(strings('algorithms'),
-            algorithms.map((algorithm) => algorithm.displayName).join(', ')),
         _ReviewRow(
-            strings('exclusions'),
-            draft.excludePatterns.isEmpty
-                ? 'None'
-                : '${draft.excludePatterns.length} rules'),
+          strings('algorithms'),
+          algorithms.map((algorithm) => algorithm.displayName).join(', '),
+        ),
+        _ReviewRow(
+          strings('exclusions'),
+          draft.excludePatterns.isEmpty
+              ? 'None'
+              : '${draft.excludePatterns.length} rules',
+        ),
         _ReviewRow(strings('outputDirectory'), draft.outputDirectory),
         _ReviewRow(
           strings('output'),
@@ -766,11 +989,13 @@ class _WizardScreenState extends State<_WizardScreen> {
           ].join(', '),
         ),
         const SizedBox(height: 1),
-        if (algorithms
-            .any((algorithm) => algorithm.status == AlgorithmStatus.obsolete))
+        if (algorithms.any(
+          (algorithm) => algorithm.status == AlgorithmStatus.obsolete,
+        ))
           _Notice(
-              'Obsolete algorithms are enabled. Their warnings will be embedded in every report.',
-              _warning),
+            'Obsolete algorithms are enabled. Their warnings will be embedded in every report.',
+            _warning,
+          ),
         if (profileErrors.isNotEmpty) _Notice(profileErrors.join(' '), _danger),
       ],
     );
@@ -779,32 +1004,58 @@ class _WizardScreenState extends State<_WizardScreen> {
   Widget _field(
     String label,
     TextEditingController controller,
+    FocusNode focusNode,
     String placeholder, {
     ValueChanged<String>? onSubmitted,
+    Widget? trailing,
+    bool autofocus = false,
   }) {
+    final input = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: focusNode.requestFocus,
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        autofocus: autofocus,
+        width: trailing == null ? 68 : null,
+        placeholder: placeholder,
+        style: const TextStyle(color: _text),
+        placeholderStyle: const TextStyle(
+          color: _muted,
+          fontStyle: FontStyle.italic,
+        ),
+        decoration: InputDecoration(
+          fillColor: _surfaceStrong,
+          border: BoxBorder.all(
+            color: const Color(0x394453),
+            style: BoxBorderStyle.rounded,
+          ),
+          focusedBorder: BoxBorder.all(
+            color: _accent,
+            style: BoxBorderStyle.rounded,
+          ),
+        ),
+        onChanged: (_) => _syncDraft(),
+        onSubmitted: onSubmitted ?? (_) => _next(),
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(label, style: const TextStyle(color: _muted)),
-          TextField(
-            controller: controller,
-            width: 68,
-            placeholder: placeholder,
-            style: const TextStyle(color: _text),
-            placeholderStyle:
-                const TextStyle(color: _muted, fontStyle: FontStyle.italic),
-            decoration: InputDecoration(
-              fillColor: _surfaceStrong,
-              border: BoxBorder.all(
-                  color: const Color(0x394453), style: BoxBorderStyle.rounded),
-              focusedBorder:
-                  BoxBorder.all(color: _accent, style: BoxBorderStyle.rounded),
+          if (trailing == null)
+            input
+          else
+            Row(
+              children: <Widget>[
+                Expanded(child: input),
+                const SizedBox(width: 1),
+                trailing,
+              ],
             ),
-            onChanged: (_) => _syncDraft(),
-            onSubmitted: onSubmitted ?? (_) => _next(),
-          ),
         ],
       ),
     );
@@ -835,6 +1086,9 @@ class _DashboardState extends State<_Dashboard> {
   CentraManifest? lastManifest;
   final password = TextEditingController();
   final verifyPath = TextEditingController();
+  final dashboardFocus = FocusNode(debugLabel: 'Centra dashboard');
+  final passwordFocus = FocusNode(debugLabel: 'ZIP password');
+  final verifyPathFocus = FocusNode(debugLabel: 'Manifest path');
   var showPassword = false;
   var showVerify = false;
 
@@ -848,18 +1102,29 @@ class _DashboardState extends State<_Dashboard> {
   void dispose() {
     password.dispose();
     verifyPath.dispose();
+    dashboardFocus.dispose();
+    passwordFocus.dispose();
+    verifyPathFocus.dispose();
     super.dispose();
   }
 
   bool _handleKey(KeyboardEvent event) {
-    if (event.matches(LogicalKey.keyQ, ctrl: true) ||
-        event.logicalKey == LogicalKey.keyQ) {
+    if (event.matches(LogicalKey.keyQ, ctrl: true)) {
+      shutdownApp();
+      return true;
+    }
+    if (passwordFocus.hasPrimaryFocus || verifyPathFocus.hasPrimaryFocus) {
+      return false;
+    }
+    if (event.logicalKey == LogicalKey.keyQ) {
       shutdownApp();
       return true;
     }
     if (event.logicalKey == LogicalKey.arrowUp && widget.profiles.isNotEmpty) {
-      setState(() =>
-          selected = selected <= 0 ? widget.profiles.length - 1 : selected - 1);
+      setState(
+        () => selected =
+            selected <= 0 ? widget.profiles.length - 1 : selected - 1,
+      );
       return true;
     }
     if (event.logicalKey == LogicalKey.arrowDown &&
@@ -937,13 +1202,16 @@ class _DashboardState extends State<_Dashboard> {
       message = null;
     });
     try {
-      final approved =
-          await const ManifestCodec().read(File(verifyPath.text.trim()));
-      final current =
-          (await IntegrityScanner().scan(profile, onProgress: (value) {
-        if (mounted) setState(() => progress = value);
-      }))
-              .manifest;
+      final approved = await const ManifestCodec().read(
+        File(verifyPath.text.trim()),
+      );
+      final current = (await IntegrityScanner().scan(
+        profile,
+        onProgress: (value) {
+          if (mounted) setState(() => progress = value);
+        },
+      ))
+          .manifest;
       final diff = const ManifestComparator().compare(approved, current);
       if (!mounted) return;
       setState(() {
@@ -963,7 +1231,9 @@ class _DashboardState extends State<_Dashboard> {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      focusNode: dashboardFocus,
       autofocus: true,
+      skipTraversal: true,
       onKeyEvent: _handleKey,
       child: Container(
         color: _background,
@@ -972,9 +1242,10 @@ class _DashboardState extends State<_Dashboard> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             _Header(
-                title: 'CENTRA',
-                subtitle: strings('tagline'),
-                trailing: strings(status)),
+              title: 'CENTRA',
+              subtitle: strings('tagline'),
+              trailing: strings(status),
+            ),
             const SizedBox(height: 1),
             Expanded(
               child: Row(
@@ -1003,90 +1274,108 @@ class _DashboardState extends State<_Dashboard> {
         decoration: BoxDecoration(
           color: _surface,
           border: BoxBorder.all(
-              color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+            color: const Color(0x27313D),
+            style: BoxBorderStyle.rounded,
+          ),
           title: BorderTitle(
-              text: strings('profiles'), style: const TextStyle(color: _muted)),
+            text: strings('profiles'),
+            style: const TextStyle(color: _muted),
+          ),
         ),
         padding: const EdgeInsets.all(1),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            ...widget.profiles.asMap().entries.map((entry) => GestureDetector(
-                  onTap: () => setState(() => selected = entry.key),
-                  child: Container(
-                    color: selected == entry.key ? _surfaceStrong : null,
-                    padding: const EdgeInsets.symmetric(horizontal: 1),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Text(
-                          '${selected == entry.key ? '›' : ' '} ${entry.value.name}',
-                          style: TextStyle(
-                            color: selected == entry.key ? _accent : _text,
-                            fontWeight: selected == entry.key
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+            ...widget.profiles.asMap().entries.map(
+                  (entry) => GestureDetector(
+                    onTap: () => setState(() => selected = entry.key),
+                    child: Container(
+                      color: selected == entry.key ? _surfaceStrong : null,
+                      padding: const EdgeInsets.symmetric(horizontal: 1),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Text(
+                            '${selected == entry.key ? '›' : ' '} ${entry.value.name}',
+                            style: TextStyle(
+                              color: selected == entry.key ? _accent : _text,
+                              fontWeight: selected == entry.key
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
-                        ),
-                        Text('  ${entry.value.source.type.wireName}',
-                            style: const TextStyle(color: _muted)),
-                      ],
+                          Text(
+                            '  ${entry.value.source.type.wireName}',
+                            style: const TextStyle(color: _muted),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                )),
+                ),
             const SizedBox(height: 1),
             _ActionButton(
-                label: '+ ${strings('newProfile')}',
-                onTap: widget.onNewProfile,
-                muted: true),
+              label: '+ ${strings('newProfile')}',
+              onTap: widget.onNewProfile,
+              muted: true,
+            ),
           ],
         ),
       );
 
   Widget _details() {
     final algorithms = profile.algorithmIds
-        .map((id) =>
-            AlgorithmRegistry(customAlgorithms: profile.customAlgorithms)
-                .descriptor(id))
+        .map(
+          (id) => AlgorithmRegistry(
+            customAlgorithms: profile.customAlgorithms,
+          ).descriptor(id),
+        )
         .toList(growable: false);
     return Container(
       decoration: BoxDecoration(
         color: _surface,
         border: BoxBorder.all(
-            color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+          color: const Color(0x27313D),
+          style: BoxBorderStyle.rounded,
+        ),
       ),
       padding: const EdgeInsets.all(1),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(profile.name,
-                style:
-                    const TextStyle(color: _text, fontWeight: FontWeight.bold)),
+            Text(
+              profile.name,
+              style: const TextStyle(color: _text, fontWeight: FontWeight.bold),
+            ),
             Text(profile.id, style: const TextStyle(color: _muted)),
             const SizedBox(height: 1),
             _ReviewRow(strings('source'), profile.source.type.wireName),
             _ReviewRow(strings('rootPath'), profile.source.root),
             _ReviewRow(
-                strings('algorithms'),
-                algorithms
-                    .map((algorithm) => algorithm.displayName)
-                    .join(', ')),
-            _ReviewRow(strings('exclusions'),
-                '${profile.excludePatterns.length} rules'),
+              strings('algorithms'),
+              algorithms.map((algorithm) => algorithm.displayName).join(', '),
+            ),
+            _ReviewRow(
+              strings('exclusions'),
+              '${profile.excludePatterns.length} rules',
+            ),
             _ReviewRow(strings('outputDirectory'), profile.output.directory),
             if (algorithms.any(
-                (algorithm) => algorithm.status == AlgorithmStatus.obsolete))
+              (algorithm) => algorithm.status == AlgorithmStatus.obsolete,
+            ))
               const _Notice(
-                  'This profile contains an obsolete algorithm. Compatibility does not equal security.',
-                  _warning),
+                'This profile contains an obsolete algorithm. Compatibility does not equal security.',
+                _warning,
+              ),
             const SizedBox(height: 1),
             Row(
               children: <Widget>[
                 _ActionButton(
-                    label: strings('scanNow'),
-                    onTap: _startScan,
-                    disabled: running),
+                  label: strings('scanNow'),
+                  onTap: _startScan,
+                  disabled: running,
+                ),
                 const SizedBox(width: 1),
                 _ActionButton(
                   label: strings('verify'),
@@ -1098,40 +1387,60 @@ class _DashboardState extends State<_Dashboard> {
             if (showPassword) ...<Widget>[
               const SizedBox(height: 1),
               const Text('ZIP password', style: TextStyle(color: _muted)),
-              TextField(
-                controller: password,
-                obscureText: true,
-                width: 50,
-                placeholder: 'Enter at scan time; never stored',
-                decoration: InputDecoration(
-                  fillColor: _surfaceStrong,
-                  border: BoxBorder.all(
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: passwordFocus.requestFocus,
+                child: TextField(
+                  controller: password,
+                  focusNode: passwordFocus,
+                  autofocus: true,
+                  obscureText: true,
+                  width: 50,
+                  placeholder: 'Enter at scan time; never stored',
+                  decoration: InputDecoration(
+                    fillColor: _surfaceStrong,
+                    border: BoxBorder.all(
                       color: const Color(0x394453),
-                      style: BoxBorderStyle.rounded),
-                  focusedBorder: BoxBorder.all(
-                      color: _accent, style: BoxBorderStyle.rounded),
+                      style: BoxBorderStyle.rounded,
+                    ),
+                    focusedBorder: BoxBorder.all(
+                      color: _accent,
+                      style: BoxBorderStyle.rounded,
+                    ),
+                  ),
+                  onSubmitted: (_) => _startScan(),
                 ),
-                onSubmitted: (_) => _startScan(),
               ),
               _ActionButton(label: strings('scanNow'), onTap: _startScan),
             ],
             if (showVerify) ...<Widget>[
               const SizedBox(height: 1),
-              const Text('Approved manifest path',
-                  style: TextStyle(color: _muted)),
-              TextField(
-                controller: verifyPath,
-                width: 68,
-                placeholder: '/secure/baselines/application.centra.json',
-                decoration: InputDecoration(
-                  fillColor: _surfaceStrong,
-                  border: BoxBorder.all(
+              const Text(
+                'Approved manifest path',
+                style: TextStyle(color: _muted),
+              ),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: verifyPathFocus.requestFocus,
+                child: TextField(
+                  controller: verifyPath,
+                  focusNode: verifyPathFocus,
+                  autofocus: true,
+                  width: 68,
+                  placeholder: '/secure/baselines/application.centra.json',
+                  decoration: InputDecoration(
+                    fillColor: _surfaceStrong,
+                    border: BoxBorder.all(
                       color: const Color(0x394453),
-                      style: BoxBorderStyle.rounded),
-                  focusedBorder: BoxBorder.all(
-                      color: _accent, style: BoxBorderStyle.rounded),
+                      style: BoxBorderStyle.rounded,
+                    ),
+                    focusedBorder: BoxBorder.all(
+                      color: _accent,
+                      style: BoxBorderStyle.rounded,
+                    ),
+                  ),
+                  onSubmitted: (_) => _verify(),
                 ),
-                onSubmitted: (_) => _verify(),
               ),
               _ActionButton(label: strings('verify'), onTap: _verify),
             ],
@@ -1145,7 +1454,9 @@ class _DashboardState extends State<_Dashboard> {
             if (lastManifest != null) ...<Widget>[
               const SizedBox(height: 1),
               _ReviewRow(
-                  strings('files'), lastManifest!.files.length.toString()),
+                strings('files'),
+                lastManifest!.files.length.toString(),
+              ),
               _ReviewRow(strings('bytes'), lastManifest!.totalBytes.toString()),
             ],
             if (message != null) ...<Widget>[
@@ -1160,8 +1471,11 @@ class _DashboardState extends State<_Dashboard> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header(
-      {required this.title, required this.subtitle, required this.trailing});
+  const _Header({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
 
   final String title;
   final String subtitle;
@@ -1173,12 +1487,15 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 1),
         child: Row(
           children: <Widget>[
-            Text(title,
-                style: const TextStyle(
-                    color: _accent, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style:
+                  const TextStyle(color: _accent, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(width: 2),
             Expanded(
-                child: Text(subtitle, style: const TextStyle(color: _muted))),
+              child: Text(subtitle, style: const TextStyle(color: _muted)),
+            ),
             Text(trailing, style: const TextStyle(color: _text)),
           ],
         ),
@@ -1186,8 +1503,11 @@ class _Header extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer(
-      {required this.left, required this.right, required this.warning});
+  const _Footer({
+    required this.left,
+    required this.right,
+    required this.warning,
+  });
 
   final String left;
   final String right;
@@ -1197,9 +1517,12 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         children: <Widget>[
           Expanded(
-              child: Text(left,
-                  style: TextStyle(color: warning ? _warning : _muted),
-                  maxLines: 1)),
+            child: Text(
+              left,
+              style: TextStyle(color: warning ? _warning : _muted),
+              maxLines: 1,
+            ),
+          ),
           Text(right, style: const TextStyle(color: _muted)),
         ],
       );
@@ -1215,9 +1538,10 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(title,
-              style:
-                  const TextStyle(color: _text, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(color: _text, fontWeight: FontWeight.bold),
+          ),
           Text(subtitle, style: const TextStyle(color: _muted)),
         ],
       );
@@ -1262,17 +1586,19 @@ class _OptionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                  disabled
-                      ? '[-]'
+                disabled
+                    ? '[-]'
+                    : selected
+                        ? '[✓]'
+                        : '[ ]',
+                style: TextStyle(
+                  color: disabled
+                      ? _muted
                       : selected
-                          ? '[✓]'
-                          : '[ ]',
-                  style: TextStyle(
-                      color: disabled
-                          ? _muted
-                          : selected
-                              ? _accent
-                              : _muted)),
+                          ? _accent
+                          : _muted,
+                ),
+              ),
               const SizedBox(width: 1),
               Expanded(
                 child: Column(
@@ -1280,12 +1606,14 @@ class _OptionTile extends StatelessWidget {
                   children: <Widget>[
                     Text(title,
                         style: TextStyle(color: disabled ? _muted : _text)),
-                    Text(subtitle,
-                        style: TextStyle(
-                            color: statusColor,
-                            fontWeight: status == null
-                                ? FontWeight.normal
-                                : FontWeight.dim)),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight:
+                            status == null ? FontWeight.normal : FontWeight.dim,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1346,11 +1674,15 @@ class _ReviewRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SizedBox(
-                width: 22,
-                child: Text(label, style: const TextStyle(color: _muted))),
+              width: 22,
+              child: Text(label, style: const TextStyle(color: _muted)),
+            ),
             Expanded(
-                child: Text(value.isEmpty ? '—' : value,
-                    style: const TextStyle(color: _text))),
+              child: Text(
+                value.isEmpty ? '—' : value,
+                style: const TextStyle(color: _text),
+              ),
+            ),
           ],
         ),
       );
