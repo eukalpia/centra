@@ -27,7 +27,18 @@ jobs:
       - name: Format changed Dart files
         run: dart format lib/src/core/path_policy.dart lib/src/core/ssh_connection.dart lib/src/core/source.dart lib/src/core/scanner.dart lib/src/tui/ssh_source_picker.dart test/path_policy_test.dart test/ssh_connection_test.dart
       - name: Analyze
-        run: dart analyze --fatal-warnings
+        shell: bash
+        run: |
+          set -o pipefail
+          dart analyze --fatal-warnings 2>&1 | tee ssh-analyze.log
+      - name: Publish analyzer diagnostics
+        if: failure()
+        run: |
+          git config user.name "Centra CI"
+          git config user.email "ci@centra.local"
+          git add ssh-analyze.log
+          git commit -m "Record SSH scan analyzer diagnostics"
+          git push origin HEAD:fix/ssh-scan-performance
       - name: Test
         run: dart test
       - name: Restore clean project workflow
