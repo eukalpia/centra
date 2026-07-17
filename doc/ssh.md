@@ -45,7 +45,7 @@ Keyboard controls in the remote browser:
 | `Home` / `End` | Jump to the first or last entry |
 | `Esc` | Return to connection settings or cancel |
 
-Mouse selection and directory opening use the same navigation state as keyboard input.
+The browser automatically scrolls to keep the keyboard selection inside the visible viewport. Mouse selection and directory opening use the same navigation state as keyboard input.
 
 ## Host-key verification
 
@@ -133,7 +133,6 @@ Common failures:
 - **Connection timeout:** verify the address, port, firewall, VPN, and timeout value.
 - **Permission denied while browsing:** the SSH account cannot read the selected directory.
 - **Connection closed during snapshot:** check keepalive settings and server-side idle limits.
-
 
 ## Interactive terminal
 
