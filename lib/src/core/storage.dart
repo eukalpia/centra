@@ -243,7 +243,11 @@ class ProfileStore {
     if (type != FileSystemEntityType.file && type != FileSystemEntityType.link) {
       throw FileSystemException('Profile path is not deletable.', file.path);
     }
-    await FileSystemEntity.delete(file.path);
+    if (type == FileSystemEntityType.link) {
+      await Link(file.path).delete();
+    } else {
+      await file.delete();
+    }
     return true;
   }
 }
