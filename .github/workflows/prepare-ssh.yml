@@ -24,7 +24,7 @@ jobs:
       - name: Format changed Dart files
         run: dart format lib/src/core/profile.dart lib/src/core/source.dart lib/src/core/scanner.dart lib/src/core/ssh_connection.dart lib/src/tui/wizard_state.dart lib/src/tui/ssh_source_picker.dart lib/src/app/cli.dart lib/centra.dart
       - name: Remove preparation files
-        run: rm .github/prepare_ssh_core.py .github/workflows/prepare-ssh.yml
+        run: rm .github/prepare_ssh_core.py .github/workflows/prepare-ssh.yml .github/ssh-prepare.trigger
       - name: Commit prepared integration
         run: |
           git config user.name "Centra CI"
