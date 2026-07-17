@@ -41,7 +41,18 @@ jobs:
           git commit -m "Record SSH scan analyzer diagnostics"
           git push origin HEAD:fix/ssh-scan-performance
       - name: Test
-        run: dart test
+        shell: bash
+        run: |
+          set -o pipefail
+          dart test --reporter expanded 2>&1 | tee ssh-test.log
+      - name: Publish test diagnostics
+        if: failure()
+        run: |
+          git config user.name "Centra CI"
+          git config user.email "ci@centra.local"
+          git add -f ssh-test.log
+          git commit -m "Record SSH scan test diagnostics"
+          git push origin HEAD:fix/ssh-scan-performance
       - name: Restore clean project workflow
         run: |
           rm .github/patch_ssh_snapshot.py
@@ -49,7 +60,7 @@ jobs:
           rm .github/patch_ssh_timeout_import.py
           rm .github/workflows/prepare-ssh-scan-performance.yml
           rm .github/trigger-ssh-scan-performance
-          rm -f ssh-analyze.log
+          rm -f ssh-analyze.log ssh-test.log
           git fetch origin main
           git checkout origin/main -- .github/workflows/ci.yml
       - name: Commit product changes
