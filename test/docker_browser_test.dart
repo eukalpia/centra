@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 import 'support/fixtures.dart';
 
 void main() {
-  group('Docker resource and filesystem navigation', () {
+  group('Docker source and filesystem navigation', () {
     test('lists running containers without invoking a shell', () async {
       final runner = FakeCommandRunner(
         defaultResult: textResult(
