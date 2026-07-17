@@ -10,9 +10,11 @@ import '../core/profile.dart';
 import '../core/scanner.dart';
 import '../core/services.dart';
 import '../core/storage.dart';
+import '../core/ssh_connection.dart';
 import '../i18n/messages.dart';
 import 'docker_source_picker.dart';
 import 'folder_picker.dart';
+import 'ssh_source_picker.dart';
 import 'wizard_state.dart';
 
 const _accent = Color(0x64D8CB);
@@ -91,6 +93,7 @@ class _CentraShellState extends State<_CentraShell> {
   late CentraSettings settings;
   late List<CentraProfile> profiles;
   late bool showWizard;
+  final sshSecrets = <String, SshConnectionSecrets>{};
 
   @override
   void initState() {
@@ -100,8 +103,12 @@ class _CentraShellState extends State<_CentraShell> {
     showWizard = widget.forceWizard || profiles.isEmpty;
   }
 
-  Future<void> _profileSaved(CentraProfile profile) async {
+  Future<void> _profileSaved(
+    CentraProfile profile,
+    SshConnectionSecrets? secrets,
+  ) async {
     await widget.profileStore.save(profile);
+    if (secrets != null) sshSecrets[profile.id] = secrets;
     settings = CentraSettings(
       locale: profile.locale,
       theme: settings.theme,
@@ -134,6 +141,7 @@ class _CentraShellState extends State<_CentraShell> {
     return _Dashboard(
       profiles: profiles,
       locale: settings.locale,
+      sshSecrets: sshSecrets,
       onNewProfile: () => setState(() => showWizard = true),
     );
   }
@@ -147,7 +155,10 @@ class _WizardScreen extends StatefulWidget {
   });
 
   final String? initialLocale;
-  final Future<void> Function(CentraProfile profile) onSaved;
+  final Future<void> Function(
+    CentraProfile profile,
+    SshConnectionSecrets? secrets,
+  ) onSaved;
   final VoidCallback onCancel;
 
   @override
@@ -197,6 +208,9 @@ class _WizardScreenState extends State<_WizardScreen> {
   FocusNode? folderPickerReturnFocus;
   SourceType? dockerPickerSourceType;
   String? selectedDockerResourceTitle;
+  var sshPickerOpen = false;
+  SshConnectionSecrets? sshConnectionSecrets;
+  String? selectedSshServerVersion;
 
   String get locale => draft.locale ?? widget.initialLocale ?? 'en';
   CentraStrings get strings => CentraStrings(locale);
@@ -348,6 +362,42 @@ class _WizardScreenState extends State<_WizardScreen> {
     wizardFocus.requestFocus();
   }
 
+  void _openSshPicker() {
+    _syncDraft();
+    setState(() {
+      error = null;
+      sshPickerOpen = true;
+    });
+  }
+
+  void _closeSshPicker() {
+    setState(() => sshPickerOpen = false);
+    wizardFocus.requestFocus();
+  }
+
+  void _selectSshSource(SshSourceSelection selection) {
+    host.text = selection.host;
+    port.text = selection.port.toString();
+    user.text = selection.user;
+    root.text = selection.path;
+    identityFile.text = selection.identityFile ?? '';
+    draft
+      ..sshAuthMethod = selection.authMethod
+      ..sshHostKeyPolicy = SshHostKeyPolicy.pinned
+      ..hostKeyType = selection.hostKeyType
+      ..hostKeyFingerprint = selection.hostKeyFingerprint
+      ..connectTimeoutSeconds = selection.connectTimeoutSeconds
+      ..keepAliveSeconds = selection.keepAliveSeconds;
+    sshConnectionSecrets = selection.secrets;
+    selectedSshServerVersion = selection.serverVersion;
+    _syncDraft();
+    setState(() {
+      error = null;
+      sshPickerOpen = false;
+    });
+    wizardFocus.requestFocus();
+  }
+
   bool _stepHasTextField(WizardStep candidate) =>
       candidate == WizardStep.details ||
       candidate == WizardStep.exclusions ||
@@ -369,7 +419,9 @@ class _WizardScreenState extends State<_WizardScreen> {
       };
 
   bool _handleKey(KeyboardEvent event) {
-    if (folderPickerController != null || dockerPickerSourceType != null) {
+    if (folderPickerController != null ||
+        dockerPickerSourceType != null ||
+        sshPickerOpen) {
       return false;
     }
     if (event.matches(LogicalKey.keyC, ctrl: true) ||
@@ -435,6 +487,11 @@ class _WizardScreenState extends State<_WizardScreen> {
             image.clear();
             service.clear();
             selectedDockerResourceTitle = null;
+            sshConnectionSecrets = null;
+            selectedSshServerVersion = null;
+            draft
+              ..hostKeyType = ''
+              ..hostKeyFingerprint = '';
           }
           draft.sourceType = nextSource;
           break;
@@ -508,7 +565,7 @@ class _WizardScreenState extends State<_WizardScreen> {
     if (step == WizardStep.review) {
       setState(() => saving = true);
       try {
-        await widget.onSaved(draft.toProfile());
+        await widget.onSaved(draft.toProfile(), sshConnectionSecrets);
       } on Object catch (exception) {
         if (mounted) setState(() => error = exception.toString());
       } finally {
@@ -589,6 +646,41 @@ class _WizardScreenState extends State<_WizardScreen> {
         ),
       ),
     );
+
+    if (sshPickerOpen) {
+      return Stack(
+        children: <Widget>[
+          screen,
+          ModalBarrier(
+            color: const Color(0x000000).withAlpha(196),
+            obscure: false,
+            onDismiss: _closeSshPicker,
+          ),
+          Center(
+            child: SshSourcePicker(
+              locale: locale,
+              initialHost: host.text.trim(),
+              initialPort: int.tryParse(port.text.trim()) ?? 22,
+              initialUser: user.text.trim(),
+              initialPath: root.text.trim().isEmpty ? '/' : root.text.trim(),
+              initialAuthMethod: draft.sshAuthMethod,
+              initialIdentityFile: identityFile.text.trim().isEmpty
+                  ? null
+                  : identityFile.text.trim(),
+              initialFingerprint: draft.hostKeyFingerprint.trim().isEmpty
+                  ? null
+                  : draft.hostKeyFingerprint.trim(),
+              initialConnectTimeoutSeconds: draft.connectTimeoutSeconds,
+              initialKeepAliveSeconds: draft.keepAliveSeconds,
+              initialSecrets:
+                  sshConnectionSecrets ?? const SshConnectionSecrets(),
+              onSelected: _selectSshSource,
+              onCancel: _closeSshPicker,
+            ),
+          ),
+        ],
+      );
+    }
 
     final dockerSourceType = dockerPickerSourceType;
     if (dockerSourceType != null) {
@@ -811,18 +903,7 @@ class _WizardScreenState extends State<_WizardScreen> {
         );
         break;
       case SourceType.ssh:
-        fields.addAll(<Widget>[
-          _field(strings('rootPath'), root, rootFocus, '/srv/application'),
-          _field(strings('host'), host, hostFocus, 'server.example.com'),
-          _field(strings('user'), user, userFocus, 'deploy'),
-          _field(strings('port'), port, portFocus, '22'),
-          _field(
-            strings('identityFile'),
-            identityFile,
-            identityFileFocus,
-            '~/.ssh/id_ed25519',
-          ),
-        ]);
+        fields.add(_sshSelectionPanel());
         break;
       case SourceType.dockerContainer:
         fields.addAll(<Widget>[
@@ -876,6 +957,66 @@ class _WizardScreenState extends State<_WizardScreen> {
         const SizedBox(height: 1),
         ...fields,
       ],
+    );
+  }
+
+  Widget _sshSelectionPanel() {
+    final connected = host.text.trim().isNotEmpty &&
+        user.text.trim().isNotEmpty &&
+        root.text.trim().isNotEmpty &&
+        draft.hostKeyFingerprint.trim().isNotEmpty;
+    return Container(
+      decoration: BoxDecoration(
+        color: _surfaceStrong,
+        border: BoxBorder.all(
+          color: connected ? _accent : const Color(0x394453),
+          style: BoxBorderStyle.rounded,
+        ),
+      ),
+      padding: const EdgeInsets.all(1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text(
+                connected ? '● SSH' : '○ SSH',
+                style: TextStyle(
+                  color: connected ? _success : _muted,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                connected ? draft.sshAuthMethod.wireName : 'not configured',
+                style: const TextStyle(color: _muted),
+              ),
+            ],
+          ),
+          _ReviewRow(
+            strings('host'),
+            connected ? '${user.text}@${host.text}:${port.text}' : '—',
+          ),
+          _ReviewRow(strings('rootPath'), connected ? root.text : '—'),
+          if (connected)
+            _ReviewRow(
+              'Fingerprint',
+              '${draft.hostKeyType} ${draft.hostKeyFingerprint}',
+            ),
+          if (selectedSshServerVersion != null)
+            _ReviewRow('Server', selectedSshServerVersion!),
+          const SizedBox(height: 1),
+          const Text(
+            'Passwords and key passphrases are kept only in memory and are never written to the profile.',
+            style: TextStyle(color: _muted),
+          ),
+          _ActionButton(
+            label: connected ? 'Изменить SSH-подключение' : 'Настроить SSH',
+            onTap: _openSshPicker,
+            muted: connected,
+          ),
+        ],
+      ),
     );
   }
 
@@ -1203,11 +1344,13 @@ class _Dashboard extends StatefulWidget {
   const _Dashboard({
     required this.profiles,
     required this.locale,
+    required this.sshSecrets,
     required this.onNewProfile,
   });
 
   final List<CentraProfile> profiles;
   final String locale;
+  final Map<String, SshConnectionSecrets> sshSecrets;
   final VoidCallback onNewProfile;
 
   @override
@@ -1223,11 +1366,16 @@ class _DashboardState extends State<_Dashboard> {
   CentraManifest? lastManifest;
   final password = TextEditingController();
   final verifyPath = TextEditingController();
+  final sshPassword = TextEditingController();
+  final sshKeyPassphrase = TextEditingController();
   final dashboardFocus = FocusNode(debugLabel: 'Centra dashboard');
   final passwordFocus = FocusNode(debugLabel: 'ZIP password');
   final verifyPathFocus = FocusNode(debugLabel: 'Manifest path');
+  final sshPasswordFocus = FocusNode(debugLabel: 'SSH password');
+  final sshKeyPassphraseFocus = FocusNode(debugLabel: 'SSH key passphrase');
   var showPassword = false;
   var showVerify = false;
+  var showSshCredentials = false;
 
   CentraStrings get strings => CentraStrings(widget.locale);
   CentraProfile get profile {
@@ -1239,9 +1387,13 @@ class _DashboardState extends State<_Dashboard> {
   void dispose() {
     password.dispose();
     verifyPath.dispose();
+    sshPassword.dispose();
+    sshKeyPassphrase.dispose();
     dashboardFocus.dispose();
     passwordFocus.dispose();
     verifyPathFocus.dispose();
+    sshPasswordFocus.dispose();
+    sshKeyPassphraseFocus.dispose();
     super.dispose();
   }
 
@@ -1250,7 +1402,10 @@ class _DashboardState extends State<_Dashboard> {
       shutdownApp();
       return true;
     }
-    if (passwordFocus.hasPrimaryFocus || verifyPathFocus.hasPrimaryFocus) {
+    if (passwordFocus.hasPrimaryFocus ||
+        verifyPathFocus.hasPrimaryFocus ||
+        sshPasswordFocus.hasPrimaryFocus ||
+        sshKeyPassphraseFocus.hasPrimaryFocus) {
       return false;
     }
     if (event.logicalKey == LogicalKey.keyQ) {
@@ -1286,6 +1441,12 @@ class _DashboardState extends State<_Dashboard> {
 
   Future<void> _startScan() async {
     if (running) return;
+    if (profile.source.type == SourceType.ssh &&
+        profile.source.sshAuthMethod.usesPassword &&
+        !(widget.sshSecrets[profile.id]?.hasPassword ?? false)) {
+      setState(() => showSshCredentials = true);
+      return;
+    }
     if (profile.output.createZip &&
         profile.output.requireZipPassword &&
         password.text.isEmpty) {
@@ -1301,6 +1462,7 @@ class _DashboardState extends State<_Dashboard> {
     try {
       final result = await IntegrityScanner().scan(
         profile,
+        sshSecrets: widget.sshSecrets[profile.id],
         onProgress: (value) {
           if (mounted) setState(() => progress = value);
         },
@@ -1321,9 +1483,15 @@ class _DashboardState extends State<_Dashboard> {
       });
     } on Object catch (error) {
       if (mounted) {
+        final text = error.toString();
         setState(() {
           status = 'failed';
-          message = error.toString();
+          message = text;
+          if (profile.source.type == SourceType.ssh &&
+              (text.contains('password is required') ||
+                  text.contains('passphrase is required'))) {
+            showSshCredentials = true;
+          }
         });
       }
     } finally {
@@ -1344,6 +1512,7 @@ class _DashboardState extends State<_Dashboard> {
       );
       final current = (await IntegrityScanner().scan(
         profile,
+        sshSecrets: widget.sshSecrets[profile.id],
         onProgress: (value) {
           if (mounted) setState(() => progress = value);
         },
@@ -1363,6 +1532,16 @@ class _DashboardState extends State<_Dashboard> {
     } finally {
       if (mounted) setState(() => running = false);
     }
+  }
+
+  void _saveSshCredentials() {
+    widget.sshSecrets[profile.id] = SshConnectionSecrets(
+      password: sshPassword.text.isEmpty ? null : sshPassword.text,
+      keyPassphrase:
+          sshKeyPassphrase.text.isEmpty ? null : sshKeyPassphrase.text,
+    );
+    setState(() => showSshCredentials = false);
+    _startScan();
   }
 
   @override
@@ -1489,6 +1668,17 @@ class _DashboardState extends State<_Dashboard> {
             const SizedBox(height: 1),
             _ReviewRow(strings('source'), profile.source.type.wireName),
             _ReviewRow(strings('rootPath'), profile.source.root),
+            if (profile.source.type == SourceType.ssh) ...<Widget>[
+              _ReviewRow(
+                strings('host'),
+                '${profile.source.user}@${profile.source.host}:${profile.source.port}',
+              ),
+              _ReviewRow('SSH auth', profile.source.sshAuthMethod.wireName),
+              _ReviewRow(
+                'Host fingerprint',
+                '${profile.source.hostKeyType ?? ''} ${profile.source.hostKeyFingerprint ?? ''}',
+              ),
+            ],
             _ReviewRow(
               strings('algorithms'),
               algorithms.map((algorithm) => algorithm.displayName).join(', '),
@@ -1521,6 +1711,82 @@ class _DashboardState extends State<_Dashboard> {
                 ),
               ],
             ),
+            if (showSshCredentials) ...<Widget>[
+              const SizedBox(height: 1),
+              const _Notice(
+                'SSH secrets are used only for this application session and are never saved.',
+                _accent,
+              ),
+              if (profile.source.sshAuthMethod.usesPassword) ...<Widget>[
+                const Text('SSH password', style: TextStyle(color: _muted)),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: sshPasswordFocus.requestFocus,
+                  child: TextField(
+                    controller: sshPassword,
+                    focusNode: sshPasswordFocus,
+                    autofocus: true,
+                    obscureText: true,
+                    width: 50,
+                    placeholder: 'Required for this connection',
+                    decoration: InputDecoration(
+                      fillColor: _surfaceStrong,
+                      border: BoxBorder.all(
+                        color: const Color(0x394453),
+                        style: BoxBorderStyle.rounded,
+                      ),
+                      focusedBorder: BoxBorder.all(
+                        color: _accent,
+                        style: BoxBorderStyle.rounded,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              if (profile.source.sshAuthMethod.usesPrivateKey) ...<Widget>[
+                const Text(
+                  'SSH key passphrase (optional)',
+                  style: TextStyle(color: _muted),
+                ),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: sshKeyPassphraseFocus.requestFocus,
+                  child: TextField(
+                    controller: sshKeyPassphrase,
+                    focusNode: sshKeyPassphraseFocus,
+                    obscureText: true,
+                    width: 50,
+                    placeholder: 'Only for encrypted private keys',
+                    decoration: InputDecoration(
+                      fillColor: _surfaceStrong,
+                      border: BoxBorder.all(
+                        color: const Color(0x394453),
+                        style: BoxBorderStyle.rounded,
+                      ),
+                      focusedBorder: BoxBorder.all(
+                        color: _accent,
+                        style: BoxBorderStyle.rounded,
+                      ),
+                    ),
+                    onSubmitted: (_) => _saveSshCredentials(),
+                  ),
+                ),
+              ],
+              Row(
+                children: <Widget>[
+                  _ActionButton(
+                    label: strings('cancel'),
+                    onTap: () => setState(() => showSshCredentials = false),
+                    muted: true,
+                  ),
+                  const SizedBox(width: 1),
+                  _ActionButton(
+                    label: 'Подключиться и сканировать',
+                    onTap: _saveSshCredentials,
+                  ),
+                ],
+              ),
+            ],
             if (showPassword) ...<Widget>[
               const SizedBox(height: 1),
               const Text('ZIP password', style: TextStyle(color: _muted)),
