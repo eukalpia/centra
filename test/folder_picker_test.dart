@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 void main() {
-  group('FolderBrowser navigation', () {
+  group('FolderBrowser directory navigation', () {
     late Directory sandbox;
 
     setUp(() async {
