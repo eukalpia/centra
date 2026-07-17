@@ -26,7 +26,7 @@ class WizardDraft {
   String user = '';
   String port = '22';
   String identityFile = '';
-  SshAuthMethod sshAuthMethod = SshAuthMethod.privateKey;
+  SshAuthMethod sshAuthMethod = SshAuthMethod.password;
   SshHostKeyPolicy sshHostKeyPolicy = SshHostKeyPolicy.trustOnFirstUse;
   String hostKeyType = '';
   String hostKeyFingerprint = '';
@@ -66,12 +66,16 @@ class WizardDraft {
             : const <String>[];
       case WizardStep.details:
         return _sourceConfig().validate()
-          ..addAll(profileName.trim().isEmpty
-              ? <String>['Profile name is required.']
-              : const <String>[])
-          ..addAll(RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(profileId)
-              ? const <String>[]
-              : <String>['Profile ID is invalid.']);
+          ..addAll(
+            profileName.trim().isEmpty
+                ? <String>['Profile name is required.']
+                : const <String>[],
+          )
+          ..addAll(
+            RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(profileId)
+                ? const <String>[]
+                : <String>['Profile ID is invalid.'],
+          );
       case WizardStep.algorithms:
         return algorithmIds.isEmpty
             ? <String>['Select at least one algorithm.']
@@ -107,8 +111,9 @@ class WizardDraft {
       algorithmIds: algorithmIds.toList(growable: false),
       includePatterns: const <String>['**'],
       excludePatterns: excludePatterns.toList(growable: false)..sort(),
-      customAlgorithms:
-          List<CustomHashAlgorithm>.unmodifiable(customAlgorithms),
+      customAlgorithms: List<CustomHashAlgorithm>.unmodifiable(
+        customAlgorithms,
+      ),
       symlinkPolicy: symlinkPolicy,
       includeHiddenFiles: includeHiddenFiles,
       capturePermissions: capturePermissions,

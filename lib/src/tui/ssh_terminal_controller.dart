@@ -74,14 +74,14 @@ class SshTerminalController extends PtyController {
       final session = await connection.openShell(columns: columns, rows: rows);
       _session = session;
       _stdoutSubscription = session.stdout.cast<List<int>>().listen(
-        (bytes) => _emit(utf8.decode(bytes, allowMalformed: true)),
-        onError: _reportError,
-        onDone: () => _reportExit(0),
-      );
+            (bytes) => _emit(utf8.decode(bytes, allowMalformed: true)),
+            onError: _reportError,
+            onDone: () => _reportExit(0),
+          );
       _stderrSubscription = session.stderr.cast<List<int>>().listen(
-        (bytes) => _emit(utf8.decode(bytes, allowMalformed: true)),
-        onError: _reportError,
-      );
+            (bytes) => _emit(utf8.decode(bytes, allowMalformed: true)),
+            onError: _reportError,
+          );
       _remoteStatus = PtyStatus.running;
       _notify();
     } on Object catch (error) {
