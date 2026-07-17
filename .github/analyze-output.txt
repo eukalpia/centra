@@ -1,0 +1,21 @@
+Analyzing centra...
+
+  error - lib/src/tui/ssh_terminal_controller.dart:103:21 - The argument type 'List<int>' can't be assigned to the parameter type 'Uint8List'.  - argument_type_not_assignable
+   info - lib/src/app/cli.dart:12:1 - Sort directive sections alphabetically. Try sorting the directives. - directives_ordering
+   info - lib/src/app/cli.dart:37:8 - Use an initializing formal to assign a parameter to a field. Try using an initialing formal ('this.manifestCodec') to initialize the field. - prefer_initializing_formals
+   info - lib/src/app/cli.dart:280:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/app/cli.dart:305:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/docker_browser.dart:125:7 - Local variables should be final. Try making the variable final. - prefer_final_locals
+   info - lib/src/core/profile.dart:117:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/profile.dart:134:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/profile.dart:138:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/profile.dart:142:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/profile.dart:293:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/profile.dart:295:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/core/profile.dart:297:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/src/tui/centra_app.dart:13:1 - Sort directive sections alphabetically. Try sorting the directives. - directives_ordering
+   info - lib/src/tui/centra_app.dart:1164:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - test/docker_browser_test.dart:100:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - test/source_test.dart:76:15 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+
+17 issues found.
