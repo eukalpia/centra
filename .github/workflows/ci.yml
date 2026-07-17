@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality · ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - name: Format report
+        run: dart format --output=none .
+      - run: dart analyze --fatal-infos
+      - run: dart test
+      - name: Compile executable
+        shell: bash
+        run: |
+          mkdir -p build
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            dart compile exe bin/centra.dart -o build/centra.exe
+          else
+            dart compile exe bin/centra.dart -o build/centra
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: centra-${{ runner.os }}-${{ runner.arch }}
+          path: build/centra*
+          if-no-files-found: error

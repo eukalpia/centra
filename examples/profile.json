@@ -1,0 +1,47 @@
+{
+  "schema": "centra.profile.v1",
+  "id": "example-production",
+  "name": "Example production",
+  "locale": "en",
+  "source": {
+    "type": "local",
+    "root": "/srv/example",
+    "port": 22
+  },
+  "algorithmIds": [
+    "sha256",
+    "md5"
+  ],
+  "includePatterns": [
+    "**"
+  ],
+  "excludePatterns": [
+    ".git/**",
+    "**/.env",
+    "**/.env.*",
+    "**/*.key",
+    "**/*.pem",
+    "**/*.log",
+    "**/node_modules/**",
+    "**/uploads/**",
+    "**/backups/**"
+  ],
+  "customAlgorithms": [],
+  "symlinkPolicy": "skip",
+  "includeHiddenFiles": true,
+  "capturePermissions": true,
+  "captureModificationTimes": true,
+  "workerCount": 4,
+  "failOnReadError": true,
+  "output": {
+    "directory": "./centra-output",
+    "writeCanonicalJson": true,
+    "writeCompatibilityText": true,
+    "createZip": true,
+    "requireZipPassword": true,
+    "includeMetadataReport": true
+  },
+  "projectKind": "node",
+  "createdAt": "2026-07-17T00:00:00.000Z",
+  "updatedAt": "2026-07-17T00:00:00.000Z"
+}

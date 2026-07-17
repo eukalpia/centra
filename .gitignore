@@ -1,0 +1,14 @@
+.dart_tool/
+.packages
+build/
+coverage/
+*.exe
+*.dill
+*.log
+.idea/
+.vscode/
+.DS_Store
+centra-output/
+.env
+.env.*
+*.private.json
