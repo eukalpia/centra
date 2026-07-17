@@ -1,0 +1,92 @@
+00:00 +0: loading test/profile_test.dart
+00:00 +0: test/profile_test.dart: CentraProfile validation requires an explicit algorithm selection
+00:00 +1: test/profile_test.dart: CentraProfile validation requires an explicit output format
+00:00 +2: test/profile_test.dart: CentraProfile validation allows MD5 compatibility profile without hiding its status
+00:00 +3: test/profile_test.dart: CentraProfile validation validates source-specific required fields
+00:00 +4: test/profile_test.dart: CentraProfile validation round-trips through the versioned JSON schema
+00:00 +5: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +6: test/security_coverage_marker_test.dart: public API exposes hardened storage and output services
+00:00 +7: test/i18n_test.dart: CentraStrings ships exactly ten unique interface languages
+00:00 +8: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
+00:00 +9: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
+00:00 +10: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
+00:00 +11: test/docker_browser_test.dart: Docker source and filesystem navigation lists running containers without invoking a shell
+00:00 +12: test/docker_browser_test.dart: Docker source and filesystem navigation lists tagged images and keeps untagged images addressable
+00:00 +13: test/docker_browser_test.dart: Docker source and filesystem navigation browses container directories from docker cp tar output
+00:00 +14: test/docker_browser_test.dart: Docker source and filesystem navigation temporary image container is removed when browsing closes
+00:00 +15: test/docker_browser_test.dart: Docker source and filesystem navigation compose service is created only when no container exists
+00:00 +16: test/docker_browser_test.dart: Docker paths normalizes paths as absolute POSIX container paths
+00:02 +17: test/folder_picker_test.dart: FolderBrowser directory navigation lists directories only and sorts them predictably
+00:02 +18: test/manifest_test.dart: CentraManifest sorts file records and emits deterministic canonical JSON
+00:02 +19: test/manifest_test.dart: CentraManifest sorts file records and emits deterministic canonical JSON
+00:02 +20: test/manifest_test.dart: CentraManifest sorts file records and emits deterministic canonical JSON
+00:02 +21: test/folder_picker_test.dart: FolderBrowser directory navigation parent entry navigates to the actual parent directory
+00:02 +22: test/manifest_test.dart: CentraManifest preserves algorithm security status in the manifest
+00:02 +23: test/folder_picker_test.dart: FolderBrowser directory navigation all ten locales expose folder picker labels
+00:02 +24: test/manifest_test.dart: ManifestComparator classifies added, removed, modified and unchanged paths
+00:02 +25: test/manifest_test.dart: ManifestComparator separates metadata-only changes from content changes
+00:02 +26: test/manifest_test.dart: ManifestComparator treats a missing algorithm result as modification
+00:02 +27: test/scanner_test.dart: IntegrityScanner hashes multiple algorithms while applying exclusions
+00:02 +28: test/scanner_test.dart: IntegrityScanner hashes multiple algorithms while applying exclusions
+00:02 +29: test/scanner_test.dart: IntegrityScanner produces the same content records regardless of worker count
+00:02 +30: test/scanner_test.dart: IntegrityScanner runs an external custom hash command without a shell
+00:02 +31: test/scanner_test.dart: IntegrityScanner records symlink targets instead of following them when requested
+00:02 +32: test/wizard_state_test.dart: WizardDraft starts without hidden policy selections
+00:02 +33: test/wizard_state_test.dart: WizardDraft blocks every required step until the user makes a choice
+00:02 +34: test/wizard_state_test.dart: WizardDraft creates a complete profile after explicit choices
+00:02 +35: test/wizard_state_test.dart: WizardDraft requires ZIP mode before a password requirement can be serialized
+00:02 +36: test/storage_test.dart: Centra storage creates isolated configuration and data directories
+00:02 +37: test/storage_test.dart: Centra storage settings default and persisted values round-trip
+00:02 +38: test/ssh_connection_test.dart: SSH configuration password authentication does not require a private key
+00:02 +39: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +40: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +41: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +42: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +43: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +44: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +45: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +46: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +47: test/storage_test.dart: Centra storage profile store saves, sorts, loads and deletes profiles
+00:02 +48: test/storage_test.dart: Centra storage rejects traversal and malformed profile identifiers
+00:02 +49: test/storage_test.dart: Centra storage invalid stored profiles fail closed
+00:02 +50: test/storage_test.dart: Centra storage atomic writer replaces text without backup or temporary debris
+00:02 +51: test/storage_test.dart: Centra storage atomic writer persists binary data exactly
+00:02 +52: test/algorithm_registry_test.dart: AlgorithmRegistry matches standard digest vectors
+00:02 +53: test/source_test.dart: source adapters Docker container adapter includes the selected context
+00:02 +54: test/source_test.dart: source adapters Docker container adapter includes the selected context
+00:02 +55: test/source_test.dart: source adapters Docker container adapter includes the selected context
+00:02 +56: test/source_test.dart: source adapters Docker container adapter includes the selected context
+00:02 +57: test/source_test.dart: source adapters Docker container adapter includes the selected context
+00:02 +58: test/source_test.dart: source adapters safe tar extraction rejects parent traversal
+00:02 +59: test/source_test.dart: source adapters Docker image provider removes its temporary container on failure
+00:03 +60: test/path_policy_test.dart: normalizeRelativePath normalizes separators and dot segments
+00:03 +61: test/path_policy_test.dart: normalizeRelativePath rejects paths escaping the root
+00:03 +62: test/path_policy_test.dart: PathPolicy matches recursive secret patterns at root and below it
+00:03 +63: test/path_policy_test.dart: PathPolicy excludes generated dependency directories
+00:03 +64: test/path_policy_test.dart: PathPolicy prunes excluded directories before remote traversal
+00:03 +64 -1: test/services_test.dart: ManifestCodec writes and reads a deterministic manifest document
+00:03 +64 -1: test/path_policy_test.dart: PathPolicy prunes excluded directories before remote traversal [E]
+  Expected: false
+    Actual: <true>
+  
+  package:matcher                  expect
+  test/path_policy_test.dart 55:7  main.<fn>.<fn>
+  
+00:03 +65 -1: test/services_test.dart: ManifestCodec writes and reads a deterministic manifest document
+00:03 +66 -1: test/services_test.dart: ManifestCodec writes and reads a deterministic manifest document
+00:03 +67 -1: test/services_test.dart: ManifestCodec writes and reads a deterministic manifest document
+00:03 +68 -1: test/services_test.dart: ManifestCodec writes and reads a deterministic manifest document
+00:03 +69 -1: test/services_test.dart: OutputService writes canonical, compatibility, report and encrypted ZIP outputs
+00:03 +70 -1: test/services_test.dart: OutputService refuses a required encrypted archive without a password
+00:03 +71 -1: test/services_test.dart: SignatureService generates, signs and verifies an Ed25519 manifest signature
+00:03 +72 -1: test/services_test.dart: SignatureService rejects a signature after manifest content changes
+00:03 +73 -1: test/services_test.dart: SignatureService rejects a trusted public key from another key pair
+00:03 +74 -1: test/services_test.dart: SignatureService private and public key documents round-trip
+00:03 +75 -1: test/services_test.dart: SignatureService rejects malformed key IDs and unsupported signature schemas
+00:03 +76 -1: Some tests failed.
+
+Failing tests:
+  test/path_policy_test.dart: PathPolicy prunes excluded directories before remote traversal
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.
