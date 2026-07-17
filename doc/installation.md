@@ -32,6 +32,10 @@ Older supported Dart SDKs can activate the executable through pub:
 dart pub global activate --source git https://github.com/eukalpia/centra.git --overwrite
 ```
 
+## Installation guarantee
+
+Continuous integration installs Centra from its Git URL and executes the resulting global `centra --version` wrapper on Ubuntu, macOS, and Windows. A change cannot pass the installation job when the `executables` entry, Git package activation, generated wrapper, or application entrypoint is broken.
+
 ## PATH troubleshooting
 
 Dart installs global command wrappers into its system cache. If `centra` is not found after a successful installation, add the cache directory to `PATH`.
