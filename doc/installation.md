@@ -34,7 +34,7 @@ dart pub global activate --source git https://github.com/eukalpia/centra.git --o
 
 ## Installation guarantee
 
-Continuous integration installs Centra from its Git URL and executes the resulting global `centra --version` wrapper on Ubuntu, macOS, and Windows. A change cannot pass the installation job when the `executables` entry, Git package activation, generated wrapper, or application entrypoint is broken.
+Continuous integration installs Centra from its Git URL and executes `centra --version` through the global `PATH` on Ubuntu, macOS, and Windows. A change cannot pass the installation job when the `executables` entry, Git package activation, generated command wrapper, PATH exposure, or application entrypoint is broken.
 
 ## PATH troubleshooting
 
