@@ -22,7 +22,7 @@ Check the installed version:
 centra --version
 ```
 
-Run the same installation command again to update Centra.
+Run the same installation command again to update Centra. No repository checkout or manual native build is involved.
 
 ## Dart 3.5 through 3.9
 
