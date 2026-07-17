@@ -116,7 +116,8 @@ class DockerBrowseSession {
         selectedBaseName != '/' &&
         archiveNames.isNotEmpty &&
         archiveNames.every(
-          (name) => name == selectedBaseName || name.startsWith('$selectedBaseName/'),
+          (name) =>
+              name == selectedBaseName || name.startsWith('$selectedBaseName/'),
         );
 
     for (final entry in archive) {
@@ -138,7 +139,8 @@ class DockerBrowseSession {
     }
 
     final sorted = directoryNames.toList(growable: false)
-      ..sort((left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
+      ..sort(
+          (left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
     final parentPath = dockerParentPath(normalizedPath);
     final entries = <DockerDirectoryEntry>[
       if (parentPath != null)
@@ -340,9 +342,8 @@ class DockerBrowserService {
         DockerResource(
           reference: reference,
           title: reference,
-          subtitle: <String>[id, size]
-              .where((value) => value.isNotEmpty)
-              .join(' · '),
+          subtitle:
+              <String>[id, size].where((value) => value.isNotEmpty).join(' · '),
         ),
       );
     }
@@ -447,7 +448,9 @@ String _normalizeArchiveName(String name) {
     value = value.substring(2);
   }
   value = p.posix.normalize(value);
-  return value == '.' || value == '/' ? '' : value.replaceFirst(RegExp(r'^/+'), '');
+  return value == '.' || value == '/'
+      ? ''
+      : value.replaceFirst(RegExp(r'^/+'), '');
 }
 
 List<String> _dockerContextArguments(String? dockerContext) {

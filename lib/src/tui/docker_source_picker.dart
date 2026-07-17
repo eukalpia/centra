@@ -251,9 +251,7 @@ class _DockerSourcePickerState extends State<DockerSourcePicker> {
       return true;
     }
     if (event.logicalKey == LogicalKey.keyR) {
-      browsing
-          ? _loadDirectory(listing?.path ?? '/')
-          : _loadResources();
+      browsing ? _loadDirectory(listing?.path ?? '/') : _loadResources();
       return true;
     }
     return false;
@@ -437,8 +435,7 @@ class _DockerSourcePickerState extends State<DockerSourcePicker> {
                   maxLines: 1,
                   style: TextStyle(
                     color: focused ? _accent : _text,
-                    fontWeight:
-                        focused ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: focused ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
@@ -510,7 +507,8 @@ class DockerPickerStrings {
 
   final String locale;
 
-  Map<String, String> get _values => _translations[locale] ?? _translations['en']!;
+  Map<String, String> get _values =>
+      _translations[locale] ?? _translations['en']!;
 
   String value(String key) => _values[key] ?? _translations['en']![key] ?? key;
   String get loading => value('loading');
@@ -551,7 +549,8 @@ class DockerPickerStrings {
       'cancel': 'Cancel',
       'back': 'Back to resources',
       'refresh': 'Refresh',
-      'resourceHelp': '↑↓ move  Enter open  R refresh  Esc cancel  Mouse supported',
+      'resourceHelp':
+          '↑↓ move  Enter open  R refresh  Esc cancel  Mouse supported',
       'filesystemHelp':
           '↑↓ move  Enter open  Backspace parent  Space choose  Esc resources',
     },
@@ -568,7 +567,8 @@ class DockerPickerStrings {
       'cancel': 'Отмена',
       'back': 'К списку ресурсов',
       'refresh': 'Обновить',
-      'resourceHelp': '↑↓ выбор  Enter открыть  R обновить  Esc отмена  Мышь работает',
+      'resourceHelp':
+          '↑↓ выбор  Enter открыть  R обновить  Esc отмена  Мышь работает',
       'filesystemHelp':
           '↑↓ выбор  Enter открыть  Backspace вверх  Space выбрать  Esc к списку',
     },
@@ -586,7 +586,8 @@ class DockerPickerStrings {
       'back': 'Resurslarga qaytish',
       'refresh': 'Yangilash',
       'resourceHelp': '↑↓ tanlash  Enter ochish  R yangilash  Esc bekor',
-      'filesystemHelp': '↑↓ tanlash  Enter ochish  Backspace yuqori  Space tanlash',
+      'filesystemHelp':
+          '↑↓ tanlash  Enter ochish  Backspace yuqori  Space tanlash',
     },
     'uz-Cyrl': <String, String>{
       'title': 'Docker файл тизими',
@@ -666,7 +667,8 @@ class DockerPickerStrings {
       'back': 'Бозгашт ба захираҳо',
       'refresh': 'Навсозӣ',
       'resourceHelp': '↑↓ интихоб  Enter кушодан  R навсозӣ  Esc бекор',
-      'filesystemHelp': '↑↓ интихоб  Enter кушодан  Backspace боло  Space интихоб',
+      'filesystemHelp':
+          '↑↓ интихоб  Enter кушодан  Backspace боло  Space интихоб',
     },
     'az': <String, String>{
       'title': 'Docker fayl sistemi',
@@ -698,7 +700,8 @@ class DockerPickerStrings {
       'back': 'Zurück zu Ressourcen',
       'refresh': 'Aktualisieren',
       'resourceHelp': '↑↓ wählen  Enter öffnen  R aktualisieren  Esc abbrechen',
-      'filesystemHelp': '↑↓ wählen  Enter öffnen  Backspace hoch  Space verwenden',
+      'filesystemHelp':
+          '↑↓ wählen  Enter öffnen  Backspace hoch  Space verwenden',
     },
   };
 }

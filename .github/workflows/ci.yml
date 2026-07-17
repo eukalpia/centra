@@ -6,40 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prepare-update:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - run: dart pub get
-      - name: Apply Docker browser integration
-        run: python tool/apply_docker_browser.py
-      - name: Format changed files
-        run: dart format lib/src/core/docker_browser.dart lib/src/tui/docker_source_picker.dart lib/src/tui/centra_app.dart test/docker_browser_test.dart
-      - name: Restore strict workflow and remove integration script
-        shell: bash
-        run: |
-          git show origin/main:.github/workflows/ci.yml > .github/workflows/ci.yml
-          rm tool/apply_docker_browser.py
-      - name: Commit prepared update
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --cached --quiet && exit 0
-          git commit -m "Integrate Docker filesystem browser"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:
