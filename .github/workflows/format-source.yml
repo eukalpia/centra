@@ -1,4 +1,4 @@
-name: Format source
+name: Format source once
 
 on:
   push:
