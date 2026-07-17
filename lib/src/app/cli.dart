@@ -48,59 +48,100 @@ class CentraCli {
       ..addFlag('help', abbr: 'h', negatable: false, help: 'Show command help.')
       ..addFlag('version', negatable: false, help: 'Show Centra version.');
 
-    parser.addCommand('algorithms', ArgParser()
-      ..addFlag('json', negatable: false, help: 'Write machine-readable JSON.'));
+    parser.addCommand(
+        'algorithms',
+        ArgParser()
+          ..addFlag('json',
+              negatable: false, help: 'Write machine-readable JSON.'));
 
     final profileParser = ArgParser();
-    profileParser.addCommand('list', ArgParser()
-      ..addFlag('json', negatable: false));
-    profileParser.addCommand('show', ArgParser()
-      ..addOption('id', abbr: 'p', help: 'Profile ID.', mandatory: true)
-      ..addFlag('json', negatable: false));
-    profileParser.addCommand('delete', ArgParser()
-      ..addOption('id', abbr: 'p', help: 'Profile ID.', mandatory: true)
-      ..addFlag('yes', abbr: 'y', negatable: false, help: 'Confirm deletion.'));
-    profileParser.addCommand('import', ArgParser()
-      ..addOption('file', abbr: 'f', help: 'Profile JSON file.', mandatory: true));
-    profileParser.addCommand('export', ArgParser()
-      ..addOption('id', abbr: 'p', help: 'Profile ID.', mandatory: true)
-      ..addOption('file', abbr: 'f', help: 'Destination JSON file.', mandatory: true));
+    profileParser.addCommand(
+        'list', ArgParser()..addFlag('json', negatable: false));
+    profileParser.addCommand(
+        'show',
+        ArgParser()
+          ..addOption('id', abbr: 'p', help: 'Profile ID.', mandatory: true)
+          ..addFlag('json', negatable: false));
+    profileParser.addCommand(
+        'delete',
+        ArgParser()
+          ..addOption('id', abbr: 'p', help: 'Profile ID.', mandatory: true)
+          ..addFlag('yes',
+              abbr: 'y', negatable: false, help: 'Confirm deletion.'));
+    profileParser.addCommand(
+        'import',
+        ArgParser()
+          ..addOption('file',
+              abbr: 'f', help: 'Profile JSON file.', mandatory: true));
+    profileParser.addCommand(
+        'export',
+        ArgParser()
+          ..addOption('id', abbr: 'p', help: 'Profile ID.', mandatory: true)
+          ..addOption('file',
+              abbr: 'f', help: 'Destination JSON file.', mandatory: true));
     parser.addCommand('profiles', profileParser);
 
-    parser.addCommand('scan', ArgParser()
-      ..addOption('profile', abbr: 'p', help: 'Profile ID.', mandatory: true)
-      ..addOption('password-env', help: 'Environment variable containing the ZIP password.')
-      ..addFlag('json', negatable: false, help: 'Write machine-readable JSON.'));
+    parser.addCommand(
+        'scan',
+        ArgParser()
+          ..addOption('profile',
+              abbr: 'p', help: 'Profile ID.', mandatory: true)
+          ..addOption('password-env',
+              help: 'Environment variable containing the ZIP password.')
+          ..addFlag('json',
+              negatable: false, help: 'Write machine-readable JSON.'));
 
-    parser.addCommand('verify', ArgParser()
-      ..addOption('profile', abbr: 'p', help: 'Profile ID.', mandatory: true)
-      ..addOption('manifest', abbr: 'm', help: 'Approved manifest file.', mandatory: true)
-      ..addFlag('json', negatable: false, help: 'Write machine-readable JSON.'));
+    parser.addCommand(
+        'verify',
+        ArgParser()
+          ..addOption('profile',
+              abbr: 'p', help: 'Profile ID.', mandatory: true)
+          ..addOption('manifest',
+              abbr: 'm', help: 'Approved manifest file.', mandatory: true)
+          ..addFlag('json',
+              negatable: false, help: 'Write machine-readable JSON.'));
 
-    parser.addCommand('diff', ArgParser()
-      ..addOption('before', help: 'Earlier manifest file.', mandatory: true)
-      ..addOption('after', help: 'Later manifest file.', mandatory: true)
-      ..addFlag('json', negatable: false, help: 'Write machine-readable JSON.')
-      ..addFlag('include-unchanged', negatable: false, help: 'Include unchanged files.'));
+    parser.addCommand(
+        'diff',
+        ArgParser()
+          ..addOption('before', help: 'Earlier manifest file.', mandatory: true)
+          ..addOption('after', help: 'Later manifest file.', mandatory: true)
+          ..addFlag('json',
+              negatable: false, help: 'Write machine-readable JSON.')
+          ..addFlag('include-unchanged',
+              negatable: false, help: 'Include unchanged files.'));
 
-    parser.addCommand('keygen', ArgParser()
-      ..addOption('id', help: 'Signing key ID.', mandatory: true)
-      ..addOption('private', help: 'Private key output file.', mandatory: true)
-      ..addOption('public', help: 'Public key output file.', mandatory: true));
+    parser.addCommand(
+        'keygen',
+        ArgParser()
+          ..addOption('id', help: 'Signing key ID.', mandatory: true)
+          ..addOption('private',
+              help: 'Private key output file.', mandatory: true)
+          ..addOption('public',
+              help: 'Public key output file.', mandatory: true));
 
-    parser.addCommand('sign', ArgParser()
-      ..addOption('manifest', abbr: 'm', help: 'Manifest file.', mandatory: true)
-      ..addOption('key', abbr: 'k', help: 'Private key file.', mandatory: true)
-      ..addOption('output', abbr: 'o', help: 'Signature document output.', mandatory: true));
+    parser.addCommand(
+        'sign',
+        ArgParser()
+          ..addOption('manifest',
+              abbr: 'm', help: 'Manifest file.', mandatory: true)
+          ..addOption('key',
+              abbr: 'k', help: 'Private key file.', mandatory: true)
+          ..addOption('output',
+              abbr: 'o', help: 'Signature document output.', mandatory: true));
 
-    parser.addCommand('verify-signature', ArgParser()
-      ..addOption('manifest', abbr: 'm', help: 'Manifest file.', mandatory: true)
-      ..addOption('signature', abbr: 's', help: 'Signature document.', mandatory: true)
-      ..addOption('public-key', abbr: 'k', help: 'Optional trusted public key document.')
-      ..addFlag('json', negatable: false));
+    parser.addCommand(
+        'verify-signature',
+        ArgParser()
+          ..addOption('manifest',
+              abbr: 'm', help: 'Manifest file.', mandatory: true)
+          ..addOption('signature',
+              abbr: 's', help: 'Signature document.', mandatory: true)
+          ..addOption('public-key',
+              abbr: 'k', help: 'Optional trusted public key document.')
+          ..addFlag('json', negatable: false));
 
-    parser.addCommand('doctor', ArgParser()
-      ..addFlag('json', negatable: false));
+    parser.addCommand('doctor', ArgParser()..addFlag('json', negatable: false));
     return parser;
   }
 
@@ -151,7 +192,8 @@ class CentraCli {
       return ExitCode.source;
     } on Object catch (error, stackTrace) {
       stderr.writeln('Unexpected failure: $error');
-      if (Platform.environment['CENTRA_DEBUG'] == '1') stderr.writeln(stackTrace);
+      if (Platform.environment['CENTRA_DEBUG'] == '1')
+        stderr.writeln(stackTrace);
       return ExitCode.internal;
     }
   }
@@ -160,7 +202,8 @@ class CentraCli {
     final algorithms = AlgorithmRegistry.builtIns;
     if (results['json'] as bool) {
       stdout.writeln(prettyJson(<String, Object?>{
-        'algorithms': algorithms.map((algorithm) => algorithm.toJson()).toList(),
+        'algorithms':
+            algorithms.map((algorithm) => algorithm.toJson()).toList(),
       }));
       return ExitCode.success;
     }
@@ -171,7 +214,8 @@ class CentraCli {
         '${algorithm.id.padRight(17)}  ${algorithm.outputBits.toString().padLeft(4)}  '
         '${algorithm.status.wireName.padRight(11)}  ${algorithm.displayName}',
       );
-      if (algorithm.warning != null) stdout.writeln('  warning: ${algorithm.warning}');
+      if (algorithm.warning != null)
+        stdout.writeln('  warning: ${algorithm.warning}');
     }
     return ExitCode.success;
   }
@@ -193,7 +237,8 @@ class CentraCli {
           stdout.writeln('No profiles configured. Run `centra init`.');
         } else {
           for (final profile in list) {
-            stdout.writeln('${profile.id.padRight(24)} ${profile.name}  [${profile.source.type.wireName}]');
+            stdout.writeln(
+                '${profile.id.padRight(24)} ${profile.name}  [${profile.source.type.wireName}]');
           }
         }
         return ExitCode.success;
@@ -201,7 +246,9 @@ class CentraCli {
         final id = command['id']! as String;
         final profile = await profiles.load(id);
         if (profile == null) throw FormatException('Profile not found: $id');
-        stdout.writeln(command['json'] as bool ? canonicalJson(profile.toJson()) : prettyJson(profile.toJson()));
+        stdout.writeln(command['json'] as bool
+            ? canonicalJson(profile.toJson())
+            : prettyJson(profile.toJson()));
         return ExitCode.success;
       case 'delete':
         if (!(command['yes'] as bool)) {
@@ -210,10 +257,12 @@ class CentraCli {
         }
         final id = command['id']! as String;
         final deleted = await profiles.delete(id);
-        stdout.writeln(deleted ? 'Deleted profile $id.' : 'Profile $id did not exist.');
+        stdout.writeln(
+            deleted ? 'Deleted profile $id.' : 'Profile $id did not exist.');
         return ExitCode.success;
       case 'import':
-        final profile = await profiles.loadFile(File(command['file']! as String));
+        final profile =
+            await profiles.loadFile(File(command['file']! as String));
         await profiles.save(profile);
         stdout.writeln('Imported profile ${profile.id}.');
         return ExitCode.success;
@@ -234,18 +283,22 @@ class CentraCli {
 
   Future<int> _scan(ArgResults results) async {
     final profile = await _requireProfile(results['profile']! as String);
-    final password = _passwordFromEnvironment(results['password-env'] as String?);
+    final password =
+        _passwordFromEnvironment(results['password-env'] as String?);
     final scan = await scanner.scan(
       profile,
       onProgress: (progress) {
         if (!(results['json'] as bool) && stderr.hasTerminal) {
-          stderr.write('\r${progress.phase.padRight(10)} ${progress.completed}/${progress.discovered} '
-              '${progress.currentPath ?? ''}'.padRight(120));
+          stderr.write(
+              '\r${progress.phase.padRight(10)} ${progress.completed}/${progress.discovered} '
+                      '${progress.currentPath ?? ''}'
+                  .padRight(120));
         }
       },
     );
     if (!(results['json'] as bool) && stderr.hasTerminal) stderr.writeln();
-    final artifacts = await outputService.write(profile, scan.manifest, zipPassword: password);
+    final artifacts = await outputService.write(profile, scan.manifest,
+        zipPassword: password);
     final result = <String, Object?>{
       'manifestId': scan.manifest.id,
       'durationMilliseconds': scan.duration.inMilliseconds,
@@ -258,19 +311,22 @@ class CentraCli {
               'path': artifact.file.absolute.path,
               'bytes': artifact.bytes,
             }),
-        if (artifacts.archive != null) <String, Object?>{
-          'kind': artifacts.archive!.kind,
-          'path': artifacts.archive!.file.absolute.path,
-          'bytes': artifacts.archive!.bytes,
-        },
+        if (artifacts.archive != null)
+          <String, Object?>{
+            'kind': artifacts.archive!.kind,
+            'path': artifacts.archive!.file.absolute.path,
+            'bytes': artifacts.archive!.bytes,
+          },
       ],
     };
     if (results['json'] as bool) {
       stdout.writeln(canonicalJson(result));
     } else {
       stdout.writeln('Manifest ${scan.manifest.id}');
-      stdout.writeln('Files: ${scan.manifest.files.length}  Bytes: ${scan.manifest.totalBytes}');
-      for (final artifact in (result['artifacts']! as List<Object?>).cast<Map<String, Object?>>()) {
+      stdout.writeln(
+          'Files: ${scan.manifest.files.length}  Bytes: ${scan.manifest.totalBytes}');
+      for (final artifact in (result['artifacts']! as List<Object?>)
+          .cast<Map<String, Object?>>()) {
         stdout.writeln('${artifact['kind']}: ${artifact['path']}');
       }
     }
@@ -279,7 +335,8 @@ class CentraCli {
 
   Future<int> _verify(ArgResults results) async {
     final profile = await _requireProfile(results['profile']! as String);
-    final approved = await manifestCodec.read(File(results['manifest']! as String));
+    final approved =
+        await manifestCodec.read(File(results['manifest']! as String));
     final current = (await scanner.scan(profile)).manifest;
     final diff = const ManifestComparator().compare(approved, current);
     if (results['json'] as bool) {
@@ -295,7 +352,9 @@ class CentraCli {
     final after = await manifestCodec.read(File(results['after']! as String));
     var diff = const ManifestComparator().compare(before, after);
     if (!(results['include-unchanged'] as bool)) {
-      diff = ManifestDiff(diff.changes.where((change) => change.type != ManifestChangeType.unchanged).toList());
+      diff = ManifestDiff(diff.changes
+          .where((change) => change.type != ManifestChangeType.unchanged)
+          .toList());
     }
     if (results['json'] as bool) {
       stdout.writeln(canonicalJson(diff.toJson()));
@@ -317,8 +376,10 @@ class CentraCli {
   }
 
   Future<int> _sign(ArgResults results) async {
-    final manifest = await manifestCodec.read(File(results['manifest']! as String));
-    final key = signatureService.decodePrivateKey(await File(results['key']! as String).readAsString());
+    final manifest =
+        await manifestCodec.read(File(results['manifest']! as String));
+    final key = signatureService
+        .decodePrivateKey(await File(results['key']! as String).readAsString());
     final document = await signatureService.sign(manifest, key);
     await const AtomicFileWriter().writeText(
       File(results['output']! as String),
@@ -329,15 +390,19 @@ class CentraCli {
   }
 
   Future<int> _verifySignature(ArgResults results) async {
-    final manifest = await manifestCodec.read(File(results['manifest']! as String));
+    final manifest =
+        await manifestCodec.read(File(results['manifest']! as String));
     final document = ManifestSignatureDocument.fromJson(
-      decodeJsonObject(await File(results['signature']! as String).readAsString()),
+      decodeJsonObject(
+          await File(results['signature']! as String).readAsString()),
     );
     final publicKeyFile = results['public-key'] as String?;
     final publicKey = publicKeyFile == null
         ? null
-        : signatureService.decodePublicKey(await File(publicKeyFile).readAsString());
-    final valid = await signatureService.verify(manifest, document, publicKey: publicKey);
+        : signatureService
+            .decodePublicKey(await File(publicKeyFile).readAsString());
+    final valid =
+        await signatureService.verify(manifest, document, publicKey: publicKey);
     if (results['json'] as bool) {
       stdout.writeln(canonicalJson(<String, Object?>{
         'valid': valid,
@@ -345,7 +410,9 @@ class CentraCli {
         'keyId': document.keyId,
       }));
     } else {
-      stdout.writeln(valid ? 'VALID signature from ${document.keyId}.' : 'INVALID signature.');
+      stdout.writeln(valid
+          ? 'VALID signature from ${document.keyId}.'
+          : 'INVALID signature.');
     }
     return valid ? ExitCode.success : ExitCode.signature;
   }
@@ -363,7 +430,8 @@ class CentraCli {
     if (results['json'] as bool) {
       stdout.writeln(canonicalJson(checks));
     } else {
-      checks.forEach((key, value) => stdout.writeln('${key.padRight(18)} $value'));
+      checks.forEach(
+          (key, value) => stdout.writeln('${key.padRight(18)} $value'));
     }
     return ExitCode.success;
   }
@@ -378,7 +446,8 @@ class CentraCli {
     if (variable == null) return null;
     final value = Platform.environment[variable];
     if (value == null || value.isEmpty) {
-      throw FormatException('Environment variable $variable is missing or empty.');
+      throw FormatException(
+          'Environment variable $variable is missing or empty.');
     }
     return value;
   }
@@ -386,7 +455,8 @@ class CentraCli {
   Future<bool> _executableAvailable(String executable) async {
     try {
       final command = Platform.isWindows ? 'where' : 'which';
-      final result = await Process.run(command, <String>[executable], runInShell: false);
+      final result =
+          await Process.run(command, <String>[executable], runInShell: false);
       return result.exitCode == 0;
     } on ProcessException {
       return false;
@@ -400,8 +470,11 @@ class CentraCli {
         'Metadata: ${diff.count(ManifestChangeType.metadata)}');
     for (final change in diff.changes) {
       if (change.type == ManifestChangeType.unchanged) continue;
-      final algorithms = change.changedAlgorithms.isEmpty ? '' : ' [${change.changedAlgorithms.join(', ')}]';
-      stdout.writeln('${change.type.name.padRight(9)} ${change.path}$algorithms');
+      final algorithms = change.changedAlgorithms.isEmpty
+          ? ''
+          : ' [${change.changedAlgorithms.join(', ')}]';
+      stdout
+          .writeln('${change.type.name.padRight(9)} ${change.path}$algorithms');
     }
   }
 

@@ -54,11 +54,14 @@ class SystemCommandRunner implements CommandRunner {
       stdoutEncoding: null,
       stderrEncoding: null,
     );
-    final result = timeout == null ? await future : await future.timeout(timeout);
+    final result =
+        timeout == null ? await future : await future.timeout(timeout);
     return ProcesResultData(
       exitCode: result.exitCode,
-      stdoutBytes: UInt8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
-      stderrBytes: UInt8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
+      stdoutBytes:
+          UInt8List.fromList((result.stdout as List<int>?) ?? const <int>[]),
+      stderrBytes:
+          UInt8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
     );
   }
 }
@@ -98,7 +101,8 @@ class LocalSourceProvider implements SourceProvider {
   Future<PreparedSource> prepare(SourceConfig config) async {
     final directory = Directory(config.root).absolute;
     if (!await directory.exists()) {
-      throw FileSystemException('Local source directory does not exist.', directory.path);
+      throw FileSystemException(
+          'Local source directory does not exist.', directory.path);
     }
     return PreparedSource(
       directory: directory,
@@ -131,7 +135,8 @@ class ArchiveSourceProvider implements SourceProvider {
         timeout: const Duration(minutes: 30),
       );
       if (result.exitCode != 0) {
-        throw ProcessException(command.$1, command.$2, result.stderrExt, result.exitCode);
+        throw ProcessException(
+            command.$1, command.$2, result.stderrExt, result.exitCode);
       }
       final snapshot = Directory(p.join(temp.path, 'snapshot'));
       await snapshot.create(recursive: true);
@@ -154,7 +159,10 @@ class ArchiveSourceProvider implements SourceProvider {
         final args = <String>[
           '-p',
           config.port.toString(),
-          if ((config.identityFile ?? '').isNotEmpty) ...<String>['-i', config.identityFile!],
+          if ((config.identityFile ?? '').isNotEmpty) ...<String>[
+            '-i',
+            config.identityFile!
+          ],
           '--',
           target,
           'tar',
@@ -186,7 +194,10 @@ class ArchiveSourceProvider implements SourceProvider {
           <String>[
             ...dockerContextArguments(config),
             'compose',
-            if ((config.composeFile ?? '').isNotEmpty) ...<String>['-f', config.composeFile!],
+            if ((config.composeFile ?? '').isNotEmpty) ...<String>[
+              '-f',
+              config.composeFile!
+            ],
             'exec',
             '-T',
             config.service!,
@@ -199,9 +210,11 @@ class ArchiveSourceProvider implements SourceProvider {
           ],
         );
       case SourceType.dockerImage:
-        throw UnsupportedError('Docker image snapshots are prepared by DockerImageSourceProvider.');
+        throw UnsupportedError(
+            'Docker image snapshots are prepared by DockerImageSourceProvider.');
       case SourceType.local:
-        throw UnsupportedError('Local sources do not use ArchiveSourceProvider.');
+        throw UnsupportedError(
+            'Local sources do not use ArchiveSourceProvider.');
     }
   }
 
@@ -219,7 +232,9 @@ class ArchiveSourceProvider implements SourceProvider {
 }
 
 List<String> dockerContextArguments(SourceConfig config) =>
-    (config.dockerContext ?? '').isEmpty ? const <String>[] : <String>['--context', config.dockerContext!];
+    (config.dockerContext ?? '').isEmpty
+        ? const <String>[]
+        : <String>['--context', config.dockerContext!];
 
 Future<void> extractTarSafely(List<int> bytes, Directory destination) async {
   final archive = TarDecoder().decodeBytes(bytes);
@@ -236,7 +251,8 @@ Future<void> extractTarSafely(List<int> bytes, Directory destination) async {
     } else if (entry.isFile) {
       final content = entry.readBytes();
       if (content == null) {
-        throw FormatException('Archive file has no readable content: ${entry.name}');
+        throw FormatException(
+            'Archive file has no readable content: ${entry.name}');
       }
       await File(outputPath).parent.create(recursive: true);
       await File(outputPath).writeAsBytes(content, flush: true);
@@ -259,9 +275,11 @@ class DockerImageSourceProvider implements SourceProvider {
       'create',
       config.image!,
     ];
-    final create = await runner.run('docker', createArguments, timeout: const Duration(minutes: 10));
+    final create = await runner.run('docker', createArguments,
+        timeout: const Duration(minutes: 10));
     if (create.exitCode != 0) {
-      throw ProcessException('docker', createArguments, create.stderrText, create.exitCode);
+      throw ProcessException(
+          'docker', createArguments, create.stderrText, create.exitCode);
     }
     final containerId = create.stdoutText.trim();
     if (containerId.isEmpty) {
@@ -282,9 +300,11 @@ class DockerImageSourceProvider implements SourceProvider {
         '$containerId:${config.root}/.',
         temp.path,
       ];
-      final copy = await runner.run('docker', copyArguments, timeout: const Duration(minutes: 30));
+      final copy = await runner.run('docker', copyArguments,
+          timeout: const Duration(minutes: 30));
       if (copy.exitCode != 0) {
-        throw ProcessException('docker', copyArguments, copy.stderrExt, copy.exitCode);
+        throw ProcessException(
+            'docker', copyArguments, copy.stderrExt, copy.exitCode);
       }
       return PreparedSource(
         directory: temp,
@@ -292,7 +312,8 @@ class DockerImageSourceProvider implements SourceProvider {
           'type': type.wireName,
           'image': config.image,
           'root': config.root,
-          if (config.dockerContext != null) 'dockerContext': config.dockerContext,
+          if (config.dockerContext != null)
+            'dockerContext': config.dockerContext,
         },
         dispose: () async {
           await removeContainer();
@@ -311,10 +332,13 @@ class SourceRegistry {
   SourceRegistry({CommandRunner runner = const SystemCommandRunner()})
       : _providers = <SourceType, SourceProvider>{
           SourceType.local: const LocalSourceProvider(),
-          SourceType.ssh: ArchiveSourceProvider(type: SourceType.ssh, runner: runner),
-          SourceType.dockerContainer: ArchiveSourceProvider(type: SourceType.dockerContainer, runner: runner),
+          SourceType.ssh:
+              ArchiveSourceProvider(type: SourceType.ssh, runner: runner),
+          SourceType.dockerContainer: ArchiveSourceProvider(
+              type: SourceType.dockerContainer, runner: runner),
           SourceType.dockerImage: DockerImageSourceProvider(runner),
-          SourceType.dockerCompose: ArchiveSourceProvider(type: SourceType.dockerCompose, runner: runner),
+          SourceType.dockerCompose: ArchiveSourceProvider(
+              type: SourceType.dockerCompose, runner: runner),
         };
 
   final Map<SourceType, SourceProvider> _providers;

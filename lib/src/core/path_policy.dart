@@ -7,7 +7,9 @@ String normalizeRelativePath(String value) {
   }
   normalized = p.posix.normalize(normalized);
   if (normalized == '.' || normalized.isEmpty) return '';
-  if (normalized.startsWith('/') || normalized == '..' || normalized.startsWith('../')) {
+  if (normalized.startsWith('/') ||
+      normalized == '..' ||
+      normalized.startsWith('../')) {
     throw FormatException('Path escapes the source root: $value');
   }
   return normalized;
@@ -19,7 +21,8 @@ class GlobPattern {
   final String source;
   final RegExp _expression;
 
-  bool matches(String path) => _expression.hasMatch(normalizeRelativePath(path));
+  bool matches(String path) =>
+      _expression.hasMatch(normalizeRelativePath(path));
 
   static String _toRegex(String pattern) {
     final normalized = pattern.replaceAll('\\', '/');
@@ -28,9 +31,11 @@ class GlobPattern {
     while (index < normalized.length) {
       final char = normalized[index];
       if (char == '*') {
-        final doubleStar = index + 1 < normalized.length && normalized[index + 1] == '*';
+        final doubleStar =
+            index + 1 < normalized.length && normalized[index + 1] == '*';
         if (doubleStar) {
-          final followedBySlash = index + 2 < normalized.length && normalized[index + 2] == '/';
+          final followedBySlash =
+              index + 2 < normalized.length && normalized[index + 2] == '/';
           buffer.write(followedBySlash ? '(?:.*/)?' : '.*');
           index += followedBySlash ? 3 : 2;
         } else {
@@ -74,10 +79,12 @@ class PathPolicy {
   bool allows(String relativePath) {
     final path = normalizeRelativePath(relativePath);
     if (path.isEmpty) return false;
-    if (!includeHiddenFiles && path.split('/').any((segment) => segment.startsWith('.'))) {
+    if (!includeHiddenFiles &&
+        path.split('/').any((segment) => segment.startsWith('.'))) {
       return false;
     }
-    final included = includePatterns.isEmpty || includePatterns.any((pattern) => pattern.matches(path));
+    final included = includePatterns.isEmpty ||
+        includePatterns.any((pattern) => pattern.matches(path));
     if (!included) return false;
     return !excludePatterns.any((pattern) => pattern.matches(path));
   }
@@ -117,25 +124,71 @@ class ProjectDetector {
   static Future<ProjectDetection> detect(Set<String> rootNames) async {
     final normalized = rootNames.map((name) => name.toLowerCase()).toSet();
     final rules = <({String kind, Set<String> markers, List<String> excludes})>[
-      (kind: 'flutter', markers: {'pubspec.yaml', 'lib', 'android', 'ios'}, excludes: ['.dart_tool/**', 'build/**', '**/.flutter-plugins*']),
-      (kind: 'dart', markers: {'pubspec.yaml'}, excludes: ['.dart_tool/**', 'build/**']),
-      (kind: 'node', markers: {'package.json'}, excludes: ['node_modules/**', '.next/**', '.turbo/**', 'dist/**', 'coverage/**']),
-      (kind: 'python', markers: {'pyproject.toml'}, excludes: ['.venv/**', 'venv/**', '__pycache__/**', '**/*.pyc', '.pytest_cache/**']),
-      (kind: 'elixir', markers: {'mix.exs'}, excludes: ['_build/**', 'deps/**', 'cover/**']),
+      (
+        kind: 'flutter',
+        markers: {'pubspec.yaml', 'lib', 'android', 'ios'},
+        excludes: ['.dart_tool/**', 'build/**', '**/.flutter-plugins*']
+      ),
+      (
+        kind: 'dart',
+        markers: {'pubspec.yaml'},
+        excludes: ['.dart_tool/**', 'build/**']
+      ),
+      (
+        kind: 'node',
+        markers: {'package.json'},
+        excludes: [
+          'node_modules/**',
+          '.next/**',
+          '.turbo/**',
+          'dist/**',
+          'coverage/**'
+        ]
+      ),
+      (
+        kind: 'python',
+        markers: {'pyproject.toml'},
+        excludes: [
+          '.venv/**',
+          'venv/**',
+          '__pycache__/**',
+          '**/*.pyc',
+          '.pytest_cache/**'
+        ]
+      ),
+      (
+        kind: 'elixir',
+        markers: {'mix.exs'},
+        excludes: ['_build/**', 'deps/**', 'cover/**']
+      ),
       (kind: 'rust', markers: {'cargo.toml'}, excludes: ['target/**']),
       (kind: 'go', markers: {'go.mod'}, excludes: ['vendor/**']),
-      (kind: 'java', markers: {'pom.xml'}, excludes: ['target/**', '.gradle/**', 'build/**']),
-      (kind: 'dotnet', markers: {'global.json'}, excludes: ['**/bin/**', '**/obj/**']),
+      (
+        kind: 'java',
+        markers: {'pom.xml'},
+        excludes: ['target/**', '.gradle/**', 'build/**']
+      ),
+      (
+        kind: 'dotnet',
+        markers: {'global.json'},
+        excludes: ['**/bin/**', '**/obj/**']
+      ),
       (kind: 'php', markers: {'composer.json'}, excludes: ['vendor/**']),
-      (kind: 'ruby', markers: {'gemfile'}, excludes: ['vendor/bundle/**', '.bundle/**']),
+      (
+        kind: 'ruby',
+        markers: {'gemfile'},
+        excludes: ['vendor/bundle/**', '.bundle/**']
+      ),
     ];
     for (final rule in rules) {
       final evidence = rule.markers.where(normalized.contains).toList();
-      if (evidence.isNotEmpty && (rule.markers.length == 1 || evidence.length >= 2)) {
+      if (evidence.isNotEmpty &&
+          (rule.markers.length == 1 || evidence.length >= 2)) {
         return ProjectDetection(
           kind: rule.kind,
           evidence: evidence,
-          suggestedExcludes: <String>{'.git/**', ..._commonSecrets, ...rule.excludes}.toList(),
+          suggestedExcludes:
+              <String>{'.git/**', ..._commonSecrets, ...rule.excludes}.toList(),
         );
       }
     }

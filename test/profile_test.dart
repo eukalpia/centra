@@ -6,8 +6,10 @@ import 'support/fixtures.dart';
 void main() {
   group('CentraProfile validation', () {
     test('requires an explicit algorithm selection', () {
-      final profile = testProfile(root: '/tmp/project', algorithmIds: const <String>[]);
-      expect(profile.validate(), contains('Select at least one hash or checksum algorithm.'));
+      final profile =
+          testProfile(root: '/tmp/project', algorithmIds: const <String>[]);
+      expect(profile.validate(),
+          contains('Select at least one hash or checksum algorithm.'));
     });
 
     test('requires an explicit output format', () {
@@ -22,26 +24,34 @@ void main() {
           includeMetadataReport: false,
         ),
       );
-      expect(profile.validate(), contains('Select at least one output format.'));
+      expect(
+          profile.validate(), contains('Select at least one output format.'));
     });
 
     test('allows MD5 compatibility profile without hiding its status', () {
-      final profile = testProfile(root: '/tmp/project', algorithmIds: const <String>['md5']);
+      final profile = testProfile(
+          root: '/tmp/project', algorithmIds: const <String>['md5']);
       expect(profile.validate(), isEmpty);
-      expect(AlgorithmRegistry().descriptor(profile.algorithmIds.single).status, AlgorithmStatus.obsolete);
+      expect(AlgorithmRegistry().descriptor(profile.algorithmIds.single).status,
+          AlgorithmStatus.obsolete);
     });
 
     test('validates source-specific required fields', () {
       const ssh = SourceConfig(type: SourceType.ssh, root: '/srv/app');
-      expect(ssh.validate(), containsAll(<String>['SSH host is required.', 'SSH user is required.']));
+      expect(
+          ssh.validate(),
+          containsAll(
+              <String>['SSH host is required.', 'SSH user is required.']));
 
-      const container = SourceConfig(type: SourceType.dockerContainer, root: '/app');
+      const container =
+          SourceConfig(type: SourceType.dockerContainer, root: '/app');
       expect(container.validate(), contains('Docker container is required.'));
 
       const image = SourceConfig(type: SourceType.dockerImage, root: '/app');
       expect(image.validate(), contains('Docker image is required.'));
 
-      const compose = SourceConfig(type: SourceType.dockerCompose, root: '/app');
+      const compose =
+          SourceConfig(type: SourceType.dockerCompose, root: '/app');
       expect(compose.validate(), contains('Compose service is required.'));
     });
 

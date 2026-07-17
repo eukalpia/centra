@@ -13,11 +13,14 @@ import 'storage.dart';
 class ManifestCodec {
   const ManifestCodec();
 
-  CentraManifest decode(String source) => CentraManifest.fromJson(decodeJsonObject(source));
+  CentraManifest decode(String source) =>
+      CentraManifest.fromJson(decodeJsonObject(source));
 
-  Future<CentraManifest> read(File file) async => decode(await file.readAsString());
+  Future<CentraManifest> read(File file) async =>
+      decode(await file.readAsString());
 
-  Future<void> write(File file, CentraManifest manifest, {bool pretty = true}) async {
+  Future<void> write(File file, CentraManifest manifest,
+      {bool pretty = true}) async {
     await const AtomicFileWriter().writeText(
       file,
       '${pretty ? manifest.encodePretty() : manifest.encodeCanonical()}\n',
@@ -48,7 +51,8 @@ class ScanArtifacts {
 }
 
 class OutputService {
-  OutputService({AtomicFileWriter writer = const AtomicFileWriter()}) : _writer = writer;
+  OutputService({AtomicFileWriter writer = const AtomicFileWriter()})
+      : _writer = writer;
 
   final AtomicFileWriter _writer;
 
@@ -59,24 +63,30 @@ class OutputService {
   }) async {
     final directory = Directory(profile.output.directory).absolute;
     await directory.create(recursive: true);
-    final baseName = _safeBaseName('${profile.id}-${manifest.generatedAt.toUtc().toIso8601String()}');
+    final baseName = _safeBaseName(
+        '${profile.id}-${manifest.generatedAt.toUtc().toIso8601String()}');
     final artifacts = <OutputArtifact>[];
 
     if (profile.output.writeCanonicalJson) {
       final file = File(p.join(directory.path, '$baseName.centra.json'));
       final content = '${manifest.encodePretty()}\n';
       await _writer.writeText(file, content);
-      artifacts.add(OutputArtifact(kind: 'manifest', file: file, bytes: utf8.encode(content).length));
+      artifacts.add(OutputArtifact(
+          kind: 'manifest', file: file, bytes: utf8.encode(content).length));
     }
 
     if (profile.output.writeCompatibilityText) {
       final multiple = manifest.algorithms.length > 1;
       for (final algorithm in manifest.algorithms) {
-        final fileName = multiple ? 'hash_values.${algorithm.id}.txt' : 'hash_values.txt';
+        final fileName =
+            multiple ? 'hash_values.${algorithm.id}.txt' : 'hash_values.txt';
         final file = File(p.join(directory.path, fileName));
         final content = _compatibilityText(manifest, algorithm.id);
         await _writer.writeText(file, content);
-        artifacts.add(OutputArtifact(kind: 'compatibility:${algorithm.id}', file: file, bytes: utf8.encode(content).length));
+        artifacts.add(OutputArtifact(
+            kind: 'compatibility:${algorithm.id}',
+            file: file,
+            bytes: utf8.encode(content).length));
       }
     }
 
@@ -84,22 +94,26 @@ class OutputService {
       final file = File(p.join(directory.path, '$baseName.report.json'));
       final content = '${prettyJson(_report(profile, manifest))}\n';
       await _writer.writeText(file, content);
-      artifacts.add(OutputArtifact(kind: 'report', file: file, bytes: utf8.encode(content).length));
+      artifacts.add(OutputArtifact(
+          kind: 'report', file: file, bytes: utf8.encode(content).length));
     }
 
     OutputArtifact? zipArtifact;
     if (profile.output.createZip) {
-      if (profile.output.requireZipPassword && (zipPassword == null || zipPassword.isEmpty)) {
+      if (profile.output.requireZipPassword &&
+          (zipPassword == null || zipPassword.isEmpty)) {
         throw StateError('This profile requires a ZIP password.');
       }
       final archive = Archive();
       for (final artifact in artifacts) {
-        archive.add(ArchiveFile.bytes(p.basename(artifact.file.path), await artifact.file.readAsBytes()));
+        archive.add(ArchiveFile.bytes(
+            p.basename(artifact.file.path), await artifact.file.readAsBytes()));
       }
       final zipBytes = ZipEncoder(password: zipPassword).encodeBytes(archive);
       final zipFile = File(p.join(directory.path, '$baseName.zip'));
       await _writer.writeBytes(zipFile, zipBytes);
-      zipArtifact = OutputArtifact(kind: 'zip', file: zipFile, bytes: zipBytes.length);
+      zipArtifact =
+          OutputArtifact(kind: 'zip', file: zipFile, bytes: zipBytes.length);
     }
     return ScanArtifacts(artifacts: artifacts, archive: zipArtifact);
   }
@@ -117,7 +131,9 @@ class OutputService {
     return buffer.toString();
   }
 
-  Map<String, Object?> _report(CentraProfile profile, CentraManifest manifest) => <String, Object?>{
+  Map<String, Object?> _report(
+          CentraProfile profile, CentraManifest manifest) =>
+      <String, Object?>{
         'schema': 'centra.report.v1',
         'manifestId': manifest.id,
         'profile': <String, Object?>{'id': profile.id, 'name': profile.name},
@@ -128,10 +144,12 @@ class OutputService {
           'bytes': manifest.totalBytes,
           'readErrors': manifest.errors.length,
         },
-        'algorithms': manifest.algorithms.map((algorithm) => <String, Object?>{
-              ...algorithm.toJson(),
-              'securityWarningRequired': algorithm.warning != null,
-            }).toList(growable: false),
+        'algorithms': manifest.algorithms
+            .map((algorithm) => <String, Object?>{
+                  ...algorithm.toJson(),
+                  'securityWarningRequired': algorithm.warning != null,
+                })
+            .toList(growable: false),
         'policy': <String, Object?>{
           'includes': profile.includePatterns,
           'excludes': profile.excludePatterns,
@@ -202,7 +220,8 @@ class ManifestSignatureDocument {
       };
 
   factory ManifestSignatureDocument.fromJson(Map<String, Object?> json) {
-    if (json['schema'] != 'centra.signature.v1' || json['algorithm'] != 'Ed25519') {
+    if (json['schema'] != 'centra.signature.v1' ||
+        json['algorithm'] != 'Ed25519') {
       throw const FormatException('Unsupported signature document.');
     }
     return ManifestSignatureDocument(
@@ -248,18 +267,24 @@ class SignatureService {
     }
   }
 
-  Future<void> writeKeyPair(SigningKeyDocument key, File privateFile, File publicFile) async {
-    await _writer.writeText(privateFile, '${prettyJson(key.toPrivateJson())}\n');
+  Future<void> writeKeyPair(
+      SigningKeyDocument key, File privateFile, File publicFile) async {
+    await _writer.writeText(
+        privateFile, '${prettyJson(key.toPrivateJson())}\n');
     await _writer.writeText(publicFile, '${prettyJson(key.toPublicJson())}\n');
     if (!Platform.isWindows) {
-      final result = await Process.run('chmod', <String>['600', privateFile.path], runInShell: false);
+      final result = await Process.run(
+          'chmod', <String>['600', privateFile.path],
+          runInShell: false);
       if (result.exitCode != 0) {
-        throw FileSystemException('Unable to restrict private key permissions.', privateFile.path);
+        throw FileSystemException(
+            'Unable to restrict private key permissions.', privateFile.path);
       }
     }
   }
 
-  Future<ManifestSignatureDocument> sign(CentraManifest manifest, SigningKeyDocument key) async {
+  Future<ManifestSignatureDocument> sign(
+      CentraManifest manifest, SigningKeyDocument key) async {
     final publicKey = SimplePublicKey(key.publicKey, type: KeyPairType.ed25519);
     final keyPair = SimpleKeyPairData(
       key.privateKey,
@@ -287,16 +312,21 @@ class SignatureService {
     }
   }
 
-  Future<bool> verify(CentraManifest manifest, ManifestSignatureDocument document, {List<int>? publicKey}) async {
+  Future<bool> verify(
+      CentraManifest manifest, ManifestSignatureDocument document,
+      {List<int>? publicKey}) async {
     if (document.manifestId != manifest.id) return false;
-    final key = SimplePublicKey(publicKey ?? document.publicKey, type: KeyPairType.ed25519);
+    final key = SimplePublicKey(publicKey ?? document.publicKey,
+        type: KeyPairType.ed25519);
     final signature = Signature(document.signature, publicKey: key);
-    return _algorithm.verify(utf8.encode(manifest.encodeCanonical()), signature: signature);
+    return _algorithm.verify(utf8.encode(manifest.encodeCanonical()),
+        signature: signature);
   }
 
   SigningKeyDocument decodePrivateKey(String source) {
     final json = decodeJsonObject(source);
-    if (json['schema'] != 'centra.ed25519.private.v1' || json['algorithm'] != 'Ed25519') {
+    if (json['schema'] != 'centra.ed25519.private.v1' ||
+        json['algorithm'] != 'Ed25519') {
       throw const FormatException('Unsupported private key document.');
     }
     return SigningKeyDocument(
@@ -309,7 +339,8 @@ class SignatureService {
 
   List<int> decodePublicKey(String source) {
     final json = decodeJsonObject(source);
-    if (json['schema'] != 'centra.ed25519.public.v1' || json['algorithm'] != 'Ed25519') {
+    if (json['schema'] != 'centra.ed25519.public.v1' ||
+        json['algorithm'] != 'Ed25519') {
       throw const FormatException('Unsupported public key document.');
     }
     return base64Decode(json['publicKey']! as String);

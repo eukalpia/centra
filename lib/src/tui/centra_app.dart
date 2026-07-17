@@ -174,7 +174,8 @@ class _WizardScreenState extends State<_WizardScreen> {
   final outputDirectory = TextEditingController();
   final exclusionPattern = TextEditingController();
 
-  CentraStrings get strings => CentraStrings(draft.locale ?? widget.initialLocale ?? 'en');
+  CentraStrings get strings =>
+      CentraStrings(draft.locale ?? widget.initialLocale ?? 'en');
 
   @override
   void dispose() {
@@ -221,12 +222,19 @@ class _WizardScreenState extends State<_WizardScreen> {
         WizardStep.source => SourceType.values,
         WizardStep.algorithms => AlgorithmRegistry.builtIns,
         WizardStep.exclusions => exclusionSuggestions,
-        WizardStep.output => const <String>['json', 'text', 'zip', 'report', 'zip-password'],
+        WizardStep.output => const <String>[
+            'json',
+            'text',
+            'zip',
+            'report',
+            'zip-password'
+          ],
         _ => const <Object>[],
       };
 
   bool _handleKey(KeyboardEvent event) {
-    if (event.matches(LogicalKey.keyC, ctrl: true) || event.matches(LogicalKey.keyQ, ctrl: true)) {
+    if (event.matches(LogicalKey.keyC, ctrl: true) ||
+        event.matches(LogicalKey.keyQ, ctrl: true)) {
       widget.onCancel();
       return true;
     }
@@ -249,7 +257,9 @@ class _WizardScreenState extends State<_WizardScreen> {
     }
     if (event.logicalKey == LogicalKey.enter) {
       if (items.isNotEmpty) {
-        _activate(cursor, continueAfter: step == WizardStep.language || step == WizardStep.source);
+        _activate(cursor,
+            continueAfter:
+                step == WizardStep.language || step == WizardStep.source);
       } else {
         _next();
       }
@@ -273,7 +283,9 @@ class _WizardScreenState extends State<_WizardScreen> {
           break;
         case WizardStep.algorithms:
           final id = (items[index] as HashAlgorithmDescriptor).id;
-          draft.algorithmIds.contains(id) ? draft.algorithmIds.remove(id) : draft.algorithmIds.add(id);
+          draft.algorithmIds.contains(id)
+              ? draft.algorithmIds.remove(id)
+              : draft.algorithmIds.add(id);
           break;
         case WizardStep.exclusions:
           final pattern = items[index] as String;
@@ -315,7 +327,9 @@ class _WizardScreenState extends State<_WizardScreen> {
       final directory = Directory(root.text.trim());
       if (await directory.exists()) {
         await for (final entity in directory.list(followLinks: false)) {
-          final segments = entity.uri.pathSegments.where((segment) => segment.isNotEmpty).toList();
+          final segments = entity.uri.pathSegments
+              .where((segment) => segment.isNotEmpty)
+              .toList();
           if (segments.isNotEmpty) rootNames.add(segments.last);
         }
       }
@@ -403,7 +417,9 @@ class _WizardScreenState extends State<_WizardScreen> {
             const SizedBox(height: 1),
             _Footer(
               left: error == null ? strings('keyboardHelp') : '⚠ $error',
-              right: saving ? '${strings('saveProfile')}…' : 'Ctrl+Q ${strings('quit')}',
+              right: saving
+                  ? '${strings('saveProfile')}…'
+                  : 'Ctrl+Q ${strings('quit')}',
               warning: error != null,
             ),
           ],
@@ -416,8 +432,10 @@ class _WizardScreenState extends State<_WizardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        border: BoxBorder.all(color: const Color(0x27313D), style: BoxBorderStyle.rounded),
-        title: BorderTitle(text: strings('setup'), style: const TextStyle(color: _muted)),
+        border: BoxBorder.all(
+            color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+        title: BorderTitle(
+            text: strings('setup'), style: const TextStyle(color: _muted)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
       child: Column(
@@ -442,7 +460,11 @@ class _WizardScreenState extends State<_WizardScreen> {
               child: Text(
                 '${active ? '›' : complete ? '✓' : '·'} $label',
                 style: TextStyle(
-                  color: active ? _accent : complete ? _success : _muted,
+                  color: active
+                      ? _accent
+                      : complete
+                          ? _success
+                          : _muted,
                   fontWeight: active ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -466,7 +488,8 @@ class _WizardScreenState extends State<_WizardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        border: BoxBorder.all(color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+        border: BoxBorder.all(
+            color: const Color(0x27313D), style: BoxBorderStyle.rounded),
       ),
       padding: const EdgeInsets.all(1),
       child: Column(
@@ -480,7 +503,9 @@ class _WizardScreenState extends State<_WizardScreen> {
               _ActionButton(label: strings('back'), onTap: _back, muted: true),
               const SizedBox(width: 1),
               _ActionButton(
-                label: step == WizardStep.review ? strings('saveProfile') : strings('next'),
+                label: step == WizardStep.review
+                    ? strings('saveProfile')
+                    : strings('next'),
                 onTap: _next,
                 disabled: saving,
               ),
@@ -494,7 +519,8 @@ class _WizardScreenState extends State<_WizardScreen> {
   Widget _languageStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          _SectionTitle(strings('chooseLanguage'), strings('noAlgorithmDefault')),
+          _SectionTitle(
+              strings('chooseLanguage'), strings('noAlgorithmDefault')),
           const SizedBox(height: 1),
           ...CentraStrings.locales.asMap().entries.map((entry) => _OptionTile(
                 selected: draft.locale == entry.value.code,
@@ -517,7 +543,8 @@ class _WizardScreenState extends State<_WizardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _SectionTitle(strings('chooseSource'), 'Local, SSH, Docker and Compose use the same manifest pipeline.'),
+        _SectionTitle(strings('chooseSource'),
+            'Local, SSH, Docker and Compose use the same manifest pipeline.'),
         const SizedBox(height: 1),
         ...SourceType.values.asMap().entries.map((entry) => _OptionTile(
               selected: draft.sourceType == entry.value,
@@ -534,7 +561,8 @@ class _WizardScreenState extends State<_WizardScreen> {
     final fields = <Widget>[
       _field(strings('profileName'), profileName, 'Production application'),
       _field(strings('profileId'), profileId, 'production-app'),
-      _field(strings('rootPath'), root, draft.sourceType == SourceType.local ? '/srv/application' : '/app'),
+      _field(strings('rootPath'), root,
+          draft.sourceType == SourceType.local ? '/srv/application' : '/app'),
     ];
     switch (draft.sourceType) {
       case SourceType.ssh:
@@ -553,7 +581,8 @@ class _WizardScreenState extends State<_WizardScreen> {
         break;
       case SourceType.dockerImage:
         fields.addAll(<Widget>[
-          _field(strings('image'), image, 'registry.example.com/application:1.0.0'),
+          _field(strings('image'), image,
+              'registry.example.com/application:1.0.0'),
           _field(strings('dockerContext'), dockerContext, 'default'),
         ]);
         break;
@@ -571,7 +600,8 @@ class _WizardScreenState extends State<_WizardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _SectionTitle(strings('details'), 'Secrets and passwords are never stored in the profile.'),
+        _SectionTitle(strings('details'),
+            'Secrets and passwords are never stored in the profile.'),
         const SizedBox(height: 1),
         ...fields,
       ],
@@ -581,16 +611,20 @@ class _WizardScreenState extends State<_WizardScreen> {
   Widget _algorithmStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          _SectionTitle(strings('chooseAlgorithms'), strings('noAlgorithmDefault')),
+          _SectionTitle(
+              strings('chooseAlgorithms'), strings('noAlgorithmDefault')),
           const SizedBox(height: 1),
           ...AlgorithmRegistry.builtIns.asMap().entries.map((entry) {
             final algorithm = entry.value;
-            final warning = algorithm.id == 'md5' ? strings('md5Warning') : algorithm.warning;
+            final warning = algorithm.id == 'md5'
+                ? strings('md5Warning')
+                : algorithm.warning;
             return _OptionTile(
               selected: draft.algorithmIds.contains(algorithm.id),
               focused: cursor == entry.key,
               title: '${algorithm.displayName} · ${algorithm.outputBits}-bit',
-              subtitle: '${strings(algorithm.status.wireName)}${warning == null ? '' : ' — $warning'}',
+              subtitle:
+                  '${strings(algorithm.status.wireName)}${warning == null ? '' : ' — $warning'}',
               status: algorithm.status,
               onTap: () => _activate(entry.key, continueAfter: false),
             );
@@ -603,10 +637,13 @@ class _WizardScreenState extends State<_WizardScreen> {
         children: <Widget>[
           _SectionTitle(strings('exclusions'), strings('exclusionHelp')),
           const SizedBox(height: 1),
-          _field(strings('addPattern'), exclusionPattern, '**/private/**', onSubmitted: (_) => _addExclusion()),
-          _ActionButton(label: strings('addPattern'), onTap: _addExclusion, muted: true),
+          _field(strings('addPattern'), exclusionPattern, '**/private/**',
+              onSubmitted: (_) => _addExclusion()),
+          _ActionButton(
+              label: strings('addPattern'), onTap: _addExclusion, muted: true),
           const SizedBox(height: 1),
-          Text('Detected project: ${draft.projectKind}', style: const TextStyle(color: _muted)),
+          Text('Detected project: ${draft.projectKind}',
+              style: const TextStyle(color: _muted)),
           const SizedBox(height: 1),
           ...exclusionSuggestions.asMap().entries.map((entry) => _OptionTile(
                 selected: draft.excludePatterns.contains(entry.value),
@@ -617,11 +654,16 @@ class _WizardScreenState extends State<_WizardScreen> {
               )),
           if (draft.excludePatterns.isNotEmpty) ...<Widget>[
             const SizedBox(height: 1),
-            const Text('Selected policy', style: TextStyle(color: _accent, fontWeight: FontWeight.bold)),
-            ...draft.excludePatterns.where((pattern) => !exclusionSuggestions.contains(pattern)).map(
+            const Text('Selected policy',
+                style: TextStyle(color: _accent, fontWeight: FontWeight.bold)),
+            ...draft.excludePatterns
+                .where((pattern) => !exclusionSuggestions.contains(pattern))
+                .map(
                   (pattern) => GestureDetector(
-                    onTap: () => setState(() => draft.excludePatterns.remove(pattern)),
-                    child: Text('× $pattern', style: const TextStyle(color: _text)),
+                    onTap: () =>
+                        setState(() => draft.excludePatterns.remove(pattern)),
+                    child: Text('× $pattern',
+                        style: const TextStyle(color: _text)),
                   ),
                 ),
           ],
@@ -629,23 +671,48 @@ class _WizardScreenState extends State<_WizardScreen> {
       );
 
   String _exclusionDescription(String pattern) {
-    if (pattern.contains('.env') || pattern.endsWith('.key') || pattern.endsWith('.pem')) {
+    if (pattern.contains('.env') ||
+        pattern.endsWith('.key') ||
+        pattern.endsWith('.pem')) {
       return 'Sensitive material';
     }
-    if (pattern.contains('node_modules') || pattern.contains('_build') || pattern.contains('target')) {
+    if (pattern.contains('node_modules') ||
+        pattern.contains('_build') ||
+        pattern.contains('target')) {
       return 'Generated dependency/build data';
     }
-    if (pattern.contains('uploads') || pattern.contains('backups')) return 'Runtime or user-managed data';
+    if (pattern.contains('uploads') || pattern.contains('backups'))
+      return 'Runtime or user-managed data';
     return 'Suggested by project detection';
   }
 
   Widget _outputStep() {
     final options = <({String title, String subtitle, bool selected})>[
-      (title: strings('canonicalJson'), subtitle: '*.centra.json', selected: draft.canonicalJson),
-      (title: strings('compatibilityText'), subtitle: 'hash_values.txt', selected: draft.compatibilityText),
-      (title: strings('zipPackage'), subtitle: '*.zip', selected: draft.zipPackage),
-      (title: strings('metadataReport'), subtitle: '*.report.json', selected: draft.metadataReport),
-      (title: strings('requireZipPassword'), subtitle: 'Password is requested only when scanning', selected: draft.requireZipPassword),
+      (
+        title: strings('canonicalJson'),
+        subtitle: '*.centra.json',
+        selected: draft.canonicalJson
+      ),
+      (
+        title: strings('compatibilityText'),
+        subtitle: 'hash_values.txt',
+        selected: draft.compatibilityText
+      ),
+      (
+        title: strings('zipPackage'),
+        subtitle: '*.zip',
+        selected: draft.zipPackage
+      ),
+      (
+        title: strings('metadataReport'),
+        subtitle: '*.report.json',
+        selected: draft.metadataReport
+      ),
+      (
+        title: strings('requireZipPassword'),
+        subtitle: 'Password is requested only when scanning',
+        selected: draft.requireZipPassword
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -668,18 +735,26 @@ class _WizardScreenState extends State<_WizardScreen> {
   Widget _reviewStep() {
     _syncDraft();
     final profileErrors = draft.validateStep(WizardStep.review);
-    final algorithms = draft.algorithmIds.map((id) => AlgorithmRegistry(customAlgorithms: draft.customAlgorithms).descriptor(id));
+    final algorithms = draft.algorithmIds.map((id) =>
+        AlgorithmRegistry(customAlgorithms: draft.customAlgorithms)
+            .descriptor(id));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _SectionTitle(strings('review'), 'Review every policy choice before saving.'),
+        _SectionTitle(
+            strings('review'), 'Review every policy choice before saving.'),
         const SizedBox(height: 1),
         _ReviewRow('Profile', '${draft.profileName} (${draft.profileId})'),
         _ReviewRow(strings('language'), draft.locale ?? '—'),
         _ReviewRow(strings('source'), draft.sourceType?.wireName ?? '—'),
         _ReviewRow(strings('rootPath'), draft.root),
-        _ReviewRow(strings('algorithms'), algorithms.map((algorithm) => algorithm.displayName).join(', ')),
-        _ReviewRow(strings('exclusions'), draft.excludePatterns.isEmpty ? 'None' : '${draft.excludePatterns.length} rules'),
+        _ReviewRow(strings('algorithms'),
+            algorithms.map((algorithm) => algorithm.displayName).join(', ')),
+        _ReviewRow(
+            strings('exclusions'),
+            draft.excludePatterns.isEmpty
+                ? 'None'
+                : '${draft.excludePatterns.length} rules'),
         _ReviewRow(strings('outputDirectory'), draft.outputDirectory),
         _ReviewRow(
           strings('output'),
@@ -691,8 +766,11 @@ class _WizardScreenState extends State<_WizardScreen> {
           ].join(', '),
         ),
         const SizedBox(height: 1),
-        if (algorithms.any((algorithm) => algorithm.status == AlgorithmStatus.obsolete))
-          _Notice('Obsolete algorithms are enabled. Their warnings will be embedded in every report.', _warning),
+        if (algorithms
+            .any((algorithm) => algorithm.status == AlgorithmStatus.obsolete))
+          _Notice(
+              'Obsolete algorithms are enabled. Their warnings will be embedded in every report.',
+              _warning),
         if (profileErrors.isNotEmpty) _Notice(profileErrors.join(' '), _danger),
       ],
     );
@@ -715,11 +793,14 @@ class _WizardScreenState extends State<_WizardScreen> {
             width: 68,
             placeholder: placeholder,
             style: const TextStyle(color: _text),
-            placeholderStyle: const TextStyle(color: _muted, fontStyle: FontStyle.italic),
+            placeholderStyle:
+                const TextStyle(color: _muted, fontStyle: FontStyle.italic),
             decoration: InputDecoration(
               fillColor: _surfaceStrong,
-              border: BoxBorder.all(color: const Color(0x394453), style: BoxBorderStyle.rounded),
-              focusedBorder: BoxBorder.all(color: _accent, style: BoxBorderStyle.rounded),
+              border: BoxBorder.all(
+                  color: const Color(0x394453), style: BoxBorderStyle.rounded),
+              focusedBorder:
+                  BoxBorder.all(color: _accent, style: BoxBorderStyle.rounded),
             ),
             onChanged: (_) => _syncDraft(),
             onSubmitted: onSubmitted ?? (_) => _next(),
@@ -771,15 +852,18 @@ class _DashboardState extends State<_Dashboard> {
   }
 
   bool _handleKey(KeyboardEvent event) {
-    if (event.matches(LogicalKey.keyQ, ctrl: true) || event.logicalKey == LogicalKey.keyQ) {
+    if (event.matches(LogicalKey.keyQ, ctrl: true) ||
+        event.logicalKey == LogicalKey.keyQ) {
       shutdownApp();
       return true;
     }
     if (event.logicalKey == LogicalKey.arrowUp && widget.profiles.isNotEmpty) {
-      setState(() => selected = selected <= 0 ? widget.profiles.length - 1 : selected - 1);
+      setState(() =>
+          selected = selected <= 0 ? widget.profiles.length - 1 : selected - 1);
       return true;
     }
-    if (event.logicalKey == LogicalKey.arrowDown && widget.profiles.isNotEmpty) {
+    if (event.logicalKey == LogicalKey.arrowDown &&
+        widget.profiles.isNotEmpty) {
       setState(() => selected = (selected + 1) % widget.profiles.length);
       return true;
     }
@@ -800,7 +884,9 @@ class _DashboardState extends State<_Dashboard> {
 
   Future<void> _startScan() async {
     if (running) return;
-    if (profile.output.createZip && profile.output.requireZipPassword && password.text.isEmpty) {
+    if (profile.output.createZip &&
+        profile.output.requireZipPassword &&
+        password.text.isEmpty) {
       setState(() => showPassword = true);
       return;
     }
@@ -826,7 +912,8 @@ class _DashboardState extends State<_Dashboard> {
       setState(() {
         lastManifest = result.manifest;
         status = 'completed';
-        message = 'Manifest ${result.manifest.id} written to ${profile.output.directory}';
+        message =
+            'Manifest ${result.manifest.id} written to ${profile.output.directory}';
         showPassword = false;
         password.clear();
       });
@@ -850,10 +937,13 @@ class _DashboardState extends State<_Dashboard> {
       message = null;
     });
     try {
-      final approved = await const ManifestCodec().read(File(verifyPath.text.trim()));
-      final current = (await IntegrityScanner().scan(profile, onProgress: (value) {
+      final approved =
+          await const ManifestCodec().read(File(verifyPath.text.trim()));
+      final current =
+          (await IntegrityScanner().scan(profile, onProgress: (value) {
         if (mounted) setState(() => progress = value);
-      })).manifest;
+      }))
+              .manifest;
       final diff = const ManifestComparator().compare(approved, current);
       if (!mounted) return;
       setState(() {
@@ -881,7 +971,10 @@ class _DashboardState extends State<_Dashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            _Header(title: 'CENTRA', subtitle: strings('tagline'), trailing: strings(status)),
+            _Header(
+                title: 'CENTRA',
+                subtitle: strings('tagline'),
+                trailing: strings(status)),
             const SizedBox(height: 1),
             Expanded(
               child: Row(
@@ -895,7 +988,8 @@ class _DashboardState extends State<_Dashboard> {
             ),
             const SizedBox(height: 1),
             _Footer(
-              left: '↑↓ ${strings('profiles')}  N ${strings('newProfile')}  S ${strings('scanNow')}  V ${strings('verify')}',
+              left:
+                  '↑↓ ${strings('profiles')}  N ${strings('newProfile')}  S ${strings('scanNow')}  V ${strings('verify')}',
               right: 'Q ${strings('quit')}',
               warning: status == 'failed',
             ),
@@ -908,8 +1002,10 @@ class _DashboardState extends State<_Dashboard> {
   Widget _profileList() => Container(
         decoration: BoxDecoration(
           color: _surface,
-          border: BoxBorder.all(color: const Color(0x27313D), style: BoxBorderStyle.rounded),
-          title: BorderTitle(text: strings('profiles'), style: const TextStyle(color: _muted)),
+          border: BoxBorder.all(
+              color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+          title: BorderTitle(
+              text: strings('profiles'), style: const TextStyle(color: _muted)),
         ),
         padding: const EdgeInsets.all(1),
         child: Column(
@@ -927,48 +1023,70 @@ class _DashboardState extends State<_Dashboard> {
                           '${selected == entry.key ? '›' : ' '} ${entry.value.name}',
                           style: TextStyle(
                             color: selected == entry.key ? _accent : _text,
-                            fontWeight: selected == entry.key ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: selected == entry.key
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
-                        Text('  ${entry.value.source.type.wireName}', style: const TextStyle(color: _muted)),
+                        Text('  ${entry.value.source.type.wireName}',
+                            style: const TextStyle(color: _muted)),
                       ],
                     ),
                   ),
                 )),
             const SizedBox(height: 1),
-            _ActionButton(label: '+ ${strings('newProfile')}', onTap: widget.onNewProfile, muted: true),
+            _ActionButton(
+                label: '+ ${strings('newProfile')}',
+                onTap: widget.onNewProfile,
+                muted: true),
           ],
         ),
       );
 
   Widget _details() {
     final algorithms = profile.algorithmIds
-        .map((id) => AlgorithmRegistry(customAlgorithms: profile.customAlgorithms).descriptor(id))
+        .map((id) =>
+            AlgorithmRegistry(customAlgorithms: profile.customAlgorithms)
+                .descriptor(id))
         .toList(growable: false);
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        border: BoxBorder.all(color: const Color(0x27313D), style: BoxBorderStyle.rounded),
+        border: BoxBorder.all(
+            color: const Color(0x27313D), style: BoxBorderStyle.rounded),
       ),
       padding: const EdgeInsets.all(1),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(profile.name, style: const TextStyle(color: _text, fontWeight: FontWeight.bold)),
+            Text(profile.name,
+                style:
+                    const TextStyle(color: _text, fontWeight: FontWeight.bold)),
             Text(profile.id, style: const TextStyle(color: _muted)),
             const SizedBox(height: 1),
             _ReviewRow(strings('source'), profile.source.type.wireName),
             _ReviewRow(strings('rootPath'), profile.source.root),
-            _ReviewRow(strings('algorithms'), algorithms.map((algorithm) => algorithm.displayName).join(', ')),
-            _ReviewRow(strings('exclusions'), '${profile.excludePatterns.length} rules'),
+            _ReviewRow(
+                strings('algorithms'),
+                algorithms
+                    .map((algorithm) => algorithm.displayName)
+                    .join(', ')),
+            _ReviewRow(strings('exclusions'),
+                '${profile.excludePatterns.length} rules'),
             _ReviewRow(strings('outputDirectory'), profile.output.directory),
-            if (algorithms.any((algorithm) => algorithm.status == AlgorithmStatus.obsolete))
-              const _Notice('This profile contains an obsolete algorithm. Compatibility does not equal security.', _warning),
+            if (algorithms.any(
+                (algorithm) => algorithm.status == AlgorithmStatus.obsolete))
+              const _Notice(
+                  'This profile contains an obsolete algorithm. Compatibility does not equal security.',
+                  _warning),
             const SizedBox(height: 1),
             Row(
               children: <Widget>[
-                _ActionButton(label: strings('scanNow'), onTap: _startScan, disabled: running),
+                _ActionButton(
+                    label: strings('scanNow'),
+                    onTap: _startScan,
+                    disabled: running),
                 const SizedBox(width: 1),
                 _ActionButton(
                   label: strings('verify'),
@@ -987,8 +1105,11 @@ class _DashboardState extends State<_Dashboard> {
                 placeholder: 'Enter at scan time; never stored',
                 decoration: InputDecoration(
                   fillColor: _surfaceStrong,
-                  border: BoxBorder.all(color: const Color(0x394453), style: BoxBorderStyle.rounded),
-                  focusedBorder: BoxBorder.all(color: _accent, style: BoxBorderStyle.rounded),
+                  border: BoxBorder.all(
+                      color: const Color(0x394453),
+                      style: BoxBorderStyle.rounded),
+                  focusedBorder: BoxBorder.all(
+                      color: _accent, style: BoxBorderStyle.rounded),
                 ),
                 onSubmitted: (_) => _startScan(),
               ),
@@ -996,15 +1117,19 @@ class _DashboardState extends State<_Dashboard> {
             ],
             if (showVerify) ...<Widget>[
               const SizedBox(height: 1),
-              const Text('Approved manifest path', style: TextStyle(color: _muted)),
+              const Text('Approved manifest path',
+                  style: TextStyle(color: _muted)),
               TextField(
                 controller: verifyPath,
                 width: 68,
                 placeholder: '/secure/baselines/application.centra.json',
                 decoration: InputDecoration(
                   fillColor: _surfaceStrong,
-                  border: BoxBorder.all(color: const Color(0x394453), style: BoxBorderStyle.rounded),
-                  focusedBorder: BoxBorder.all(color: _accent, style: BoxBorderStyle.rounded),
+                  border: BoxBorder.all(
+                      color: const Color(0x394453),
+                      style: BoxBorderStyle.rounded),
+                  focusedBorder: BoxBorder.all(
+                      color: _accent, style: BoxBorderStyle.rounded),
                 ),
                 onSubmitted: (_) => _verify(),
               ),
@@ -1019,7 +1144,8 @@ class _DashboardState extends State<_Dashboard> {
             ],
             if (lastManifest != null) ...<Widget>[
               const SizedBox(height: 1),
-              _ReviewRow(strings('files'), lastManifest!.files.length.toString()),
+              _ReviewRow(
+                  strings('files'), lastManifest!.files.length.toString()),
               _ReviewRow(strings('bytes'), lastManifest!.totalBytes.toString()),
             ],
             if (message != null) ...<Widget>[
@@ -1034,7 +1160,8 @@ class _DashboardState extends State<_Dashboard> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title, required this.subtitle, required this.trailing});
+  const _Header(
+      {required this.title, required this.subtitle, required this.trailing});
 
   final String title;
   final String subtitle;
@@ -1046,9 +1173,12 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 1),
         child: Row(
           children: <Widget>[
-            Text(title, style: const TextStyle(color: _accent, fontWeight: FontWeight.bold)),
+            Text(title,
+                style: const TextStyle(
+                    color: _accent, fontWeight: FontWeight.bold)),
             const SizedBox(width: 2),
-            Expanded(child: Text(subtitle, style: const TextStyle(color: _muted))),
+            Expanded(
+                child: Text(subtitle, style: const TextStyle(color: _muted))),
             Text(trailing, style: const TextStyle(color: _text)),
           ],
         ),
@@ -1056,7 +1186,8 @@ class _Header extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.left, required this.right, required this.warning});
+  const _Footer(
+      {required this.left, required this.right, required this.warning});
 
   final String left;
   final String right;
@@ -1065,7 +1196,10 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: <Widget>[
-          Expanded(child: Text(left, style: TextStyle(color: warning ? _warning : _muted), maxLines: 1)),
+          Expanded(
+              child: Text(left,
+                  style: TextStyle(color: warning ? _warning : _muted),
+                  maxLines: 1)),
           Text(right, style: const TextStyle(color: _muted)),
         ],
       );
@@ -1081,7 +1215,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(title, style: const TextStyle(color: _text, fontWeight: FontWeight.bold)),
+          Text(title,
+              style:
+                  const TextStyle(color: _text, fontWeight: FontWeight.bold)),
           Text(subtitle, style: const TextStyle(color: _muted)),
         ],
       );
@@ -1125,14 +1261,31 @@ class _OptionTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(disabled ? '[-]' : selected ? '[✓]' : '[ ]', style: TextStyle(color: disabled ? _muted : selected ? _accent : _muted)),
+              Text(
+                  disabled
+                      ? '[-]'
+                      : selected
+                          ? '[✓]'
+                          : '[ ]',
+                  style: TextStyle(
+                      color: disabled
+                          ? _muted
+                          : selected
+                              ? _accent
+                              : _muted)),
               const SizedBox(width: 1),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Text(title, style: TextStyle(color: disabled ? _muted : _text)),
-                    Text(subtitle, style: TextStyle(color: statusColor, fontWeight: status == null ? FontWeight.normal : FontWeight.dim)),
+                    Text(title,
+                        style: TextStyle(color: disabled ? _muted : _text)),
+                    Text(subtitle,
+                        style: TextStyle(
+                            color: statusColor,
+                            fontWeight: status == null
+                                ? FontWeight.normal
+                                : FontWeight.dim)),
                   ],
                 ),
               ),
@@ -1159,12 +1312,20 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
         onTap: disabled ? null : onTap,
         child: Container(
-          color: disabled ? const Color(0x27313D) : muted ? _surfaceStrong : _accent,
+          color: disabled
+              ? const Color(0x27313D)
+              : muted
+                  ? _surfaceStrong
+                  : _accent,
           padding: const EdgeInsets.symmetric(horizontal: 2),
           child: Text(
             label,
             style: TextStyle(
-              color: disabled ? _muted : muted ? _text : _background,
+              color: disabled
+                  ? _muted
+                  : muted
+                      ? _text
+                      : _background,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1184,8 +1345,12 @@ class _ReviewRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            SizedBox(width: 22, child: Text(label, style: const TextStyle(color: _muted))),
-            Expanded(child: Text(value.isEmpty ? '—' : value, style: const TextStyle(color: _text))),
+            SizedBox(
+                width: 22,
+                child: Text(label, style: const TextStyle(color: _muted))),
+            Expanded(
+                child: Text(value.isEmpty ? '—' : value,
+                    style: const TextStyle(color: _text))),
           ],
         ),
       );

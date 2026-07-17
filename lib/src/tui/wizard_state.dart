@@ -51,17 +51,25 @@ class WizardDraft {
   List<String> validateStep(WizardStep step) {
     switch (step) {
       case WizardStep.language:
-        return locale == null ? <String>['Select a language.'] : const <String>[];
+        return locale == null
+            ? <String>['Select a language.']
+            : const <String>[];
       case WizardStep.source:
-        return sourceType == null ? <String>['Select a source.'] : const <String>[];
+        return sourceType == null
+            ? <String>['Select a source.']
+            : const <String>[];
       case WizardStep.details:
         return _sourceConfig().validate()
-          ..addAll(profileName.trim().isEmpty ? <String>['Profile name is required.'] : const <String>[])
+          ..addAll(profileName.trim().isEmpty
+              ? <String>['Profile name is required.']
+              : const <String>[])
           ..addAll(RegExp(r'^[a-z0-9][a-z0-9._-]{1,63}$').hasMatch(profileId)
               ? const <String>[]
               : <String>['Profile ID is invalid.']);
       case WizardStep.algorithms:
-        return algorithmIds.isEmpty ? <String>['Select at least one algorithm.'] : const <String>[];
+        return algorithmIds.isEmpty
+            ? <String>['Select at least one algorithm.']
+            : const <String>[];
       case WizardStep.exclusions:
         return excludePatterns.any((pattern) => pattern.trim().isEmpty)
             ? <String>['Empty exclusion patterns are not allowed.']
@@ -93,7 +101,8 @@ class WizardDraft {
       algorithmIds: algorithmIds.toList(growable: false),
       includePatterns: const <String>['**'],
       excludePatterns: excludePatterns.toList(growable: false)..sort(),
-      customAlgorithms: List<CustomHashAlgorithm>.unmodifiable(customAlgorithms),
+      customAlgorithms:
+          List<CustomHashAlgorithm>.unmodifiable(customAlgorithms),
       symlinkPolicy: symlinkPolicy,
       includeHiddenFiles: includeHiddenFiles,
       capturePermissions: capturePermissions,
@@ -118,7 +127,8 @@ class WizardDraft {
         image: image.trim().isEmpty ? null : image.trim(),
         service: service.trim().isEmpty ? null : service.trim(),
         composeFile: composeFile.trim().isEmpty ? null : composeFile.trim(),
-        dockerContext: dockerContext.trim().isEmpty ? null : dockerContext.trim(),
+        dockerContext:
+            dockerContext.trim().isEmpty ? null : dockerContext.trim(),
       );
 
   OutputConfig _outputConfig() => OutputConfig(

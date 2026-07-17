@@ -7,10 +7,13 @@ void main() {
   group('CentraManifest', () {
     test('sorts file records and emits deterministic canonical JSON', () {
       final manifest = testManifest(files: const <ManifestFileRecord>[
-        ManifestFileRecord(path: 'z.txt', size: 1, digests: <String, String>{'sha256': '02'}),
-        ManifestFileRecord(path: 'a.txt', size: 1, digests: <String, String>{'sha256': '01'}),
+        ManifestFileRecord(
+            path: 'z.txt', size: 1, digests: <String, String>{'sha256': '02'}),
+        ManifestFileRecord(
+            path: 'a.txt', size: 1, digests: <String, String>{'sha256': '01'}),
       ]);
-      expect(manifest.files.map((file) => file.path), <String>['a.txt', 'z.txt']);
+      expect(
+          manifest.files.map((file) => file.path), <String>['a.txt', 'z.txt']);
       expect(manifest.encodeCanonical(), manifest.encodeCanonical());
       final decoded = CentraManifest.fromJson(manifest.toJson());
       expect(decoded.encodeCanonical(), manifest.encodeCanonical());
@@ -35,14 +38,33 @@ void main() {
 
     test('classifies added, removed, modified and unchanged paths', () {
       final before = testManifest(files: const <ManifestFileRecord>[
-        ManifestFileRecord(path: 'removed.txt', size: 1, digests: <String, String>{'sha256': '01'}),
-        ManifestFileRecord(path: 'modified.txt', size: 1, digests: <String, String>{'sha256': '02'}),
-        ManifestFileRecord(path: 'same.txt', size: 1, digests: <String, String>{'sha256': '03'}),
+        ManifestFileRecord(
+            path: 'removed.txt',
+            size: 1,
+            digests: <String, String>{'sha256': '01'}),
+        ManifestFileRecord(
+            path: 'modified.txt',
+            size: 1,
+            digests: <String, String>{'sha256': '02'}),
+        ManifestFileRecord(
+            path: 'same.txt',
+            size: 1,
+            digests: <String, String>{'sha256': '03'}),
       ]);
-      final after = testManifest(id: 'manifest-2', files: const <ManifestFileRecord>[
-        ManifestFileRecord(path: 'added.txt', size: 1, digests: <String, String>{'sha256': '04'}),
-        ManifestFileRecord(path: 'modified.txt', size: 1, digests: <String, String>{'sha256': 'ff'}),
-        ManifestFileRecord(path: 'same.txt', size: 1, digests: <String, String>{'sha256': '03'}),
+      final after =
+          testManifest(id: 'manifest-2', files: const <ManifestFileRecord>[
+        ManifestFileRecord(
+            path: 'added.txt',
+            size: 1,
+            digests: <String, String>{'sha256': '04'}),
+        ManifestFileRecord(
+            path: 'modified.txt',
+            size: 1,
+            digests: <String, String>{'sha256': 'ff'}),
+        ManifestFileRecord(
+            path: 'same.txt',
+            size: 1,
+            digests: <String, String>{'sha256': '03'}),
       ]);
       final diff = comparator.compare(before, after);
       expect(diff.count(ManifestChangeType.added), 1);
@@ -51,7 +73,9 @@ void main() {
       expect(diff.count(ManifestChangeType.unchanged), 1);
       expect(diff.hasIntegrityChanges, isTrue);
       expect(
-        diff.changes.singleWhere((change) => change.path == 'modified.txt').changedAlgorithms,
+        diff.changes
+            .singleWhere((change) => change.path == 'modified.txt')
+            .changedAlgorithms,
         <String>['sha256'],
       );
     });
@@ -82,10 +106,17 @@ void main() {
 
     test('treats a missing algorithm result as modification', () {
       final before = testManifest(files: const <ManifestFileRecord>[
-        ManifestFileRecord(path: 'file.txt', size: 1, digests: <String, String>{'sha256': 'aa', 'md5': 'bb'}),
+        ManifestFileRecord(
+            path: 'file.txt',
+            size: 1,
+            digests: <String, String>{'sha256': 'aa', 'md5': 'bb'}),
       ]);
-      final after = testManifest(id: 'manifest-2', files: const <ManifestFileRecord>[
-        ManifestFileRecord(path: 'file.txt', size: 1, digests: <String, String>{'sha256': 'aa'}),
+      final after =
+          testManifest(id: 'manifest-2', files: const <ManifestFileRecord>[
+        ManifestFileRecord(
+            path: 'file.txt',
+            size: 1,
+            digests: <String, String>{'sha256': 'aa'}),
       ]);
       final change = comparator.compare(before, after).changes.single;
       expect(change.type, ManifestChangeType.modified);

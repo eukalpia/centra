@@ -33,22 +33,29 @@ void main() {
         random: Random(1),
       ).scan(profile, onProgress: progress.add);
 
-      expect(result.manifest.files.map((file) => file.path), <String>['README.md', 'lib/main.dart']);
+      expect(result.manifest.files.map((file) => file.path),
+          <String>['README.md', 'lib/main.dart']);
       for (final file in result.manifest.files) {
-        expect(file.digests.keys, containsAllInOrder(<String>['sha256', 'md5', 'crc32']));
+        expect(file.digests.keys,
+            containsAllInOrder(<String>['sha256', 'md5', 'crc32']));
         expect(file.digests['sha256'], hasLength(64));
         expect(file.digests['md5'], hasLength(32));
         expect(file.digests['crc32'], hasLength(8));
       }
-      expect(result.manifest.algorithms.lastWhere((algorithm) => algorithm.id == 'md5').status,
+      expect(
+          result.manifest.algorithms
+              .lastWhere((algorithm) => algorithm.id == 'md5')
+              .status,
           AlgorithmStatus.obsolete);
       expect(progress.last.phase, 'complete');
       expect(result.manifest.errors, isEmpty);
     });
 
-    test('produces the same content records regardless of worker count', () async {
+    test('produces the same content records regardless of worker count',
+        () async {
       project = await createProject(<String, String>{
-        for (var index = 0; index < 25; index++) 'files/$index.txt': 'value-$index',
+        for (var index = 0; index < 25; index++)
+          'files/$index.txt': 'value-$index',
       });
       final oneWorker = await IntegrityScanner(random: Random(2)).scan(
         testProfile(root: project.path, workerCount: 1),
@@ -64,7 +71,8 @@ void main() {
 
     test('runs an external custom hash command without a shell', () async {
       project = await createProject(<String, String>{'file.txt': 'content'});
-      final runner = FakeCommandRunner(defaultResult: textResult('HASH=0123456789abcdef\n'));
+      final runner = FakeCommandRunner(
+          defaultResult: textResult('HASH=0123456789abcdef\n'));
       const custom = CustomHashAlgorithm(
         id: 'external-test',
         displayName: 'External test',
@@ -81,14 +89,16 @@ void main() {
           customAlgorithms: const <CustomHashAlgorithm>[custom],
         ),
       );
-      expect(result.manifest.files.single.digests['external-test'], '0123456789abcdef');
+      expect(result.manifest.files.single.digests['external-test'],
+          '0123456789abcdef');
       expect(runner.commands, hasLength(1));
       expect(runner.commands.single.executable, 'hash-tool');
       expect(runner.commands.single.arguments.first, '--file');
       expect(runner.commands.single.arguments.last, endsWith('file.txt'));
     });
 
-    test('records symlink targets instead of following them when requested', () async {
+    test('records symlink targets instead of following them when requested',
+        () async {
       project = await createProject(<String, String>{'target.txt': 'target'});
       final link = Link('${project.path}/link.txt');
       try {
@@ -99,7 +109,8 @@ void main() {
       final result = await IntegrityScanner().scan(
         testProfile(root: project.path, symlinkPolicy: SymlinkPolicy.record),
       );
-      final linkRecord = result.manifest.files.singleWhere((file) => file.path == 'link.txt');
+      final linkRecord =
+          result.manifest.files.singleWhere((file) => file.path == 'link.txt');
       expect(linkRecord.symlinkTarget, 'target.txt');
       expect(linkRecord.digests['sha256'], hasLength(64));
     });

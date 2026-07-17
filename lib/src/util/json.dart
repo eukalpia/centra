@@ -15,7 +15,8 @@ Object? normalizeJson(Object? value) {
 
 String canonicalJson(Object? value) => jsonEncode(normalizeJson(value));
 
-String prettyJson(Object? value) => const JsonEncoder.withIndent('  ').convert(normalizeJson(value));
+String prettyJson(Object? value) =>
+    const JsonEncoder.withIndent('  ').convert(normalizeJson(value));
 
 Map<String, Object?> decodeJsonObject(String source) {
   final value = jsonDecode(source);
