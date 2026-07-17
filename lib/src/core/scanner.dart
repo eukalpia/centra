@@ -126,19 +126,45 @@ class IntegrityScanner {
       throw FormatException(validationErrors.join('\n'));
     }
     final stopwatch = Stopwatch()..start();
-    final prepared = await _sourceRegistry
-        .provider(profile.source.type)
-        .prepare(profile.source, sshSecrets: sshSecrets);
+    final registry =
+        AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
+    final descriptors =
+        profile.algorithmIds.map(registry.descriptor).toList(growable: false);
+    final policy = PathPolicy(
+      includes: profile.includePatterns,
+      excludes: profile.excludePatterns,
+      includeHiddenFiles: profile.includeHiddenFiles,
+    );
+    onProgress?.call(
+      ScanProgress(
+        phase: profile.source.type == SourceType.ssh
+            ? 'ssh-connect'
+            : 'source-prepare',
+        discovered: 0,
+        completed: 0,
+        totalBytes: 0,
+        currentPath: profile.source.root,
+      ),
+    );
+    final prepared =
+        await _sourceRegistry.provider(profile.source.type).prepare(
+              profile.source,
+              sshSecrets: sshSecrets,
+              pathPolicy: policy,
+              workerCount: profile.workerCount,
+              onSshProgress: onProgress == null
+                  ? null
+                  : (progress) => onProgress(
+                        ScanProgress(
+                          phase: progress.phase,
+                          discovered: progress.discovered,
+                          completed: progress.completed,
+                          totalBytes: progress.totalBytes,
+                          currentPath: progress.currentPath,
+                        ),
+                      ),
+            );
     try {
-      final registry =
-          AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
-      final descriptors =
-          profile.algorithmIds.map(registry.descriptor).toList(growable: false);
-      final policy = PathPolicy(
-        includes: profile.includePatterns,
-        excludes: profile.excludePatterns,
-        includeHiddenFiles: profile.includeHiddenFiles,
-      );
       onProgress?.call(const ScanProgress(
           phase: 'inventory', discovered: 0, completed: 0, totalBytes: 0));
       final inventory =

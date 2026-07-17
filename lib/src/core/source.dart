@@ -92,6 +92,9 @@ abstract interface class SourceProvider {
   Future<PreparedSource> prepare(
     SourceConfig config, {
     SshConnectionSecrets? sshSecrets,
+    PathPolicy? pathPolicy,
+    int workerCount = 4,
+    SshSnapshotProgressCallback? onSshProgress,
   });
 }
 
@@ -105,6 +108,9 @@ class LocalSourceProvider implements SourceProvider {
   Future<PreparedSource> prepare(
     SourceConfig config, {
     SshConnectionSecrets? sshSecrets,
+    PathPolicy? pathPolicy,
+    int workerCount = 4,
+    SshSnapshotProgressCallback? onSshProgress,
   }) async {
     final directory = Directory(config.root).absolute;
     if (!await directory.exists()) {
@@ -135,13 +141,21 @@ class SshSourceProvider implements SourceProvider {
   Future<PreparedSource> prepare(
     SourceConfig config, {
     SshConnectionSecrets? sshSecrets,
+    PathPolicy? pathPolicy,
+    int workerCount = 4,
+    SshSnapshotProgressCallback? onSshProgress,
   }) async {
     final connection = await service.connect(
       config,
       secrets: sshSecrets ?? const SshConnectionSecrets(),
     );
     try {
-      final snapshot = await connection.downloadSnapshot(config.root);
+      final snapshot = await connection.downloadSnapshot(
+        config.root,
+        pathPolicy: pathPolicy,
+        workerCount: workerCount,
+        onProgress: onSshProgress,
+      );
       return PreparedSource(
         directory: snapshot.directory,
         metadata: <String, Object?>{
@@ -186,6 +200,9 @@ class ArchiveSourceProvider implements SourceProvider {
   Future<PreparedSource> prepare(
     SourceConfig config, {
     SshConnectionSecrets? sshSecrets,
+    PathPolicy? pathPolicy,
+    int workerCount = 4,
+    SshSnapshotProgressCallback? onSshProgress,
   }) async {
     final temp = await Directory.systemTemp.createTemp('centra-source-');
     try {
@@ -316,6 +333,9 @@ class DockerImageSourceProvider implements SourceProvider {
   Future<PreparedSource> prepare(
     SourceConfig config, {
     SshConnectionSecrets? sshSecrets,
+    PathPolicy? pathPolicy,
+    int workerCount = 4,
+    SshSnapshotProgressCallback? onSshProgress,
   }) async {
     final createArguments = <String>[
       ...dockerContextArguments(config),

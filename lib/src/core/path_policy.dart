@@ -24,6 +24,12 @@ class GlobPattern {
   bool matches(String path) =>
       _expression.hasMatch(normalizeRelativePath(path));
 
+  bool matchesDirectory(String path) {
+    final normalized = normalizeRelativePath(path);
+    return _expression.hasMatch(normalized) ||
+        _expression.hasMatch('$normalized/');
+  }
+
   static String _toRegex(String pattern) {
     final normalized = pattern.replaceAll('\\', '/');
     final buffer = StringBuffer('^');
@@ -87,6 +93,18 @@ class PathPolicy {
         includePatterns.any((pattern) => pattern.matches(path));
     if (!included) return false;
     return !excludePatterns.any((pattern) => pattern.matches(path));
+  }
+
+  bool shouldTraverseDirectory(String relativePath) {
+    final path = normalizeRelativePath(relativePath);
+    if (path.isEmpty) return true;
+    if (!includeHiddenFiles &&
+        path.split('/').any((segment) => segment.startsWith('.'))) {
+      return false;
+    }
+    return !excludePatterns.any(
+      (pattern) => pattern.matchesDirectory(path),
+    );
   }
 }
 
