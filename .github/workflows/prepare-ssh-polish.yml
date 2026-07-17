@@ -1,0 +1,35 @@
+name: Prepare SSH security polish
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.head_ref == 'feature/ssh-connection-manager'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ssh-connection-manager
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Apply SSH security polish
+        run: python .github/prepare_ssh_polish.py
+      - name: Resolve dependencies
+        run: dart pub get
+      - name: Format changed files
+        run: dart format lib/src/tui/ssh_source_picker.dart lib/src/app/cli.dart lib/src/core/scanner.dart
+      - name: Remove preparation files
+        run: rm .github/prepare_ssh_polish.py .github/workflows/prepare-ssh-polish.yml
+      - name: Commit polished SSH workflow
+        run: |
+          git config user.name "Centra CI"
+          git config user.email "ci@centra.local"
+          git add -A
+          git commit -m "Harden SSH credentials and metadata" || exit 0
+          git push origin HEAD:feature/ssh-connection-manager
