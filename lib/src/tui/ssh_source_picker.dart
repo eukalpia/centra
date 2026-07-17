@@ -614,6 +614,7 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
             password,
             passwordFocus,
             '••••••••',
+            obscureText: true,
           ),
         if (authMethod.usesPrivateKey)
           Row(
@@ -633,6 +634,7 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
                   passphrase,
                   passphraseFocus,
                   'optional',
+                  obscureText: true,
                 ),
               ),
             ],
@@ -820,8 +822,9 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
     String label,
     TextEditingController controller,
     FocusNode node,
-    String placeholder,
-  ) {
+    String placeholder, {
+    bool obscureText = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 1),
       child: Column(
@@ -835,6 +838,7 @@ class _SshSourcePickerState extends State<SshSourcePicker> {
               controller: controller,
               focusNode: node,
               placeholder: placeholder,
+              obscureText: obscureText,
               style: const TextStyle(color: _sshText),
               placeholderStyle: const TextStyle(
                 color: _sshMuted,

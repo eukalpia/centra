@@ -438,8 +438,8 @@ class CentraCli {
       'platform': Platform.operatingSystem,
       'configDirectory': paths.configDirectory.absolute.path,
       'dataDirectory': paths.dataDirectory.absolute.path,
-      'ssh': await _executableAvailable('ssh'),
-      'tar': await _executableAvailable('tar'),
+      'sshTransport': 'built-in SFTP',
+      'externalSshRequired': false,
       'docker': await _executableAvailable('docker'),
     };
     if (results['json'] as bool) {
