@@ -103,8 +103,7 @@ void main() {
     });
 
     test('temporary image container is removed when browsing closes', () async {
-      final archive = Archive()
-        ..add(ArchiveFile.string('app/main', 'binary'));
+      final archive = Archive()..add(ArchiveFile.string('app/main', 'binary'));
       final runner = FakeCommandRunner(handler: (executable, arguments) async {
         if (arguments.contains('create')) return textResult('temporary-123\n');
         if (arguments.contains('cp')) {
