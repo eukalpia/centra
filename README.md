@@ -15,6 +15,28 @@ Centra creates reproducible integrity manifests, verifies deployed files against
 
 Centra does **not** silently choose a hash algorithm. The first-run wizard requires an explicit source, algorithm set, exclusion policy, and output format.
 
+## Install
+
+No cloning or manual compilation is required. With Dart 3.10 or newer:
+
+```bash
+dart install https://github.com/eukalpia/centra.git --overwrite
+```
+
+Then launch Centra from any directory:
+
+```bash
+centra
+```
+
+For Dart 3.5 through 3.9:
+
+```bash
+dart pub global activate --source git https://github.com/eukalpia/centra.git --overwrite
+```
+
+Run the same installation command again to update Centra. See [Installation](doc/installation.md) for PATH troubleshooting and uninstall commands.
+
 ## What Centra handles
 
 - Local directories.
@@ -33,11 +55,6 @@ Centra does **not** silently choose a hash algorithm. The first-run wizard requi
 - Ten interface languages: English, Russian, Uzbek Latin, Uzbek Cyrillic, Turkish, Kazakh, Kyrgyz, Tajik, Azerbaijani, and German.
 
 ## First launch
-
-```bash
-dart pub get
-dart run centra
-```
 
 The setup wizard asks for:
 
