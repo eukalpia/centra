@@ -62,12 +62,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       INSTALL_REF: ${{ github.event.pull_request.head.sha || github.sha }}
-      DART_DATA_HOME: ${{ runner.temp }}/dart-data
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
+      - name: Configure isolated Dart Data Home
+        shell: bash
+        run: echo "DART_DATA_HOME=$RUNNER_TEMP/dart-data" >> "$GITHUB_ENV"
       - name: Install from Git repository
         shell: bash
         run: dart install https://github.com/eukalpia/centra.git --git-ref "$INSTALL_REF" --overwrite
