@@ -25,7 +25,17 @@ jobs:
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
-        run: dart analyze --fatal-warnings
+        shell: bash
+        run: |
+          set -o pipefail
+          dart analyze --fatal-warnings 2>&1 | tee analyzer.log
+      - name: Upload analyzer diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: centra-analyzer-${{ runner.os }}
+          path: analyzer.log
+          if-no-files-found: error
       - name: Test
         shell: bash
         run: |
