@@ -14,6 +14,9 @@ import '../core/ssh_connection.dart';
 import '../i18n/messages.dart';
 import 'docker_source_picker.dart';
 import 'folder_picker.dart';
+import 'production_dashboard.dart';
+import 'settings_panel.dart';
+import 'ssh_connection_library.dart';
 import 'ssh_source_picker.dart';
 import 'wizard_state.dart';
 
@@ -93,6 +96,7 @@ class _CentraShellState extends State<_CentraShell> {
   late CentraSettings settings;
   late List<CentraProfile> profiles;
   late bool showWizard;
+  var showSettings = false;
   final sshSecrets = <String, SshConnectionSecrets>{};
 
   @override
@@ -109,10 +113,10 @@ class _CentraShellState extends State<_CentraShell> {
   ) async {
     await widget.profileStore.save(profile);
     if (secrets != null) sshSecrets[profile.id] = secrets;
-    settings = CentraSettings(
+    settings = settings.copyWith(
       locale: profile.locale,
-      theme: settings.theme,
-      confirmDestructiveActions: settings.confirmDestructiveActions,
+      onboardingCompleted: true,
+      lastProfileId: profile.id,
     );
     await widget.settingsStore.save(settings);
     final refreshed = await widget.profileStore.list();
@@ -123,11 +127,36 @@ class _CentraShellState extends State<_CentraShell> {
     });
   }
 
+  Future<void> _settingsSaved(CentraSettings updated) async {
+    await widget.settingsStore.save(updated);
+    if (!mounted) return;
+    setState(() {
+      settings = updated;
+      showSettings = false;
+    });
+  }
+
+  void _profilesChanged(List<CentraProfile> updated) {
+    if (!mounted) return;
+    setState(() => profiles = List<CentraProfile>.from(updated));
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (showSettings) {
+      return Center(
+        child: CentraSettingsPanel(
+          settings: settings,
+          onSaved: _settingsSaved,
+          onCancel: () => setState(() => showSettings = false),
+        ),
+      );
+    }
     if (showWizard) {
       return _WizardScreen(
-        initialLocale: profiles.isEmpty ? null : settings.locale,
+        initialLocale: settings.locale,
+        skipLanguageSelection:
+            settings.onboardingCompleted || profiles.isNotEmpty,
         onSaved: _profileSaved,
         onCancel: () {
           if (profiles.isEmpty) {
@@ -138,11 +167,14 @@ class _CentraShellState extends State<_CentraShell> {
         },
       );
     }
-    return _Dashboard(
+    return ProductionDashboard(
       profiles: profiles,
       locale: settings.locale,
       sshSecrets: sshSecrets,
+      profileStore: widget.profileStore,
+      onProfilesChanged: _profilesChanged,
       onNewProfile: () => setState(() => showWizard = true),
+      onSettings: () => setState(() => showSettings = true),
     );
   }
 }
@@ -150,11 +182,13 @@ class _CentraShellState extends State<_CentraShell> {
 class _WizardScreen extends StatefulWidget {
   const _WizardScreen({
     required this.initialLocale,
+    required this.skipLanguageSelection,
     required this.onSaved,
     required this.onCancel,
   });
 
   final String? initialLocale;
+  final bool skipLanguageSelection;
   final Future<void> Function(
     CentraProfile profile,
     SshConnectionSecrets? secrets,
@@ -167,7 +201,7 @@ class _WizardScreen extends StatefulWidget {
 
 class _WizardScreenState extends State<_WizardScreen> {
   final draft = WizardDraft();
-  var step = WizardStep.language;
+  late WizardStep step;
   var cursor = 0;
   String? error;
   var saving = false;
@@ -211,6 +245,14 @@ class _WizardScreenState extends State<_WizardScreen> {
   var sshPickerOpen = false;
   SshConnectionSecrets? sshConnectionSecrets;
   String? selectedSshServerVersion;
+
+  @override
+  void initState() {
+    super.initState();
+    draft.locale = widget.initialLocale;
+    step =
+        widget.skipLanguageSelection ? WizardStep.source : WizardStep.language;
+  }
 
   String get locale => draft.locale ?? widget.initialLocale ?? 'en';
   CentraStrings get strings => CentraStrings(locale);
@@ -387,7 +429,9 @@ class _WizardScreenState extends State<_WizardScreen> {
       ..hostKeyType = selection.hostKeyType
       ..hostKeyFingerprint = selection.hostKeyFingerprint
       ..connectTimeoutSeconds = selection.connectTimeoutSeconds
-      ..keepAliveSeconds = selection.keepAliveSeconds;
+      ..keepAliveSeconds = selection.keepAliveSeconds
+      ..sshConnectionId = selection.connectionId ?? ''
+      ..sshConnectionName = selection.connectionName ?? '';
     sshConnectionSecrets = selection.secrets;
     selectedSshServerVersion = selection.serverVersion;
     _syncDraft();
@@ -583,7 +627,8 @@ class _WizardScreenState extends State<_WizardScreen> {
   }
 
   void _back() {
-    if (step == WizardStep.language) {
+    if (step == WizardStep.language ||
+        (widget.skipLanguageSelection && step == WizardStep.source)) {
       widget.onCancel();
       return;
     }
@@ -657,7 +702,7 @@ class _WizardScreenState extends State<_WizardScreen> {
             onDismiss: _closeSshPicker,
           ),
           Center(
-            child: SshSourcePicker(
+            child: SshConnectionLibrary(
               locale: locale,
               initialHost: host.text.trim(),
               initialPort: int.tryParse(port.text.trim()) ?? 22,

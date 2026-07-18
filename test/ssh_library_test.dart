@@ -59,7 +59,8 @@ void main() {
     expect(source, contains('private.example.com'));
   });
 
-  test('successful connection records pinned host and last directory', () async {
+  test('successful connection records pinned host and last directory',
+      () async {
     final created = await store.create(
       name: 'Web',
       host: 'web.example.com',

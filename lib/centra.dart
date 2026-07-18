@@ -13,3 +13,4 @@ export 'src/core/ssh_inventory.dart';
 export 'src/core/ssh_library.dart';
 export 'src/core/scan_result.dart';
 export 'src/core/trusted_baseline.dart';
+export 'src/core/profile_editor.dart';

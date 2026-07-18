@@ -45,8 +45,7 @@ class SourceChangePanel extends StatelessWidget {
             initialAuthMethod: profile.source.sshAuthMethod,
             initialIdentityFile: profile.source.identityFile,
             initialFingerprint: profile.source.hostKeyFingerprint,
-            initialConnectTimeoutSeconds:
-                profile.source.connectTimeoutSeconds,
+            initialConnectTimeoutSeconds: profile.source.connectTimeoutSeconds,
             initialKeepAliveSeconds: profile.source.keepAliveSeconds,
             onSelected: (selection) => onSelected((
               updateProfile(

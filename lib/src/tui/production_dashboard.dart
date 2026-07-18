@@ -159,8 +159,11 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
             ),
             _headerButton(t('Settings', 'Настройки'), widget.onSettings),
             const SizedBox(width: 1),
-            _headerButton(t('Scan policy', 'Политика'),
-                profile == null ? null : () => setState(() => stage = _DashboardStage.policy)),
+            _headerButton(
+                t('Scan policy', 'Политика'),
+                profile == null
+                    ? null
+                    : () => setState(() => stage = _DashboardStage.policy)),
           ],
         ),
       );
@@ -205,9 +208,8 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
                             '${index == selected ? '›' : ' '} ${value.name}',
                             maxLines: 1,
                             style: TextStyle(
-                              color: index == selected
-                                  ? _dashAccent
-                                  : _dashText,
+                              color:
+                                  index == selected ? _dashAccent : _dashText,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -258,8 +260,7 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
     if (stage == _DashboardStage.estimate && preparedScan != null) {
       return ScanEstimatePanel(
         estimate: preparedScan!.estimate,
-        fullVerification:
-            value.verificationMode == VerificationMode.full,
+        fullVerification: value.verificationMode == VerificationMode.full,
         translate: _translate,
         onStart: _executePreparedScan,
         onCancel: () => _cancelPrepared(false),
@@ -279,7 +280,8 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
               onCompare: _showComparison,
               onExport: _showArtifacts,
               onRepeat: _beginScan,
-              onChangeSource: () => setState(() => stage = _DashboardStage.source),
+              onChangeSource: () =>
+                  setState(() => stage = _DashboardStage.source),
             ),
           ),
           if (trustedBaseline != null || baselineDiff != null)
@@ -309,13 +311,22 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
             const SizedBox(height: 1),
             _detail(t('Source', 'Источник'), value.source.type.wireName),
             if (value.source.type == SourceType.ssh)
-              _detail(t('Connection', 'Подключение'),
-                  value.source.sshConnectionName ?? '${value.source.user}@${value.source.host}:${value.source.port}'),
+              _detail(
+                  t('Connection', 'Подключение'),
+                  value.source.sshConnectionName ??
+                      '${value.source.user}@${value.source.host}:${value.source.port}'),
             _detail(t('Directory', 'Папка'), value.source.root),
-            _detail(t('Algorithms', 'Алгоритмы'), value.algorithmIds.join(', ')),
-            _detail(t('Verification', 'Проверка'), value.verificationMode == VerificationMode.full ? t('Full', 'Полная') : t('Fast · weaker', 'Быстрая · слабее')),
-            _detail(t('Read policy', 'Ошибки чтения'), value.effectiveReadErrorPolicy.wireName),
-            _detail(t('Exclusions', 'Исключения'), '${value.excludePatterns.length} ${t('rules', 'правил')}'),
+            _detail(
+                t('Algorithms', 'Алгоритмы'), value.algorithmIds.join(', ')),
+            _detail(
+                t('Verification', 'Проверка'),
+                value.verificationMode == VerificationMode.full
+                    ? t('Full', 'Полная')
+                    : t('Fast · weaker', 'Быстрая · слабее')),
+            _detail(t('Read policy', 'Ошибки чтения'),
+                value.effectiveReadErrorPolicy.wireName),
+            _detail(t('Exclusions', 'Исключения'),
+                '${value.excludePatterns.length} ${t('rules', 'правил')}'),
             _detail(t('Output', 'Результат'), value.output.directory),
             if (value.algorithmIds.contains('md5'))
               Container(
@@ -330,7 +341,8 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
             if (status != null)
               Text(status!, style: const TextStyle(color: _dashSuccess)),
             if (error != null)
-              Text(error!, maxLines: 4, style: const TextStyle(color: _dashDanger)),
+              Text(error!,
+                  maxLines: 4, style: const TextStyle(color: _dashDanger)),
             const Spacer(),
             Row(
               children: <Widget>[
@@ -342,7 +354,8 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
                     () => setState(() => stage = _DashboardStage.policy),
                     muted: true),
                 const Spacer(),
-                _button(t('Estimate and scan', 'Оценить и сканировать'), _beginScan),
+                _button(t('Estimate and scan', 'Оценить и сканировать'),
+                    _beginScan),
               ],
             ),
           ],
@@ -541,7 +554,8 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
   void _showComparison() {
     final diff = baselineDiff;
     if (diff == null) {
-      setState(() => status = t('No trusted baseline configured.', 'Доверенный baseline не настроен.'));
+      setState(() => status = t('No trusted baseline configured.',
+          'Доверенный baseline не настроен.'));
       return;
     }
     setState(() => status = diff.hasIntegrityChanges
@@ -554,7 +568,8 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
         .where((artifact) => artifact.kind == 'report')
         .firstOrNull;
     setState(() => status = report == null
-        ? t('Metadata report was not requested.', 'Отчёт не был выбран в профиле.')
+        ? t('Metadata report was not requested.',
+            'Отчёт не был выбран в профиле.')
         : report.file.absolute.path);
   }
 
@@ -614,11 +629,13 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
     }
   }
 
-  String _translate(String key) => <String, String>{
+  String _translate(String key) =>
+      <String, String>{
         'scanProgress': t('Scan progress', 'Ход сканирования'),
         'phaseConnect': t('Connect to source', 'Подключение к источнику'),
         'phaseInventory': t('Build file inventory', 'Построение списка файлов'),
-        'phaseTransfer': t('Transfer and hash stream', 'Передача и потоковое хэширование'),
+        'phaseTransfer':
+            t('Transfer and hash stream', 'Передача и потоковое хэширование'),
         'phaseHashing': t('Finalize hashes', 'Завершение хэшей'),
         'currentFile': t('Current file', 'Текущий файл'),
         'transferred': t('Transferred', 'Передано'),
@@ -631,15 +648,22 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
         'readErrors': t('Read errors', 'Ошибки чтения'),
         'calculating': t('calculating…', 'расчёт…'),
         'stopScan': t('Stop scan', 'Остановить сканирование'),
-        'stopAndChangeSource': t('Stop and change directory', 'Остановить и выбрать папку'),
+        'stopAndChangeSource':
+            t('Stop and change directory', 'Остановить и выбрать папку'),
         'cancelling': t('Stopping…', 'Остановка…'),
         'scanEstimate': t('Scan estimate', 'Предварительная оценка'),
         'totalSize': t('Total size', 'Объём'),
         'expectedTime': t('Expected time', 'Ожидаемое время'),
-        'fullVerificationDescription': t('Full verification reads and hashes every accepted file.', 'Полная проверка перечитывает и хэширует каждый принятый файл.'),
-        'fastVerificationWarning': t('Fast verification is weaker: unchanged metadata reuses trusted baseline hashes.', 'Быстрая проверка слабее: при совпадении метаданных используются хэши trusted baseline.'),
-        'exclusionPreview': t('Excluded before transfer', 'Исключено до передачи'),
-        'noExcludedFiles': t('No excluded files found.', 'Исключённых файлов не найдено.'),
+        'fullVerificationDescription': t(
+            'Full verification reads and hashes every accepted file.',
+            'Полная проверка перечитывает и хэширует каждый принятый файл.'),
+        'fastVerificationWarning': t(
+            'Fast verification is weaker: unchanged metadata reuses trusted baseline hashes.',
+            'Быстрая проверка слабее: при совпадении метаданных используются хэши trusted baseline.'),
+        'exclusionPreview':
+            t('Excluded before transfer', 'Исключено до передачи'),
+        'noExcludedFiles':
+            t('No excluded files found.', 'Исключённых файлов не найдено.'),
         'filesShort': t('files', 'ф.'),
         'showLess': t('Show less', 'Свернуть'),
         'showAll': t('Show all', 'Показать всё'),
@@ -657,19 +681,25 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
         'compare': t('Compare', 'Сравнить'),
         'export': t('Export', 'Экспортировать'),
         'repeat': t('Repeat', 'Повторить'),
-      }[key] ?? key;
+      }[key] ??
+      key;
 
   Widget _footer() => Row(
         children: <Widget>[
-          Text('↑↓ ${t('profiles', 'профили')}', style: const TextStyle(color: _dashMuted)),
+          Text('↑↓ ${t('profiles', 'профили')}',
+              style: const TextStyle(color: _dashMuted)),
           const SizedBox(width: 2),
-          Text('S ${t('scan', 'сканировать')}', style: const TextStyle(color: _dashMuted)),
+          Text('S ${t('scan', 'сканировать')}',
+              style: const TextStyle(color: _dashMuted)),
           const SizedBox(width: 2),
-          Text('P ${t('policy', 'политика')}', style: const TextStyle(color: _dashMuted)),
+          Text('P ${t('policy', 'политика')}',
+              style: const TextStyle(color: _dashMuted)),
           const SizedBox(width: 2),
-          Text(', ${t('settings', 'настройки')}', style: const TextStyle(color: _dashMuted)),
+          Text(', ${t('settings', 'настройки')}',
+              style: const TextStyle(color: _dashMuted)),
           const Spacer(),
-          Text('Q ${t('quit', 'выход')}', style: const TextStyle(color: _dashMuted)),
+          Text('Q ${t('quit', 'выход')}',
+              style: const TextStyle(color: _dashMuted)),
         ],
       );
 
@@ -677,8 +707,12 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
         padding: const EdgeInsets.only(bottom: 1),
         child: Row(
           children: <Widget>[
-            SizedBox(width: 22, child: Text(label, style: const TextStyle(color: _dashMuted))),
-            Expanded(child: Text(value, maxLines: 2, style: const TextStyle(color: _dashText))),
+            SizedBox(
+                width: 22,
+                child: Text(label, style: const TextStyle(color: _dashMuted))),
+            Expanded(
+                child: Text(value,
+                    maxLines: 2, style: const TextStyle(color: _dashText))),
           ],
         ),
       );
@@ -688,16 +722,29 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
         child: Container(
           color: onTap == null ? const Color(0x27313D) : _dashSurfaceStrong,
           padding: const EdgeInsets.symmetric(horizontal: 1),
-          child: Text(label, style: TextStyle(color: onTap == null ? _dashMuted : _dashText)),
+          child: Text(label,
+              style: TextStyle(color: onTap == null ? _dashMuted : _dashText)),
         ),
       );
 
-  Widget _button(String label, VoidCallback? onTap, {bool muted = false}) => GestureDetector(
+  Widget _button(String label, VoidCallback? onTap, {bool muted = false}) =>
+      GestureDetector(
         onTap: onTap,
         child: Container(
-          color: onTap == null ? const Color(0x27313D) : muted ? _dashSurfaceStrong : _dashAccent,
+          color: onTap == null
+              ? const Color(0x27313D)
+              : muted
+                  ? _dashSurfaceStrong
+                  : _dashAccent,
           padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Text(label, style: TextStyle(color: onTap == null ? _dashMuted : muted ? _dashText : _dashBackground, fontWeight: FontWeight.bold)),
+          child: Text(label,
+              style: TextStyle(
+                  color: onTap == null
+                      ? _dashMuted
+                      : muted
+                          ? _dashText
+                          : _dashBackground,
+                  fontWeight: FontWeight.bold)),
         ),
       );
 }
@@ -714,7 +761,8 @@ class _ScanCredentialsPrompt extends StatefulWidget {
   final String locale;
   final CentraProfile profile;
   final SshConnectionSecrets? existing;
-  final void Function(SshConnectionSecrets secrets, String? zipPassword) onSubmit;
+  final void Function(SshConnectionSecrets secrets, String? zipPassword)
+      onSubmit;
   final VoidCallback onCancel;
 
   @override
@@ -733,7 +781,8 @@ class _ScanCredentialsPromptState extends State<_ScanCredentialsPrompt> {
   void initState() {
     super.initState();
     password = TextEditingController(text: widget.existing?.password ?? '');
-    passphrase = TextEditingController(text: widget.existing?.keyPassphrase ?? '');
+    passphrase =
+        TextEditingController(text: widget.existing?.keyPassphrase ?? '');
   }
 
   @override
@@ -751,23 +800,33 @@ class _ScanCredentialsPromptState extends State<_ScanCredentialsPrompt> {
           child: Container(
             decoration: BoxDecoration(
               color: _dashSurface,
-              border: BoxBorder.all(color: _dashAccent, style: BoxBorderStyle.rounded),
+              border: BoxBorder.all(
+                  color: _dashAccent, style: BoxBorderStyle.rounded),
               title: BorderTitle(text: t('Session secrets', 'Секреты сессии')),
             ),
             padding: const EdgeInsets.all(1),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text(t('Secrets stay in memory and are never saved.', 'Секреты остаются в памяти и никогда не сохраняются.'), style: const TextStyle(color: _dashMuted)),
-                if (widget.profile.source.type == SourceType.ssh && widget.profile.source.sshAuthMethod.usesPassword) ...<Widget>[
+                Text(
+                    t('Secrets stay in memory and are never saved.',
+                        'Секреты остаются в памяти и никогда не сохраняются.'),
+                    style: const TextStyle(color: _dashMuted)),
+                if (widget.profile.source.type == SourceType.ssh &&
+                    widget
+                        .profile.source.sshAuthMethod.usesPassword) ...<Widget>[
                   Text(t('SSH password', 'SSH-пароль')),
                   TextField(controller: password, obscureText: true),
                 ],
-                if (widget.profile.source.type == SourceType.ssh && widget.profile.source.sshAuthMethod.usesPrivateKey) ...<Widget>[
-                  Text(t('Key passphrase · optional', 'Passphrase ключа · необязательно')),
+                if (widget.profile.source.type == SourceType.ssh &&
+                    widget.profile.source.sshAuthMethod
+                        .usesPrivateKey) ...<Widget>[
+                  Text(t('Key passphrase · optional',
+                      'Passphrase ключа · необязательно')),
                   TextField(controller: passphrase, obscureText: true),
                 ],
-                if (widget.profile.output.createZip && widget.profile.output.requireZipPassword) ...<Widget>[
+                if (widget.profile.output.createZip &&
+                    widget.profile.output.requireZipPassword) ...<Widget>[
                   Text(t('ZIP password', 'Пароль ZIP')),
                   TextField(controller: zip, obscureText: true),
                 ],
@@ -775,9 +834,30 @@ class _ScanCredentialsPromptState extends State<_ScanCredentialsPrompt> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    GestureDetector(onTap: widget.onCancel, child: Container(color: _dashSurfaceStrong, padding: const EdgeInsets.symmetric(horizontal: 2), child: Text(t('Cancel', 'Отмена')))),
+                    GestureDetector(
+                        onTap: widget.onCancel,
+                        child: Container(
+                            color: _dashSurfaceStrong,
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Text(t('Cancel', 'Отмена')))),
                     const SizedBox(width: 1),
-                    GestureDetector(onTap: () => widget.onSubmit(SshConnectionSecrets(password: password.text.isEmpty ? null : password.text, keyPassphrase: passphrase.text.isEmpty ? null : passphrase.text), zip.text.isEmpty ? null : zip.text), child: Container(color: _dashAccent, padding: const EdgeInsets.symmetric(horizontal: 2), child: Text(t('Continue', 'Продолжить'), style: const TextStyle(color: _dashBackground, fontWeight: FontWeight.bold)))),
+                    GestureDetector(
+                        onTap: () => widget.onSubmit(
+                            SshConnectionSecrets(
+                                password: password.text.isEmpty
+                                    ? null
+                                    : password.text,
+                                keyPassphrase: passphrase.text.isEmpty
+                                    ? null
+                                    : passphrase.text),
+                            zip.text.isEmpty ? null : zip.text),
+                        child: Container(
+                            color: _dashAccent,
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Text(t('Continue', 'Продолжить'),
+                                style: const TextStyle(
+                                    color: _dashBackground,
+                                    fontWeight: FontWeight.bold)))),
                   ],
                 ),
               ],

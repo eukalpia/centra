@@ -32,6 +32,8 @@ class WizardDraft {
   String hostKeyFingerprint = '';
   int connectTimeoutSeconds = 15;
   int keepAliveSeconds = 10;
+  String sshConnectionId = '';
+  String sshConnectionName = '';
   String container = '';
   String image = '';
   String service = '';
@@ -142,6 +144,10 @@ class WizardDraft {
             : hostKeyFingerprint.trim(),
         connectTimeoutSeconds: connectTimeoutSeconds,
         keepAliveSeconds: keepAliveSeconds,
+        sshConnectionId:
+            sshConnectionId.trim().isEmpty ? null : sshConnectionId.trim(),
+        sshConnectionName:
+            sshConnectionName.trim().isEmpty ? null : sshConnectionName.trim(),
         container: container.trim().isEmpty ? null : container.trim(),
         image: image.trim().isEmpty ? null : image.trim(),
         service: service.trim().isEmpty ? null : service.trim(),

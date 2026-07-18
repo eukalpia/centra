@@ -99,9 +99,8 @@ class _ScanEstimatePanelState extends State<ScanEstimatePanel> {
                   : widget.translate('fastVerificationWarning'),
               maxLines: 2,
               style: TextStyle(
-                color: widget.fullVerification
-                    ? _estimateText
-                    : _estimateWarning,
+                color:
+                    widget.fullVerification ? _estimateText : _estimateWarning,
               ),
             ),
           ),

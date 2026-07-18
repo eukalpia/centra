@@ -37,7 +37,8 @@ void main() {
     expect(result.summary.filesHashed, 1);
     expect(result.summary.skipped, 1);
     expect(result.manifest.files.single.path, 'a.txt');
-    expect(phases, containsAll(<String>['source-prepare', 'estimate', 'complete']));
+    expect(phases,
+        containsAll(<String>['source-prepare', 'estimate', 'complete']));
   });
 
   test('fast verification reuses trusted baseline digests', () async {

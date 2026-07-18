@@ -32,8 +32,7 @@ class ProfileScanSettingsPanel extends StatefulWidget {
       _ProfileScanSettingsPanelState();
 }
 
-class _ProfileScanSettingsPanelState
-    extends State<ProfileScanSettingsPanel> {
+class _ProfileScanSettingsPanelState extends State<ProfileScanSettingsPanel> {
   late VerificationMode verificationMode;
   late ReadErrorPolicy readErrorPolicy;
   late SymlinkPolicy symlinkPolicy;
@@ -239,9 +238,11 @@ class _ProfileScanSettingsPanelState
               maxLines: 3,
               style: const TextStyle(color: _policyMuted),
             ),
-            _field(t('Baseline manifest', 'Baseline manifest'), baselineManifest),
+            _field(
+                t('Baseline manifest', 'Baseline manifest'), baselineManifest),
             _field(t('Signature document', 'Файл подписи'), baselineSignature),
-            _field(t('Trusted public key', 'Доверенный открытый ключ'), trustedPublicKey),
+            _field(t('Trusted public key', 'Доверенный открытый ключ'),
+                trustedPublicKey),
             _field(t('Signer', 'Подписант'), trustedSigner),
             _field(t('Release commit', 'Commit релиза'), releaseCommit),
             _field(t('Build', 'Сборка'), releaseBuild),

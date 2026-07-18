@@ -4,7 +4,8 @@ import 'package:centra/centra.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('streaming pipeline hashes one byte stream with multiple algorithms', () {
+  test('streaming pipeline hashes one byte stream with multiple algorithms',
+      () {
     final pipeline = StreamingHashPipeline(
       registry: AlgorithmRegistry(),
       algorithmIds: const <String>['sha256', 'md5', 'crc32', 'adler32'],
