@@ -47,7 +47,7 @@ void main() {
 
       expect((await store.load()).toJson(), settings.toJson());
       expect(await paths.settingsFile.readAsString(),
-          contains('centra.settings.v1'));
+          contains('centra.settings.v2'));
     });
 
     test('profile store saves, sorts, loads and deletes profiles', () async {

@@ -10,6 +10,8 @@ class ManifestFileRecord {
     this.modifiedAt,
     this.mode,
     this.symlinkTarget,
+    this.unstable = false,
+    this.attempts = 1,
   });
 
   final String path;
@@ -18,6 +20,8 @@ class ManifestFileRecord {
   final int? mode;
   final String? symlinkTarget;
   final Map<String, String> digests;
+  final bool unstable;
+  final int attempts;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'path': path,
@@ -26,6 +30,8 @@ class ManifestFileRecord {
           'modifiedAt': modifiedAt!.toUtc().toIso8601String(),
         if (mode != null) 'mode': mode,
         if (symlinkTarget != null) 'symlinkTarget': symlinkTarget,
+        if (unstable) 'unstable': true,
+        if (attempts > 1) 'attempts': attempts,
         'digests': digests,
       };
 
@@ -38,6 +44,8 @@ class ManifestFileRecord {
             : DateTime.parse(json['modifiedAt']! as String),
         mode: json['mode'] as int?,
         symlinkTarget: json['symlinkTarget'] as String?,
+        unstable: json['unstable'] as bool? ?? false,
+        attempts: json['attempts'] as int? ?? 1,
         digests: (json['digests']! as Map).cast<String, String>(),
       );
 }
@@ -82,6 +90,12 @@ class CentraManifest {
     required Iterable<ManifestFileRecord> files,
     required this.errors,
     required this.totalBytes,
+    this.directoriesVisited = 0,
+    this.skipped = 0,
+    this.unstableFiles = 0,
+    this.transferredBytes = 0,
+    this.durationMilliseconds = 0,
+    this.baseline,
   }) : files = (files.toList()
           ..sort((left, right) => left.path.compareTo(right.path)));
 
@@ -98,6 +112,12 @@ class CentraManifest {
   final List<ManifestFileRecord> files;
   final List<ManifestReadError> errors;
   final int totalBytes;
+  final int directoriesVisited;
+  final int skipped;
+  final int unstableFiles;
+  final int transferredBytes;
+  final int durationMilliseconds;
+  final Map<String, Object?>? baseline;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'schema': 'centra.manifest.v1',
@@ -124,7 +144,13 @@ class CentraManifest {
           'fileCount': files.length,
           'totalBytes': totalBytes,
           'readErrorCount': errors.length,
+          'directoriesVisited': directoriesVisited,
+          'skipped': skipped,
+          'unstableFiles': unstableFiles,
+          'transferredBytes': transferredBytes,
+          'durationMilliseconds': durationMilliseconds,
         },
+        if (baseline != null) 'baseline': baseline,
         'files': files.map((file) => file.toJson()).toList(growable: false),
         'errors': errors.map((error) => error.toJson()).toList(growable: false),
       };
@@ -164,6 +190,14 @@ class CentraManifest {
               (value! as Map).cast<String, Object?>()))
           .toList(growable: false),
       totalBytes: summary['totalBytes']! as int,
+      directoriesVisited: summary['directoriesVisited'] as int? ?? 0,
+      skipped: summary['skipped'] as int? ?? 0,
+      unstableFiles: summary['unstableFiles'] as int? ?? 0,
+      transferredBytes: summary['transferredBytes'] as int? ?? 0,
+      durationMilliseconds: summary['durationMilliseconds'] as int? ?? 0,
+      baseline: json['baseline'] == null
+          ? null
+          : (json['baseline']! as Map).cast<String, Object?>(),
     );
   }
 }

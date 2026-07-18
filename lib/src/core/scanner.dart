@@ -1,370 +1,418 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
-
-import 'package:archive/archive.dart';
-import 'package:path/path.dart' as p;
-import 'package:pointycastle/export.dart';
 
 import '../util/hex.dart';
 import 'algorithm_registry.dart';
+import 'local_scan_engine.dart';
 import 'manifest.dart';
 import 'path_policy.dart';
 import 'profile.dart';
+import 'scan_control.dart';
+import 'scan_result.dart';
 import 'source.dart';
 import 'ssh_connection.dart';
+import 'ssh_inventory.dart';
+import 'ssh_scan_engine.dart';
 
-const centraVersion = '0.1.0';
+export 'scan_control.dart';
+export 'scan_result.dart';
 
-class ScanProgress {
-  const ScanProgress({
-    required this.phase,
-    required this.discovered,
-    required this.completed,
-    required this.totalBytes,
-    this.currentPath,
-  });
-
-  final String phase;
-  final int discovered;
-  final int completed;
-  final int totalBytes;
-  final String? currentPath;
-}
-
-typedef ScanProgressCallback = void Function(ScanProgress progress);
-
-class ScanResult {
-  const ScanResult({
-    required this.manifest,
-    required this.duration,
-  });
-
-  final CentraManifest manifest;
-  final Duration duration;
-}
-
-class _InventoryEntry {
-  const _InventoryEntry({
-    required this.entity,
-    required this.path,
-    required this.isLink,
-  });
-
-  final FileSystemEntity entity;
-  final String path;
-  final bool isLink;
-}
-
-abstract interface class _HashAccumulator {
-  void update(Uint8List bytes);
-  String finish();
-}
-
-class _DigestAccumulator implements _HashAccumulator {
-  _DigestAccumulator(this.digest);
-
-  final Digest digest;
-
-  @override
-  void update(Uint8List bytes) => digest.update(bytes, 0, bytes.length);
-
-  @override
-  String finish() {
-    final output = Uint8List(digest.digestSize);
-    digest.doFinal(output, 0);
-    return hexEncode(output);
-  }
-}
-
-class _Crc32Accumulator implements _HashAccumulator {
-  var _value = 0;
-
-  @override
-  void update(Uint8List bytes) => _value = getCrc32(bytes, _value);
-
-  @override
-  String finish() => _value.toUnsigned(32).toRadixString(16).padLeft(8, '0');
-}
-
-class _Adler32Accumulator implements _HashAccumulator {
-  var _value = 1;
-
-  @override
-  void update(Uint8List bytes) => _value = getAdler32(bytes, _value);
-
-  @override
-  String finish() => _value.toUnsigned(32).toRadixString(16).padLeft(8, '0');
-}
+const centraVersion = '0.2.0';
 
 class IntegrityScanner {
   IntegrityScanner({
     SourceRegistry? sourceRegistry,
+    SshConnectionService sshService = const SshConnectionService(),
     CommandRunner commandRunner = const SystemCommandRunner(),
     DateTime Function()? clock,
     Random? random,
+    LocalScanEngine localEngine = const LocalScanEngine(),
+    SshScanEngine sshEngine = const SshScanEngine(),
   })  : _sourceRegistry =
             sourceRegistry ?? SourceRegistry(runner: commandRunner),
+        _sshService = sshService,
         _commandRunner = commandRunner,
         _clock = clock ?? DateTime.now,
-        _random = random ?? Random.secure();
+        _random = random ?? Random.secure(),
+        _localEngine = localEngine,
+        _sshEngine = sshEngine;
 
   final SourceRegistry _sourceRegistry;
+  final SshConnectionService _sshService;
   final CommandRunner _commandRunner;
   final DateTime Function() _clock;
   final Random _random;
+  final LocalScanEngine _localEngine;
+  final SshScanEngine _sshEngine;
 
-  Future<ScanResult> scan(
+  Future<PreparedScan> prepare(
     CentraProfile profile, {
     ScanProgressCallback? onProgress,
     SshConnectionSecrets? sshSecrets,
+    ScanCancellationToken? cancellationToken,
   }) async {
     final validationErrors = profile.validate();
     if (validationErrors.isNotEmpty) {
       throw FormatException(validationErrors.join('\n'));
     }
-    final stopwatch = Stopwatch()..start();
-    final registry =
-        AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
-    final descriptors =
-        profile.algorithmIds.map(registry.descriptor).toList(growable: false);
+    final token = cancellationToken ?? ScanCancellationToken();
     final policy = PathPolicy(
       includes: profile.includePatterns,
       excludes: profile.excludePatterns,
       includeHiddenFiles: profile.includeHiddenFiles,
     );
-    onProgress?.call(
-      ScanProgress(
-        phase: profile.source.type == SourceType.ssh
-            ? 'ssh-connect'
-            : 'source-prepare',
-        discovered: 0,
+    final prepareWatch = Stopwatch()..start();
+    onProgress?.call(ScanProgress(
+      phase: profile.source.type == SourceType.ssh
+          ? 'ssh-connect'
+          : 'source-prepare',
+      discovered: 0,
+      completed: 0,
+      totalBytes: 0,
+      currentPath: profile.source.root,
+      elapsed: prepareWatch.elapsed,
+    ));
+
+    if (profile.source.type == SourceType.ssh) {
+      return _prepareSsh(
+        profile,
+        policy,
+        token,
+        sshSecrets ?? const SshConnectionSecrets(),
+        onProgress,
+        prepareWatch,
+      );
+    }
+    return _prepareDirectorySource(
+      profile,
+      policy,
+      token,
+      sshSecrets,
+      onProgress,
+      prepareWatch,
+    );
+  }
+
+  Future<PreparedScan> _prepareSsh(
+    CentraProfile profile,
+    PathPolicy policy,
+    ScanCancellationToken token,
+    SshConnectionSecrets secrets,
+    ScanProgressCallback? onProgress,
+    Stopwatch prepareWatch,
+  ) async {
+    final connection = await _sshService.connect(
+      profile.source,
+      secrets: secrets,
+      cancellationToken: token,
+    );
+    var disposed = false;
+    final removeCancellation = token.addListener(() {
+      unawaited(connection.close());
+    });
+    try {
+      final inventory = await connection.inventoryRemote(
+        profile.source.root,
+        pathPolicy: policy,
+        limits: profile.limits,
+        symlinkPolicy: profile.symlinkPolicy,
+        readErrorPolicy: profile.effectiveReadErrorPolicy,
+        readRetryCount: profile.readRetryCount,
+        cancellationToken: token,
+        onProgress: onProgress,
+      );
+      final durations = _estimatedDurations(inventory.totalBytes, remote: true);
+      final estimate = inventory.toEstimate(
+        minimumDuration: durations.$1,
+        maximumDuration: durations.$2,
+      );
+      onProgress?.call(ScanProgress(
+        phase: 'estimate',
+        discovered: inventory.entries.length,
         completed: 0,
         totalBytes: 0,
         currentPath: profile.source.root,
-      ),
-    );
-    final prepared =
-        await _sourceRegistry.provider(profile.source.type).prepare(
-              profile.source,
-              sshSecrets: sshSecrets,
-              pathPolicy: policy,
-              workerCount: profile.workerCount,
-              onSshProgress: onProgress == null
-                  ? null
-                  : (progress) => onProgress(
-                        ScanProgress(
-                          phase: progress.phase,
-                          discovered: progress.discovered,
-                          completed: progress.completed,
-                          totalBytes: progress.totalBytes,
-                          currentPath: progress.currentPath,
-                        ),
-                      ),
-            );
-    try {
-      onProgress?.call(const ScanProgress(
-          phase: 'inventory', discovered: 0, completed: 0, totalBytes: 0));
-      final inventory =
-          await _inventory(prepared.directory, profile, policy, onProgress);
-      final files = <ManifestFileRecord>[];
-      final errors = <ManifestReadError>[];
-      var nextIndex = 0;
-      var completed = 0;
-      var totalBytes = 0;
-
-      Future<void> worker() async {
-        while (true) {
-          _InventoryEntry? entry;
-          if (nextIndex < inventory.length) {
-            entry = inventory[nextIndex++];
-          }
-          if (entry == null) return;
-          try {
-            final record = await _hashEntry(
-              entry: entry,
-              profile: profile,
-              registry: registry,
-            );
-            files.add(record);
-            totalBytes += record.size;
-          } on Object catch (error) {
-            errors.add(ManifestReadError(
-              path: entry.path,
-              code: error.runtimeType.toString(),
-              message: error.toString(),
-            ));
-            if (profile.failOnReadError) rethrow;
-          } finally {
-            completed++;
-            onProgress?.call(ScanProgress(
-              phase: 'hashing',
-              discovered: inventory.length,
-              completed: completed,
-              totalBytes: totalBytes,
-              currentPath: entry.path,
-            ));
-          }
-        }
-      }
-
-      await Future.wait(
-          List<Future<void>>.generate(profile.workerCount, (_) => worker()));
-      files.sort((left, right) => left.path.compareTo(right.path));
-      errors.sort((left, right) => left.path.compareTo(right.path));
-      final generatedAt = _clock().toUtc();
-      final manifest = CentraManifest(
-        id: _manifestId(generatedAt),
-        generatedAt: generatedAt,
-        toolVersion: centraVersion,
-        profileId: profile.id,
-        profileName: profile.name,
-        projectKind: profile.projectKind,
-        source: prepared.metadata,
-        algorithms: descriptors,
-        includePatterns: profile.includePatterns,
-        excludePatterns: profile.excludePatterns,
-        files: files,
-        errors: errors,
-        totalBytes: totalBytes,
-      );
-      onProgress?.call(ScanProgress(
-        phase: 'complete',
-        discovered: inventory.length,
-        completed: completed,
-        totalBytes: totalBytes,
+        directories: inventory.directories,
+        skipped: inventory.skipped,
+        readErrors: inventory.issues.length,
+        expectedBytes: inventory.totalBytes,
+        elapsed: prepareWatch.elapsed,
       ));
-      stopwatch.stop();
-      return ScanResult(manifest: manifest, duration: stopwatch.elapsed);
-    } finally {
-      await prepared.dispose();
+      return PreparedScan(
+        estimate: estimate,
+        execute: ({baseline, verificationMode, baselineMetadata}) =>
+            _executeSsh(
+          profile: profile,
+          connection: connection,
+          inventory: inventory,
+          estimate: estimate,
+          token: token,
+          onProgress: onProgress,
+          baseline: baseline,
+          verificationMode: verificationMode ?? profile.verificationMode,
+          baselineMetadata: baselineMetadata,
+        ),
+        dispose: () async {
+          if (disposed) return;
+          disposed = true;
+          removeCancellation();
+          await connection.close();
+        },
+      );
+    } on Object {
+      removeCancellation();
+      await connection.close();
+      rethrow;
     }
   }
 
-  Future<List<_InventoryEntry>> _inventory(
-    Directory root,
+  Future<PreparedScan> _prepareDirectorySource(
     CentraProfile profile,
     PathPolicy policy,
+    ScanCancellationToken token,
+    SshConnectionSecrets? sshSecrets,
     ScanProgressCallback? onProgress,
+    Stopwatch prepareWatch,
   ) async {
-    final entries = <_InventoryEntry>[];
-    await for (final entity in root.list(
-        recursive: true,
-        followLinks: profile.symlinkPolicy == SymlinkPolicy.follow)) {
-      final relative =
-          normalizeRelativePath(p.relative(entity.path, from: root.path));
-      if (!policy.allows(relative)) continue;
-      final type = await FileSystemEntity.type(entity.path, followLinks: false);
-      if (type == FileSystemEntityType.file) {
-        entries.add(_InventoryEntry(
-            entity: File(entity.path), path: relative, isLink: false));
-      } else if (type == FileSystemEntityType.link &&
-          profile.symlinkPolicy == SymlinkPolicy.record) {
-        entries.add(_InventoryEntry(
-            entity: Link(entity.path), path: relative, isLink: true));
-      }
-      if (entries.length % 250 == 0 && entries.isNotEmpty) {
-        onProgress?.call(ScanProgress(
-          phase: 'inventory',
-          discovered: entries.length,
-          completed: 0,
-          totalBytes: 0,
-          currentPath: relative,
-        ));
-      }
+    final prepared = await token.race(
+      _sourceRegistry.provider(profile.source.type).prepare(
+            profile.source,
+            sshSecrets: sshSecrets,
+            pathPolicy: policy,
+            workerCount: profile.workerCount,
+            cancellationToken: token,
+          ),
+    );
+    var disposed = false;
+    final removeCancellation = token.addListener(() {
+      unawaited(prepared.dispose());
+    });
+    try {
+      final plan = await _localEngine.inventory(
+        prepared.directory,
+        profile: profile,
+        pathPolicy: policy,
+        cancellationToken: token,
+        onProgress: onProgress,
+      );
+      final durations = _estimatedDurations(plan.totalBytes, remote: false);
+      final estimate = plan.estimate(
+        minimumDuration: durations.$1,
+        maximumDuration: durations.$2,
+      );
+      onProgress?.call(ScanProgress(
+        phase: 'estimate',
+        discovered: plan.entries.length,
+        completed: 0,
+        totalBytes: 0,
+        currentPath: prepared.directory.path,
+        directories: plan.directories,
+        skipped: plan.skipped,
+        readErrors: plan.issues.length,
+        expectedBytes: plan.totalBytes,
+        elapsed: prepareWatch.elapsed,
+      ));
+      return PreparedScan(
+        estimate: estimate,
+        execute: ({baseline, verificationMode, baselineMetadata}) =>
+            _executeLocal(
+          profile: profile,
+          prepared: prepared,
+          plan: plan,
+          estimate: estimate,
+          token: token,
+          onProgress: onProgress,
+          baseline: baseline,
+          verificationMode: verificationMode ?? profile.verificationMode,
+          baselineMetadata: baselineMetadata,
+        ),
+        dispose: () async {
+          if (disposed) return;
+          disposed = true;
+          removeCancellation();
+          await prepared.dispose();
+        },
+      );
+    } on Object {
+      removeCancellation();
+      await prepared.dispose();
+      rethrow;
     }
-    entries.sort((left, right) => left.path.compareTo(right.path));
-    return entries;
   }
 
-  Future<ManifestFileRecord> _hashEntry({
-    required _InventoryEntry entry,
-    required CentraProfile profile,
-    required AlgorithmRegistry registry,
+  Future<ScanResult> scan(
+    CentraProfile profile, {
+    ScanProgressCallback? onProgress,
+    SshConnectionSecrets? sshSecrets,
+    ScanCancellationToken? cancellationToken,
+    CentraManifest? baseline,
+    VerificationMode? verificationMode,
+    Map<String, Object?>? baselineMetadata,
   }) async {
-    final stat = await entry.entity.stat();
-    final accumulators = <String, _HashAccumulator>{};
-    for (final id in profile.algorithmIds) {
-      if (registry.custom(id) != null) continue;
-      accumulators[id] = switch (id) {
-        'crc32' => _Crc32Accumulator(),
-        'adler32' => _Adler32Accumulator(),
-        _ => _DigestAccumulator(registry.createDigest(id)),
-      };
-    }
+    final prepared = await prepare(
+      profile,
+      onProgress: onProgress,
+      sshSecrets: sshSecrets,
+      cancellationToken: cancellationToken,
+    );
+    return prepared.run(
+      baseline: baseline,
+      verificationMode: verificationMode,
+      baselineMetadata: baselineMetadata,
+    );
+  }
 
-    String? symlinkTarget;
-    if (entry.isLink) {
-      symlinkTarget = await (entry.entity as Link).target();
-      final bytes = Uint8List.fromList(utf8.encode(symlinkTarget));
-      for (final accumulator in accumulators.values) {
-        accumulator.update(bytes);
-      }
-    } else {
-      await for (final chunk in (entry.entity as File).openRead()) {
-        final bytes = chunk is Uint8List ? chunk : Uint8List.fromList(chunk);
-        for (final accumulator in accumulators.values) {
-          accumulator.update(bytes);
-        }
-      }
-    }
+  Future<ScanResult> _executeSsh({
+    required CentraProfile profile,
+    required SshConnection connection,
+    required SshInventoryResult inventory,
+    required ScanEstimate estimate,
+    required ScanCancellationToken token,
+    required ScanProgressCallback? onProgress,
+    required VerificationMode verificationMode,
+    CentraManifest? baseline,
+    Map<String, Object?>? baselineMetadata,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final registry =
+        AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
+    final descriptors =
+        profile.algorithmIds.map(registry.descriptor).toList(growable: false);
+    final execution = await _sshEngine.execute(
+      connection,
+      inventory,
+      profile: profile,
+      registry: registry,
+      runCustom: _runCustom,
+      cancellationToken: token,
+      verificationMode: verificationMode,
+      baseline: baseline,
+      onProgress: onProgress,
+    );
+    stopwatch.stop();
+    final generatedAt = _clock().toUtc();
+    return buildScanResult(
+      toolVersion: centraVersion,
+      manifestId: _manifestId(generatedAt),
+      generatedAt: generatedAt,
+      profile: profile,
+      source: <String, Object?>{
+        'type': SourceType.ssh.wireName,
+        'root': inventory.root,
+        'host': profile.source.host,
+        'user': profile.source.user,
+        'port': profile.source.port,
+        'authMethod': profile.source.sshAuthMethod.wireName,
+        if (profile.source.sshConnectionId != null)
+          'connectionId': profile.source.sshConnectionId,
+        if (profile.source.sshConnectionName != null)
+          'connectionName': profile.source.sshConnectionName,
+        'hostKeyType': connection.hostKeyType,
+        'hostKeyFingerprint': connection.hostKeyFingerprint,
+        'serverVersion': connection.serverVersion,
+        'streamed': true,
+      },
+      descriptors: descriptors,
+      records: execution.records,
+      issues: execution.issues,
+      directories: inventory.directories,
+      skipped: inventory.skipped,
+      unstableFiles: execution.unstableFiles,
+      transferredBytes: execution.transferredBytes,
+      duration: stopwatch.elapsed,
+      estimate: estimate,
+      baselineMetadata: baselineMetadata,
+      onProgress: onProgress,
+    );
+  }
 
-    final digests = <String, String>{
-      for (final entry in accumulators.entries) entry.key: entry.value.finish(),
-    };
-    for (final id in profile.algorithmIds) {
-      final custom = registry.custom(id);
-      if (custom != null) {
-        digests[id] = await _runCustom(custom, entry.entity.path);
-      }
-    }
-    return ManifestFileRecord(
-      path: entry.path,
-      size: entry.isLink ? utf8.encode(symlinkTarget!).length : stat.size,
-      modifiedAt: profile.source.type == SourceType.ssh
-          ? null
-          : profile.captureModificationTimes
-              ? stat.modified.toUtc()
-              : null,
-      mode: profile.source.type == SourceType.ssh
-          ? null
-          : profile.capturePermissions
-              ? stat.mode
-              : null,
-      symlinkTarget: symlinkTarget,
-      digests: Map<String, String>.fromEntries(
-        profile.algorithmIds
-            .map((id) => MapEntry<String, String>(id, digests[id]!)),
-      ),
+  Future<ScanResult> _executeLocal({
+    required CentraProfile profile,
+    required PreparedSource prepared,
+    required LocalScanPlan plan,
+    required ScanEstimate estimate,
+    required ScanCancellationToken token,
+    required ScanProgressCallback? onProgress,
+    required VerificationMode verificationMode,
+    CentraManifest? baseline,
+    Map<String, Object?>? baselineMetadata,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final registry =
+        AlgorithmRegistry(customAlgorithms: profile.customAlgorithms);
+    final descriptors =
+        profile.algorithmIds.map(registry.descriptor).toList(growable: false);
+    final execution = await _localEngine.execute(
+      plan,
+      profile: profile,
+      registry: registry,
+      runCustom: _runCustom,
+      cancellationToken: token,
+      verificationMode: verificationMode,
+      baseline: baseline,
+      onProgress: onProgress,
+    );
+    stopwatch.stop();
+    final generatedAt = _clock().toUtc();
+    return buildScanResult(
+      toolVersion: centraVersion,
+      manifestId: _manifestId(generatedAt),
+      generatedAt: generatedAt,
+      profile: profile,
+      source: prepared.metadata,
+      descriptors: descriptors,
+      records: execution.records,
+      issues: execution.issues,
+      directories: plan.directories,
+      skipped: plan.skipped,
+      unstableFiles: execution.unstableFiles,
+      transferredBytes: execution.transferredBytes,
+      duration: stopwatch.elapsed,
+      estimate: estimate,
+      baselineMetadata: baselineMetadata,
+      onProgress: onProgress,
     );
   }
 
   Future<String> _runCustom(
-      CustomHashAlgorithm algorithm, String filePath) async {
+    CustomHashAlgorithm algorithm,
+    String filePath,
+    ScanCancellationToken token,
+  ) async {
+    token.throwIfCancelled();
     final arguments = algorithm.arguments
         .map((argument) => argument.replaceAll('{file}', filePath))
         .toList(growable: false);
-    final result = await _commandRunner.run(
-      algorithm.executable,
-      arguments,
-      timeout: Duration(seconds: algorithm.timeoutSeconds),
+    final result = await token.race(
+      _commandRunner.run(
+        algorithm.executable,
+        arguments,
+        timeout: Duration(seconds: algorithm.timeoutSeconds),
+      ),
     );
     if (result.exitCode != 0) {
       throw ProcessException(
-          algorithm.executable, arguments, result.stderrText, result.exitCode);
+        algorithm.executable,
+        arguments,
+        result.stderrText,
+        result.exitCode,
+      );
     }
-    final match = RegExp(algorithm.outputPattern, multiLine: true)
-        .firstMatch(result.stdoutText);
+    final match = RegExp(
+      algorithm.outputPattern,
+      multiLine: true,
+    ).firstMatch(result.stdoutText);
     if (match == null || algorithm.outputGroup > match.groupCount) {
       throw FormatException(
-          'Custom algorithm ${algorithm.id} output did not match its configured pattern.');
+        'Custom algorithm ${algorithm.id} output did not match its configured pattern.',
+      );
     }
     final value = match.group(algorithm.outputGroup)!.trim().toLowerCase();
     if (!RegExp(r'^[0-9a-f]+$').hasMatch(value)) {
       throw FormatException(
-          'Custom algorithm ${algorithm.id} returned non-hexadecimal output.');
+        'Custom algorithm ${algorithm.id} returned non-hexadecimal output.',
+      );
     }
     if (algorithm.outputBits > 0 && value.length * 4 != algorithm.outputBits) {
       throw FormatException(
@@ -372,6 +420,16 @@ class IntegrityScanner {
       );
     }
     return value;
+  }
+
+  (Duration, Duration) _estimatedDurations(int bytes, {required bool remote}) {
+    if (bytes <= 0) return (Duration.zero, Duration.zero);
+    final fastBytesPerSecond = remote ? 50 * 1024 * 1024 : 350 * 1024 * 1024;
+    final slowBytesPerSecond = remote ? 4 * 1024 * 1024 : 60 * 1024 * 1024;
+    Duration estimate(int throughput) => Duration(
+          milliseconds: max(1000, (bytes / throughput * 1000).round()),
+        );
+    return (estimate(fastBytesPerSecond), estimate(slowBytesPerSecond));
   }
 
   String _manifestId(DateTime generatedAt) {

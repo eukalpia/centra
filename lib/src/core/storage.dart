@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../util/json.dart';
 import 'profile.dart';
+import 'scan_control.dart';
 
 class CentraPaths {
   CentraPaths({Directory? configDirectory, Directory? dataDirectory})
@@ -17,6 +18,8 @@ class CentraPaths {
   Directory get profilesDirectory =>
       Directory(p.join(configDirectory.path, 'profiles'));
   File get settingsFile => File(p.join(configDirectory.path, 'settings.json'));
+  File get sshConnectionsFile =>
+      File(p.join(configDirectory.path, 'ssh-connections.json'));
   Directory get historyDirectory =>
       Directory(p.join(dataDirectory.path, 'history'));
 
@@ -67,11 +70,19 @@ class CentraSettings {
     required this.locale,
     required this.theme,
     required this.confirmDestructiveActions,
+    this.onboardingCompleted = false,
+    this.confirmBeforeRootScan = true,
+    this.defaultVerificationMode = VerificationMode.full,
+    this.lastProfileId,
   });
 
   final String locale;
   final String theme;
   final bool confirmDestructiveActions;
+  final bool onboardingCompleted;
+  final bool confirmBeforeRootScan;
+  final VerificationMode defaultVerificationMode;
+  final String? lastProfileId;
 
   static const defaults = CentraSettings(
     locale: 'en',
@@ -79,22 +90,55 @@ class CentraSettings {
     confirmDestructiveActions: true,
   );
 
+  CentraSettings copyWith({
+    String? locale,
+    String? theme,
+    bool? confirmDestructiveActions,
+    bool? onboardingCompleted,
+    bool? confirmBeforeRootScan,
+    VerificationMode? defaultVerificationMode,
+    String? lastProfileId,
+  }) =>
+      CentraSettings(
+        locale: locale ?? this.locale,
+        theme: theme ?? this.theme,
+        confirmDestructiveActions:
+            confirmDestructiveActions ?? this.confirmDestructiveActions,
+        onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+        confirmBeforeRootScan:
+            confirmBeforeRootScan ?? this.confirmBeforeRootScan,
+        defaultVerificationMode:
+            defaultVerificationMode ?? this.defaultVerificationMode,
+        lastProfileId: lastProfileId ?? this.lastProfileId,
+      );
+
   Map<String, Object?> toJson() => <String, Object?>{
-        'schema': 'centra.settings.v1',
+        'schema': 'centra.settings.v2',
         'locale': locale,
         'theme': theme,
         'confirmDestructiveActions': confirmDestructiveActions,
+        'onboardingCompleted': onboardingCompleted,
+        'confirmBeforeRootScan': confirmBeforeRootScan,
+        'defaultVerificationMode': defaultVerificationMode.wireName,
+        if (lastProfileId != null) 'lastProfileId': lastProfileId,
       };
 
   factory CentraSettings.fromJson(Map<String, Object?> json) {
-    if (json['schema'] != 'centra.settings.v1') {
-      throw FormatException('Unsupported settings schema: ${json['schema']}');
+    final schema = json['schema'];
+    if (schema != 'centra.settings.v1' && schema != 'centra.settings.v2') {
+      throw FormatException('Unsupported settings schema: $schema');
     }
     return CentraSettings(
       locale: json['locale'] as String? ?? 'en',
       theme: json['theme'] as String? ?? 'auto',
       confirmDestructiveActions:
           json['confirmDestructiveActions'] as bool? ?? true,
+      onboardingCompleted: json['onboardingCompleted'] as bool? ?? false,
+      confirmBeforeRootScan: json['confirmBeforeRootScan'] as bool? ?? true,
+      defaultVerificationMode: VerificationModeName.parse(
+        json['defaultVerificationMode'] as String? ?? 'full',
+      ),
+      lastProfileId: json['lastProfileId'] as String?,
     );
   }
 }

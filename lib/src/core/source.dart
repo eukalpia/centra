@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import 'path_policy.dart';
 import 'profile.dart';
+import 'scan_control.dart';
 import 'ssh_connection.dart';
 
 class ProcessResultData {
@@ -35,7 +36,18 @@ abstract interface class CommandRunner {
   });
 }
 
-class SystemCommandRunner implements CommandRunner {
+abstract interface class CancellableCommandRunner {
+  Future<ProcessResultData> runCancellable(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    Map<String, String>? environment,
+    Duration? timeout,
+    required ScanCancellationToken cancellationToken,
+  });
+}
+
+class SystemCommandRunner implements CommandRunner, CancellableCommandRunner {
   const SystemCommandRunner();
 
   @override
@@ -64,6 +76,55 @@ class SystemCommandRunner implements CommandRunner {
       stderrBytes:
           Uint8List.fromList((result.stderr as List<int>?) ?? const <int>[]),
     );
+  }
+
+  @override
+  Future<ProcessResultData> runCancellable(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    Map<String, String>? environment,
+    Duration? timeout,
+    required ScanCancellationToken cancellationToken,
+  }) async {
+    cancellationToken.throwIfCancelled();
+    final process = await Process.start(
+      executable,
+      arguments,
+      workingDirectory: workingDirectory,
+      environment: environment,
+      runInShell: false,
+    );
+    final stdoutFuture = process.stdout.fold<List<int>>(
+      <int>[],
+      (bytes, chunk) => bytes..addAll(chunk),
+    );
+    final stderrFuture = process.stderr.fold<List<int>>(
+      <int>[],
+      (bytes, chunk) => bytes..addAll(chunk),
+    );
+    final removeCancellation = cancellationToken.addListener(() {
+      process.kill(
+          Platform.isWindows ? ProcessSignal.sigterm : ProcessSignal.sigkill);
+    });
+    try {
+      final exitFuture = process.exitCode;
+      final exitCode = timeout == null
+          ? await cancellationToken.race(exitFuture)
+          : await cancellationToken.race(exitFuture.timeout(timeout));
+      cancellationToken.throwIfCancelled();
+      return ProcessResultData(
+        exitCode: exitCode,
+        stdoutBytes: Uint8List.fromList(await stdoutFuture),
+        stderrBytes: Uint8List.fromList(await stderrFuture),
+      );
+    } on TimeoutException {
+      process.kill(
+          Platform.isWindows ? ProcessSignal.sigterm : ProcessSignal.sigkill);
+      rethrow;
+    } finally {
+      removeCancellation();
+    }
   }
 }
 
@@ -95,6 +156,7 @@ abstract interface class SourceProvider {
     PathPolicy? pathPolicy,
     int workerCount = 4,
     SshSnapshotProgressCallback? onSshProgress,
+    ScanCancellationToken? cancellationToken,
   });
 }
 
@@ -111,7 +173,9 @@ class LocalSourceProvider implements SourceProvider {
     PathPolicy? pathPolicy,
     int workerCount = 4,
     SshSnapshotProgressCallback? onSshProgress,
+    ScanCancellationToken? cancellationToken,
   }) async {
+    cancellationToken?.throwIfCancelled();
     final directory = Directory(config.root).absolute;
     if (!await directory.exists()) {
       throw FileSystemException(
@@ -144,10 +208,12 @@ class SshSourceProvider implements SourceProvider {
     PathPolicy? pathPolicy,
     int workerCount = 4,
     SshSnapshotProgressCallback? onSshProgress,
+    ScanCancellationToken? cancellationToken,
   }) async {
     final connection = await service.connect(
       config,
       secrets: sshSecrets ?? const SshConnectionSecrets(),
+      cancellationToken: cancellationToken,
     );
     try {
       final snapshot = await connection.downloadSnapshot(
@@ -155,6 +221,7 @@ class SshSourceProvider implements SourceProvider {
         pathPolicy: pathPolicy,
         workerCount: workerCount,
         onProgress: onSshProgress,
+        cancellationToken: cancellationToken,
       );
       return PreparedSource(
         directory: snapshot.directory,
@@ -203,14 +270,17 @@ class ArchiveSourceProvider implements SourceProvider {
     PathPolicy? pathPolicy,
     int workerCount = 4,
     SshSnapshotProgressCallback? onSshProgress,
+    ScanCancellationToken? cancellationToken,
   }) async {
     final temp = await Directory.systemTemp.createTemp('centra-source-');
     try {
       final command = _command(config);
-      final result = await runner.run(
+      final result = await runSourceCommand(
+        runner,
         command.$1,
         command.$2,
         timeout: const Duration(minutes: 30),
+        cancellationToken: cancellationToken,
       );
       if (result.exitCode != 0) {
         throw ProcessException(
@@ -292,6 +362,27 @@ class ArchiveSourceProvider implements SourceProvider {
       };
 }
 
+Future<ProcessResultData> runSourceCommand(
+  CommandRunner runner,
+  String executable,
+  List<String> arguments, {
+  Duration? timeout,
+  ScanCancellationToken? cancellationToken,
+}) {
+  if (cancellationToken != null && runner is CancellableCommandRunner) {
+    return (runner as CancellableCommandRunner).runCancellable(
+      executable,
+      arguments,
+      timeout: timeout,
+      cancellationToken: cancellationToken,
+    );
+  }
+  final operation = runner.run(executable, arguments, timeout: timeout);
+  return cancellationToken == null
+      ? operation
+      : cancellationToken.race(operation);
+}
+
 List<String> dockerContextArguments(SourceConfig config) =>
     (config.dockerContext ?? '').isEmpty
         ? const <String>[]
@@ -336,14 +427,20 @@ class DockerImageSourceProvider implements SourceProvider {
     PathPolicy? pathPolicy,
     int workerCount = 4,
     SshSnapshotProgressCallback? onSshProgress,
+    ScanCancellationToken? cancellationToken,
   }) async {
     final createArguments = <String>[
       ...dockerContextArguments(config),
       'create',
       config.image!,
     ];
-    final create = await runner.run('docker', createArguments,
-        timeout: const Duration(minutes: 10));
+    final create = await runSourceCommand(
+      runner,
+      'docker',
+      createArguments,
+      timeout: const Duration(minutes: 10),
+      cancellationToken: cancellationToken,
+    );
     if (create.exitCode != 0) {
       throw ProcessException(
           'docker', createArguments, create.stderrText, create.exitCode);
@@ -354,9 +451,11 @@ class DockerImageSourceProvider implements SourceProvider {
     }
     final temp = await Directory.systemTemp.createTemp('centra-image-');
     Future<void> removeContainer() async {
-      await runner.run(
+      await runSourceCommand(
+        runner,
         'docker',
         <String>[...dockerContextArguments(config), 'rm', '-f', containerId],
+        cancellationToken: null,
       );
     }
 
@@ -367,8 +466,13 @@ class DockerImageSourceProvider implements SourceProvider {
         '$containerId:${config.root}/.',
         temp.path,
       ];
-      final copy = await runner.run('docker', copyArguments,
-          timeout: const Duration(minutes: 30));
+      final copy = await runSourceCommand(
+        runner,
+        'docker',
+        copyArguments,
+        timeout: const Duration(minutes: 30),
+        cancellationToken: cancellationToken,
+      );
       if (copy.exitCode != 0) {
         throw ProcessException(
             'docker', copyArguments, copy.stderrText, copy.exitCode);
