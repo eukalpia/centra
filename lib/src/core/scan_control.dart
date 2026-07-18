@@ -53,8 +53,7 @@ typedef ScanCancellationListener = void Function();
 /// Cooperative cancellation shared by inventory, transfer, hashing and output.
 class ScanCancellationToken {
   final Completer<void> _cancelledCompleter = Completer<void>();
-  final Set<ScanCancellationListener> _listeners =
-      <ScanCancellationListener>{};
+  final Set<ScanCancellationListener> _listeners = <ScanCancellationListener>{};
   var _cancelled = false;
 
   bool get isCancelled => _cancelled;

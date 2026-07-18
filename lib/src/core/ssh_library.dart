@@ -282,8 +282,9 @@ class SshConnectionStore {
       port: port,
       user: user.trim(),
       authMethod: authMethod,
-      identityFile:
-          trimmedIdentity == null || trimmedIdentity.isEmpty ? null : trimmedIdentity,
+      identityFile: trimmedIdentity == null || trimmedIdentity.isEmpty
+          ? null
+          : trimmedIdentity,
       connectTimeoutSeconds: connectTimeoutSeconds,
       keepAliveSeconds: keepAliveSeconds,
       lastPath: lastPath,
@@ -346,11 +347,11 @@ class SshConnectionStore {
     await _writer.writeText(
       paths.sshConnectionsFile,
       '${prettyJson(<String, Object?>{
-        'schema': 'centra.ssh-connections.v1',
-        'connections': sorted
-            .map((connection) => connection.toJson())
-            .toList(growable: false),
-      })}\n',
+            'schema': 'centra.ssh-connections.v1',
+            'connections': sorted
+                .map((connection) => connection.toJson())
+                .toList(growable: false),
+          })}\n',
     );
   }
 }

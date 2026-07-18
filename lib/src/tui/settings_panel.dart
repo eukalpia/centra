@@ -71,7 +71,8 @@ class _CentraSettingsPanelState extends State<CentraSettingsPanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(strings('language'), style: const TextStyle(color: _settingsMuted)),
+            Text(strings('language'),
+                style: const TextStyle(color: _settingsMuted)),
             Wrap(
               spacing: 1,
               children: CentraStrings.locales
@@ -85,7 +86,8 @@ class _CentraSettingsPanelState extends State<CentraSettingsPanel> {
                   .toList(growable: false),
             ),
             const SizedBox(height: 1),
-            Text(strings('theme'), style: const TextStyle(color: _settingsMuted)),
+            Text(strings('theme'),
+                style: const TextStyle(color: _settingsMuted)),
             Row(
               children: <Widget>[
                 Expanded(

@@ -6,80 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prepare-production-scan:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feature/production-scan-workflow'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feature/production-scan-workflow
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - name: Assemble staged Dart modules
-        shell: bash
-        run: |
-          cat .github/parts/local_scan_engine.1 \
-              .github/parts/local_scan_engine.2a \
-              .github/parts/local_scan_engine.2b1 \
-              .github/parts/local_scan_engine.2b2 \
-              > lib/src/core/local_scan_engine.dart
-          cat .github/parts/ssh_scan_engine.1 \
-              .github/parts/ssh_scan_engine.2 \
-              > lib/src/core/ssh_scan_engine.dart
-          cat .github/parts/scanner.1 \
-              .github/parts/scanner.2 \
-              .github/parts/scanner.3 \
-              > lib/src/core/scanner.dart
-          cat .github/parts/ssh_connection_library.1 \
-              .github/parts/ssh_connection_library.2 \
-              > lib/src/tui/ssh_connection_library.dart
-      - name: Apply schema and runtime migrations
-        run: |
-          python .github/apply_production_scan_models.py
-          python .github/apply_manifest_scan_summary.py
-          python .github/apply_ssh_direct_streaming.py
-          python .github/apply_cancellable_sources.py
-          python .github/apply_ssh_connection_cancellation.py
-          python .github/apply_legacy_snapshot_cancellation.py
-      - name: Add public exports
-        shell: bash
-        run: |
-          for line in \
-            "export 'src/core/scan_result.dart';" \
-            "export 'src/core/trusted_baseline.dart';" \
-            "export 'src/core/ssh_library.dart';"; do
-            grep -Fqx "$line" lib/centra.dart || echo "$line" >> lib/centra.dart
-          done
-      - run: dart pub get
-      - name: Format product code
-        shell: bash
-        run: |
-          dart format lib test || true
-      - name: Remove staging files and restore CI
-        shell: bash
-        run: |
-          rm -rf .github/parts
-          rm .github/apply_production_scan_models.py
-          rm .github/apply_manifest_scan_summary.py
-          rm .github/apply_ssh_direct_streaming.py
-          rm .github/apply_cancellable_sources.py
-          rm .github/apply_ssh_connection_cancellation.py
-          rm .github/apply_legacy_snapshot_cancellation.py
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-      - name: Commit assembled product tree
-        shell: bash
-        run: |
-          git config user.name "Centra CI"
-          git config user.email "ci@centra.local"
-          git add -A
-          git commit -m "Build production scan workflow"
-          git push origin HEAD:feature/production-scan-workflow
-
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:
@@ -148,11 +77,17 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          set -o pipefail
           export PATH="$PATH:$DART_DATA_HOME/install/bin"
-          centra --version
+          centra --version | tee installed-version.txt
+          grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' installed-version.txt
       - name: Run installed command on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:Path = "$env:Path;$env:DART_DATA_HOME\install\bin"
-          centra --version
+          $version = (centra --version).Trim()
+          Write-Output $version
+          if ($version -notmatch '^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$') {
+            throw "Unexpected Centra version: $version"
+          }

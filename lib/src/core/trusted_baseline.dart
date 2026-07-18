@@ -54,10 +54,14 @@ class TrustedBaselineService {
     final manifestPath = profile.trustedBaselineManifest;
     final signaturePath = profile.trustedBaselineSignature;
     final publicKeyPath = profile.trustedPublicKey;
-    if (manifestPath == null && signaturePath == null && publicKeyPath == null) {
+    if (manifestPath == null &&
+        signaturePath == null &&
+        publicKeyPath == null) {
       return null;
     }
-    if (manifestPath == null || signaturePath == null || publicKeyPath == null) {
+    if (manifestPath == null ||
+        signaturePath == null ||
+        publicKeyPath == null) {
       throw const FormatException(
         'Trusted baseline requires manifest, signature, and public key files.',
       );

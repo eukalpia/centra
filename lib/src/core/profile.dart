@@ -1,4 +1,5 @@
 import 'algorithm_registry.dart';
+import 'scan_control.dart';
 
 enum SourceType {
   local,
@@ -96,6 +97,8 @@ class SourceConfig {
     this.hostKeyFingerprint,
     this.connectTimeoutSeconds = 15,
     this.keepAliveSeconds = 10,
+    this.sshConnectionId,
+    this.sshConnectionName,
     this.container,
     this.image,
     this.service,
@@ -115,6 +118,8 @@ class SourceConfig {
   final String? hostKeyFingerprint;
   final int connectTimeoutSeconds;
   final int keepAliveSeconds;
+  final String? sshConnectionId;
+  final String? sshConnectionName;
   final String? container;
   final String? image;
   final String? service;
@@ -178,6 +183,8 @@ class SourceConfig {
         if (type == SourceType.ssh)
           'connectTimeoutSeconds': connectTimeoutSeconds,
         if (type == SourceType.ssh) 'keepAliveSeconds': keepAliveSeconds,
+        if (sshConnectionId != null) 'sshConnectionId': sshConnectionId,
+        if (sshConnectionName != null) 'sshConnectionName': sshConnectionName,
         if (container != null) 'container': container,
         if (image != null) 'image': image,
         if (service != null) 'service': service,
@@ -202,6 +209,8 @@ class SourceConfig {
         hostKeyFingerprint: json['hostKeyFingerprint'] as String?,
         connectTimeoutSeconds: json['connectTimeoutSeconds'] as int? ?? 15,
         keepAliveSeconds: json['keepAliveSeconds'] as int? ?? 10,
+        sshConnectionId: json['sshConnectionId'] as String?,
+        sshConnectionName: json['sshConnectionName'] as String?,
         container: json['container'] as String?,
         image: json['image'] as String?,
         service: json['service'] as String?,
@@ -281,6 +290,17 @@ class CentraProfile {
     required this.projectKind,
     required this.createdAt,
     required this.updatedAt,
+    this.verificationMode = VerificationMode.full,
+    this.readErrorPolicy,
+    this.readRetryCount = 2,
+    this.unstableRetryCount = 1,
+    this.limits = const ScanLimits(),
+    this.trustedBaselineManifest,
+    this.trustedBaselineSignature,
+    this.trustedPublicKey,
+    this.trustedSigner,
+    this.releaseCommit,
+    this.releaseBuild,
   });
 
   final String id;
@@ -301,6 +321,21 @@ class CentraProfile {
   final String projectKind;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final VerificationMode verificationMode;
+  final ReadErrorPolicy? readErrorPolicy;
+  final int readRetryCount;
+  final int unstableRetryCount;
+  final ScanLimits limits;
+  final String? trustedBaselineManifest;
+  final String? trustedBaselineSignature;
+  final String? trustedPublicKey;
+  final String? trustedSigner;
+  final String? releaseCommit;
+  final String? releaseBuild;
+
+  ReadErrorPolicy get effectiveReadErrorPolicy =>
+      readErrorPolicy ??
+      (failOnReadError ? ReadErrorPolicy.stop : ReadErrorPolicy.continueScan);
 
   List<String> validate() {
     final errors = <String>[];
@@ -315,9 +350,22 @@ class CentraProfile {
       errors.add('Algorithm IDs must be unique.');
     if (workerCount < 1 || workerCount > 64)
       errors.add('Worker count must be between 1 and 64.');
+    if (readRetryCount < 0 || readRetryCount > 20) {
+      errors.add('Read retry count must be between 0 and 20.');
+    }
+    if (unstableRetryCount < 0 || unstableRetryCount > 10) {
+      errors.add('Unstable file retry count must be between 0 and 10.');
+    }
+    if (trustedBaselineSignature != null && trustedBaselineManifest == null) {
+      errors.add('A trusted signature requires a baseline manifest.');
+    }
+    if (trustedPublicKey != null && trustedBaselineSignature == null) {
+      errors.add('A trusted public key requires a signature document.');
+    }
     errors
       ..addAll(source.validate())
-      ..addAll(output.validate());
+      ..addAll(output.validate())
+      ..addAll(limits.validate());
     final registry = AlgorithmRegistry(customAlgorithms: customAlgorithms);
     for (final id in algorithmIds) {
       try {
@@ -345,7 +393,7 @@ class CentraProfile {
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'schema': 'centra.profile.v1',
+        'schema': 'centra.profile.v2',
         'id': id,
         'name': name,
         'locale': locale,
@@ -365,11 +413,25 @@ class CentraProfile {
         'projectKind': projectKind,
         'createdAt': createdAt.toUtc().toIso8601String(),
         'updatedAt': updatedAt.toUtc().toIso8601String(),
+        'verificationMode': verificationMode.wireName,
+        'readErrorPolicy': effectiveReadErrorPolicy.wireName,
+        'readRetryCount': readRetryCount,
+        'unstableRetryCount': unstableRetryCount,
+        'limits': limits.toJson(),
+        if (trustedBaselineManifest != null)
+          'trustedBaselineManifest': trustedBaselineManifest,
+        if (trustedBaselineSignature != null)
+          'trustedBaselineSignature': trustedBaselineSignature,
+        if (trustedPublicKey != null) 'trustedPublicKey': trustedPublicKey,
+        if (trustedSigner != null) 'trustedSigner': trustedSigner,
+        if (releaseCommit != null) 'releaseCommit': releaseCommit,
+        if (releaseBuild != null) 'releaseBuild': releaseBuild,
       };
 
   factory CentraProfile.fromJson(Map<String, Object?> json) {
-    if (json['schema'] != 'centra.profile.v1') {
-      throw FormatException('Unsupported profile schema: ${json['schema']}');
+    final schema = json['schema'];
+    if (schema != 'centra.profile.v1' && schema != 'centra.profile.v2') {
+      throw FormatException('Unsupported profile schema: $schema');
     }
     return CentraProfile(
       id: json['id']! as String,
@@ -402,6 +464,24 @@ class CentraProfile {
       projectKind: json['projectKind'] as String? ?? 'generic',
       createdAt: DateTime.parse(json['createdAt']! as String),
       updatedAt: DateTime.parse(json['updatedAt']! as String),
+      verificationMode: VerificationModeName.parse(
+        json['verificationMode'] as String? ?? 'full',
+      ),
+      readErrorPolicy: json['readErrorPolicy'] == null
+          ? null
+          : ReadErrorPolicyName.parse(json['readErrorPolicy']! as String),
+      readRetryCount: json['readRetryCount'] as int? ?? 2,
+      unstableRetryCount: json['unstableRetryCount'] as int? ?? 1,
+      limits: ScanLimits.fromJson(
+        (json['limits'] as Map<Object?, Object?>? ?? const <Object?, Object?>{})
+            .cast<String, Object?>(),
+      ),
+      trustedBaselineManifest: json['trustedBaselineManifest'] as String?,
+      trustedBaselineSignature: json['trustedBaselineSignature'] as String?,
+      trustedPublicKey: json['trustedPublicKey'] as String?,
+      trustedSigner: json['trustedSigner'] as String?,
+      releaseCommit: json['releaseCommit'] as String?,
+      releaseBuild: json['releaseBuild'] as String?,
     );
   }
 }

@@ -95,6 +95,21 @@ class PathPolicy {
     return !excludePatterns.any((pattern) => pattern.matches(path));
   }
 
+  String? matchingExclusion(String relativePath, {bool directory = false}) {
+    final path = normalizeRelativePath(relativePath);
+    if (path.isEmpty) return null;
+    if (!includeHiddenFiles &&
+        path.split('/').any((segment) => segment.startsWith('.'))) {
+      return '<hidden>';
+    }
+    for (final pattern in excludePatterns) {
+      final matches =
+          directory ? pattern.matchesDirectory(path) : pattern.matches(path);
+      if (matches) return pattern.source;
+    }
+    return null;
+  }
+
   bool shouldTraverseDirectory(String relativePath) {
     final path = normalizeRelativePath(relativePath);
     if (path.isEmpty) return true;

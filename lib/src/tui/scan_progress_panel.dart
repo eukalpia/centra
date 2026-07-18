@@ -133,9 +133,7 @@ class ScanProgressPanel extends StatelessWidget {
           Row(
             children: <Widget>[
               _button(
-                cancelling
-                    ? translate('cancelling')
-                    : translate('stopScan'),
+                cancelling ? translate('cancelling') : translate('stopScan'),
                 cancelling ? null : onCancel,
                 warning: true,
               ),
@@ -175,7 +173,11 @@ class ScanProgressPanel extends StatelessWidget {
     final active = current == target ||
         (phase == 'ssh-connect' && progress.phase == 'source-prepare') ||
         (phase == 'ssh-inventory' && progress.phase == 'inventory');
-    final marker = complete ? '✓' : active ? '›' : '·';
+    final marker = complete
+        ? '✓'
+        : active
+            ? '›'
+            : '·';
     final suffix = active && progress.discovered > 0
         ? '  ${progress.completed}/${progress.discovered}'
         : '';

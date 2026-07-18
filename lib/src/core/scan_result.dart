@@ -86,7 +86,8 @@ ScanResult buildScanResult({
   records.sort((left, right) => left.path.compareTo(right.path));
   final readIssues = issues
       .where(
-        (issue) => issue.code != 'unstable_file' &&
+        (issue) =>
+            issue.code != 'unstable_file' &&
             issue.code != 'one_file_system_best_effort',
       )
       .toList(growable: false);

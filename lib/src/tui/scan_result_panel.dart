@@ -113,7 +113,8 @@ class _ScanResultPanelState extends State<ScanResultPanel> {
               ),
             ],
           ),
-          _metric(widget.translate('duration'), formatDuration(summary.duration)),
+          _metric(
+              widget.translate('duration'), formatDuration(summary.duration)),
           const SizedBox(height: 1),
           Text(
             widget.translate('manifest'),
@@ -169,7 +170,8 @@ class _ScanResultPanelState extends State<ScanResultPanel> {
                 muted: true,
               ),
               const SizedBox(width: 1),
-              _button(widget.translate('compare'), widget.onCompare, muted: true),
+              _button(widget.translate('compare'), widget.onCompare,
+                  muted: true),
               const SizedBox(width: 1),
               _button(widget.translate('export'), widget.onExport, muted: true),
               const Spacer(),

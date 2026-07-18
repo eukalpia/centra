@@ -35,8 +35,7 @@ class Crc32HashAccumulator implements HashAccumulator {
   void update(Uint8List bytes) => _value = getCrc32(bytes, _value);
 
   @override
-  String finish() =>
-      _value.toUnsigned(32).toRadixString(16).padLeft(8, '0');
+  String finish() => _value.toUnsigned(32).toRadixString(16).padLeft(8, '0');
 }
 
 class Adler32HashAccumulator implements HashAccumulator {
@@ -46,8 +45,7 @@ class Adler32HashAccumulator implements HashAccumulator {
   void update(Uint8List bytes) => _value = getAdler32(bytes, _value);
 
   @override
-  String finish() =>
-      _value.toUnsigned(32).toRadixString(16).padLeft(8, '0');
+  String finish() => _value.toUnsigned(32).toRadixString(16).padLeft(8, '0');
 }
 
 class StreamingHashPipeline {
