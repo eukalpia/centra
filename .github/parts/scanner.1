@@ -1,0 +1,166 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:math';
+
+import '../util/hex.dart';
+import 'algorithm_registry.dart';
+import 'local_scan_engine.dart';
+import 'manifest.dart';
+import 'path_policy.dart';
+import 'profile.dart';
+import 'scan_control.dart';
+import 'scan_result.dart';
+import 'source.dart';
+import 'ssh_connection.dart';
+import 'ssh_scan_engine.dart';
+
+export 'scan_control.dart';
+export 'scan_result.dart';
+
+const centraVersion = '0.2.0';
+
+class IntegrityScanner {
+  IntegrityScanner({
+    SourceRegistry? sourceRegistry,
+    SshConnectionService sshService = const SshConnectionService(),
+    CommandRunner commandRunner = const SystemCommandRunner(),
+    DateTime Function()? clock,
+    Random? random,
+    LocalScanEngine localEngine = const LocalScanEngine(),
+    SshScanEngine sshEngine = const SshScanEngine(),
+  })  : _sourceRegistry = sourceRegistry ?? SourceRegistry(runner: commandRunner),
+        _sshService = sshService,
+        _commandRunner = commandRunner,
+        _clock = clock ?? DateTime.now,
+        _random = random ?? Random.secure(),
+        _localEngine = localEngine,
+        _sshEngine = sshEngine;
+
+  final SourceRegistry _sourceRegistry;
+  final SshConnectionService _sshService;
+  final CommandRunner _commandRunner;
+  final DateTime Function() _clock;
+  final Random _random;
+  final LocalScanEngine _localEngine;
+  final SshScanEngine _sshEngine;
+
+  Future<PreparedScan> prepare(
+    CentraProfile profile, {
+    ScanProgressCallback? onProgress,
+    SshConnectionSecrets? sshSecrets,
+    ScanCancellationToken? cancellationToken,
+  }) async {
+    final validationErrors = profile.validate();
+    if (validationErrors.isNotEmpty) {
+      throw FormatException(validationErrors.join('\n'));
+    }
+    final token = cancellationToken ?? ScanCancellationToken();
+    final policy = PathPolicy(
+      includes: profile.includePatterns,
+      excludes: profile.excludePatterns,
+      includeHiddenFiles: profile.includeHiddenFiles,
+    );
+    final prepareWatch = Stopwatch()..start();
+    onProgress?.call(ScanProgress(
+      phase: profile.source.type == SourceType.ssh
+          ? 'ssh-connect'
+          : 'source-prepare',
+      discovered: 0,
+      completed: 0,
+      totalBytes: 0,
+      currentPath: profile.source.root,
+      elapsed: prepareWatch.elapsed,
+    ));
+
+    if (profile.source.type == SourceType.ssh) {
+      return _prepareSsh(
+        profile,
+        policy,
+        token,
+        sshSecrets ?? const SshConnectionSecrets(),
+        onProgress,
+        prepareWatch,
+      );
+    }
+    return _prepareDirectorySource(
+      profile,
+      policy,
+      token,
+      sshSecrets,
+      onProgress,
+      prepareWatch,
+    );
+  }
+
+  Future<PreparedScan> _prepareSsh(
+    CentraProfile profile,
+    PathPolicy policy,
+    ScanCancellationToken token,
+    SshConnectionSecrets secrets,
+    ScanProgressCallback? onProgress,
+    Stopwatch prepareWatch,
+  ) async {
+    final connection = await _sshService.connect(
+      profile.source,
+      secrets: secrets,
+      cancellationToken: token,
+    );
+    var disposed = false;
+    final removeCancellation = token.addListener(() {
+      unawaited(connection.close());
+    });
+    try {
+      final inventory = await connection.inventoryRemote(
+        profile.source.root,
+        pathPolicy: policy,
+        limits: profile.limits,
+        symlinkPolicy: profile.symlinkPolicy,
+        readErrorPolicy: profile.effectiveReadErrorPolicy,
+        readRetryCount: profile.readRetryCount,
+        cancellationToken: token,
+        onProgress: onProgress,
+      );
+      final durations = _estimatedDurations(inventory.totalBytes, remote: true);
+      final estimate = inventory.toEstimate(
+        minimumDuration: durations.$1,
+        maximumDuration: durations.$2,
+      );
+      onProgress?.call(ScanProgress(
+        phase: 'estimate',
+        discovered: inventory.entries.length,
+        completed: 0,
+        totalBytes: 0,
+        currentPath: profile.source.root,
+        directories: inventory.directories,
+        skipped: inventory.skipped,
+        readErrors: inventory.issues.length,
+        expectedBytes: inventory.totalBytes,
+        elapsed: prepareWatch.elapsed,
+      ));
+      return PreparedScan(
+        estimate: estimate,
+        execute: ({baseline, verificationMode, baselineMetadata}) => _executeSsh(
+          profile: profile,
+          connection: connection,
+          inventory: inventory,
+          estimate: estimate,
+          token: token,
+          onProgress: onProgress,
+          baseline: baseline,
+          verificationMode: verificationMode ?? profile.verificationMode,
+          baselineMetadata: baselineMetadata,
+        ),
+        dispose: () async {
+          if (disposed) return;
+          disposed = true;
+          removeCancellation();
+          await connection.close();
+        },
+      );
+    } on Object {
+      removeCancellation();
+      await connection.close();
+      rethrow;
+    }
+  }
+
