@@ -233,7 +233,3 @@ dart compile exe bin/centra.dart -o build/centra
 ```
 
 Architecture is documented in [doc/architecture.md](doc/architecture.md).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
