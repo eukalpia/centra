@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:cinder/cinder.dart';
 
 import '../core/manifest.dart';
