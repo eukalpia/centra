@@ -77,3 +77,17 @@ class SshStreamedFileResult<T> {
   final DateTime? beforeModifiedAt;
   final DateTime? afterModifiedAt;
 }
+
+class SshStreamBatch<T> {
+  const SshStreamBatch({
+    required this.files,
+    required this.issues,
+    required this.transferredBytes,
+    required this.unstableFiles,
+  });
+
+  final List<SshStreamedFileResult<T>> files;
+  final List<ScanIssue> issues;
+  final int transferredBytes;
+  final int unstableFiles;
+}
