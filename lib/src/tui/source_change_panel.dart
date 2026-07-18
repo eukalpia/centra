@@ -1,6 +1,5 @@
 import 'package:cinder/cinder.dart';
 
-import '../core/docker_browser.dart';
 import '../core/profile.dart';
 import '../core/profile_editor.dart';
 import '../core/ssh_connection.dart';

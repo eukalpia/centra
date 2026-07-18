@@ -17,7 +17,6 @@ import 'folder_picker.dart';
 import 'production_dashboard.dart';
 import 'settings_panel.dart';
 import 'ssh_connection_library.dart';
-import 'ssh_source_picker.dart';
 import 'wizard_state.dart';
 
 const _accent = Color(0x64D8CB);

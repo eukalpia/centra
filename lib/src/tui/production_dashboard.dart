@@ -103,9 +103,10 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
   }
 
   @override
-  Widget build(BuildContext context) => KeyboardListener(
+  Widget build(BuildContext context) => Focus(
         focusNode: focusNode,
         autofocus: true,
+        skipTraversal: true,
         onKeyEvent: _onKey,
         child: Container(
           color: _dashBackground,
@@ -605,28 +606,45 @@ class _ProductionDashboardState extends State<ProductionDashboard> {
     );
   }
 
-  void _onKey(KeyEvent event) {
-    if (event is! KeyDownEvent) return;
-    if (event.logicalKey == LogicalKeyboardKey.keyQ) shutdownApp();
+  bool _onKey(KeyboardEvent event) {
+    if (event.matches(LogicalKey.keyQ, ctrl: true) ||
+        event.logicalKey == LogicalKey.keyQ) {
+      shutdownApp();
+      return true;
+    }
     if (stage == _DashboardStage.idle) {
-      if (event.logicalKey == LogicalKeyboardKey.keyN) widget.onNewProfile();
-      if (event.logicalKey == LogicalKeyboardKey.keyS) _beginScan();
-      if (event.logicalKey == LogicalKeyboardKey.keyP && profile != null) {
-        setState(() => stage = _DashboardStage.policy);
+      if (event.logicalKey == LogicalKey.keyN) {
+        widget.onNewProfile();
+        return true;
       }
-      if (event.logicalKey == LogicalKeyboardKey.comma) widget.onSettings();
-      if (event.logicalKey == LogicalKeyboardKey.arrowDown &&
+      if (event.logicalKey == LogicalKey.keyS) {
+        _beginScan();
+        return true;
+      }
+      if (event.logicalKey == LogicalKey.keyP && profile != null) {
+        setState(() => stage = _DashboardStage.policy);
+        return true;
+      }
+      if (event.logicalKey == LogicalKey.comma) {
+        widget.onSettings();
+        return true;
+      }
+      if (event.logicalKey == LogicalKey.arrowDown &&
           selected + 1 < widget.profiles.length) {
         setState(() => selected++);
+        return true;
       }
-      if (event.logicalKey == LogicalKeyboardKey.arrowUp && selected > 0) {
+      if (event.logicalKey == LogicalKey.arrowUp && selected > 0) {
         setState(() => selected--);
+        return true;
       }
     } else if ((stage == _DashboardStage.preparing ||
             stage == _DashboardStage.scanning) &&
-        event.logicalKey == LogicalKeyboardKey.escape) {
+        event.logicalKey == LogicalKey.escape) {
       _cancel(false);
+      return true;
     }
+    return false;
   }
 
   String _translate(String key) =>

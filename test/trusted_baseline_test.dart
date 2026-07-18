@@ -78,14 +78,8 @@ CentraManifest _manifest() => CentraManifest(
       profileName: 'Production',
       projectKind: 'generic',
       source: const <String, Object?>{'type': 'local', 'root': '/srv/app'},
-      algorithms: const <HashAlgorithmDescriptor>[
-        HashAlgorithmDescriptor(
-          id: 'sha256',
-          label: 'SHA-256',
-          family: 'SHA-2',
-          outputBits: 256,
-          security: AlgorithmSecurity.recommended,
-        ),
+      algorithms: <HashAlgorithmDescriptor>[
+        AlgorithmRegistry().descriptor('sha256'),
       ],
       includePatterns: const <String>['**'],
       excludePatterns: const <String>[],
