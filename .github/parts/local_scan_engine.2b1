@@ -1,0 +1,93 @@
+  Future<_LocalHashOutcome> _hashEntry({
+    required LocalInventoryEntry entry,
+    required CentraProfile profile,
+    required AlgorithmRegistry registry,
+    required CustomHashRunner runCustom,
+    required ScanCancellationToken cancellationToken,
+  }) async {
+    final maximumReadAttempts =
+        profile.effectiveReadErrorPolicy == ReadErrorPolicy.retry
+            ? profile.readRetryCount + 1
+            : 1;
+    Object? lastError;
+    for (var readAttempt = 1;
+        readAttempt <= maximumReadAttempts;
+        readAttempt++) {
+      var unstableAttempt = 0;
+      while (true) {
+        cancellationToken.throwIfCancelled();
+        try {
+          final before = await entry.entity.stat();
+          final pipeline = StreamingHashPipeline(
+            registry: registry,
+            algorithmIds: profile.algorithmIds,
+          );
+          String? symlinkTarget = entry.symlinkTarget;
+          if (entry.isLink) {
+            symlinkTarget ??= await (entry.entity as Link).target();
+            pipeline.add(utf8.encode(symlinkTarget));
+          } else {
+            final operation = () async {
+              await for (final chunk in (entry.entity as File).openRead()) {
+                cancellationToken.throwIfCancelled();
+                pipeline.add(chunk);
+              }
+            }();
+            await cancellationToken.race(
+              operation.timeout(
+                Duration(seconds: profile.limits.fileTimeoutSeconds),
+              ),
+            );
+          }
+          final after = await entry.entity.stat();
+          final unstable = before.size != after.size ||
+              before.modified.toUtc() != after.modified.toUtc() ||
+              before.mode != after.mode;
+          if (unstable && unstableAttempt < profile.unstableRetryCount) {
+            unstableAttempt++;
+            continue;
+          }
+          final digests = pipeline.finish();
+          for (final id in profile.algorithmIds) {
+            final custom = registry.custom(id);
+            if (custom != null) {
+              digests[id] = await runCustom(
+                custom,
+                entry.entity.path,
+                cancellationToken,
+              );
+            }
+          }
+          final record = ManifestFileRecord(
+            path: entry.path,
+            size: pipeline.bytes,
+            modifiedAt:
+                profile.captureModificationTimes ? after.modified.toUtc() : null,
+            mode: profile.capturePermissions ? after.mode : null,
+            symlinkTarget: symlinkTarget,
+            digests: _orderedDigests(profile.algorithmIds, digests),
+            unstable: unstable,
+            attempts: readAttempt + unstableAttempt,
+          );
+          return _LocalHashOutcome(
+            record: record,
+            issue: unstable
+                ? ScanIssue(
+                    path: entry.path,
+                    code: 'unstable_file',
+                    message: 'File changed while it was being read.',
+                    attempts: readAttempt + unstableAttempt,
+                  )
+                : null,
+            bytesRead: pipeline.bytes,
+            unstable: unstable,
+          );
+        } on ScanCancelledException {
+          rethrow;
+        } on Object catch (error) {
+          lastError = error;
+          break;
+        }
+      }
+      if (readAttempt < maximumReadAttempts) continue;
+    }
