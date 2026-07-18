@@ -1,9 +1,9 @@
 import 'dart:io';
 
+import '../util/json.dart';
 import 'manifest.dart';
 import 'profile.dart';
 import 'services.dart';
-import 'util_json_bridge.dart';
 
 class TrustedBaselineVerification {
   const TrustedBaselineVerification({
@@ -82,14 +82,16 @@ class TrustedBaselineService {
   }) async {
     for (final file in <File>[manifestFile, signatureFile, publicKeyFile]) {
       if (!await file.exists()) {
-        throw FileSystemException('Trusted baseline file does not exist.', file.path);
+        throw FileSystemException(
+          'Trusted baseline file does not exist.',
+          file.path,
+        );
       }
     }
     final manifest = await _codec.read(manifestFile);
-    final signatureJson = decodeCentraJsonObject(
-      await signatureFile.readAsString(),
+    final signature = ManifestSignatureDocument.fromJson(
+      decodeJsonObject(await signatureFile.readAsString()),
     );
-    final signature = ManifestSignatureDocument.fromJson(signatureJson);
     final trustedPublicKey = _signatures.decodePublicKey(
       await publicKeyFile.readAsString(),
     );
