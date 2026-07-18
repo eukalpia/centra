@@ -6,35 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prepare-test-update:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feature/production-scan-workflow'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feature/production-scan-workflow
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - run: python .github/update_settings_schema_test.py
-      - run: dart pub get
-      - run: dart format test/storage_test.dart
-      - name: Restore project workflow
-        run: |
-          rm .github/update_settings_schema_test.py
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-      - name: Commit test update
-        run: |
-          git config user.name "Centra CI"
-          git config user.email "ci@centra.local"
-          git add -A
-          git commit -m "Update settings schema v2 contract test"
-          git push origin HEAD:feature/production-scan-workflow
-
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:
@@ -103,11 +77,17 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          set -o pipefail
           export PATH="$PATH:$DART_DATA_HOME/install/bin"
-          centra --version
+          centra --version | tee installed-version.txt
+          grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' installed-version.txt
       - name: Run installed command on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:Path = "$env:Path;$env:DART_DATA_HOME\install\bin"
-          centra --version
+          $version = (centra --version).Trim()
+          Write-Output $version
+          if ($version -notmatch '^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$') {
+            throw "Unexpected Centra version: $version"
+          }
