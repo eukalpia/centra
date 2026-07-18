@@ -6,45 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  prepare-fixes:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feature/production-scan-workflow'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feature/production-scan-workflow
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-      - name: Apply analyzer fixes
-        run: |
-          python .github/fix_scan_control.py
-          python .github/fix_scanner_import.py
-          python .github/fix_source_runner.py
-          python .github/fix_ssh_stream_nullability.py
-          python .github/fix_settings_layout.py
-      - run: dart pub get
-      - run: dart format lib
-      - name: Restore project workflow
-        run: |
-          rm .github/fix_scan_control.py
-          rm .github/fix_scanner_import.py
-          rm .github/fix_source_runner.py
-          rm .github/fix_ssh_stream_nullability.py
-          rm .github/fix_settings_layout.py
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-      - name: Commit fixes
-        run: |
-          git config user.name "Centra CI"
-          git config user.email "ci@centra.local"
-          git add -A
-          git commit -m "Fix production scan analyzer errors"
-          git push origin HEAD:feature/production-scan-workflow
-
   quality:
     name: Quality · ${{ matrix.os }}
     strategy:
@@ -61,17 +25,7 @@ jobs:
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
-        shell: bash
-        run: |
-          set -o pipefail
-          dart analyze --fatal-warnings 2>&1 | tee analyzer.log
-      - name: Upload analyzer diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: centra-analyzer-${{ runner.os }}
-          path: analyzer.log
-          if-no-files-found: error
+        run: dart analyze --fatal-warnings
       - name: Test
         shell: bash
         run: |
@@ -123,11 +77,17 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
+          set -o pipefail
           export PATH="$PATH:$DART_DATA_HOME/install/bin"
-          centra --version
+          centra --version | tee installed-version.txt
+          grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$' installed-version.txt
       - name: Run installed command on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:Path = "$env:Path;$env:DART_DATA_HOME\install\bin"
-          centra --version
+          $version = (centra --version).Trim()
+          Write-Output $version
+          if ($version -notmatch '^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$') {
+            throw "Unexpected Centra version: $version"
+          }

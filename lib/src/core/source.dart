@@ -370,7 +370,7 @@ Future<ProcessResultData> runSourceCommand(
   ScanCancellationToken? cancellationToken,
 }) {
   if (cancellationToken != null && runner is CancellableCommandRunner) {
-    return runner.runCancellable(
+    return (runner as CancellableCommandRunner).runCancellable(
       executable,
       arguments,
       timeout: timeout,

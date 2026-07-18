@@ -12,6 +12,7 @@ import 'scan_control.dart';
 import 'scan_result.dart';
 import 'source.dart';
 import 'ssh_connection.dart';
+import 'ssh_inventory.dart';
 import 'ssh_scan_engine.dart';
 
 export 'scan_control.dart';
@@ -290,10 +291,11 @@ class IntegrityScanner {
       onProgress: onProgress,
     );
     stopwatch.stop();
+    final generatedAt = _clock().toUtc();
     return buildScanResult(
       toolVersion: centraVersion,
-      manifestId: _manifestId(_clock().toUtc()),
-      generatedAt: _clock().toUtc(),
+      manifestId: _manifestId(generatedAt),
+      generatedAt: generatedAt,
       profile: profile,
       source: <String, Object?>{
         'type': SourceType.ssh.wireName,

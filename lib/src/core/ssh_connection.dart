@@ -311,7 +311,6 @@ class SshConnection {
       );
       if (names == null) return;
       for (final name in names) {
-        cancellationToken?.throwIfCancelled();
         cancellationToken.throwIfCancelled();
         if (name.filename == '.' || name.filename == '..') continue;
         if (!_safeRemoteName(name.filename)) {
@@ -565,11 +564,12 @@ class SshConnection {
             final before = await cancellationToken.race(
               client.stat(entry.remotePath).timeout(fileTimeout),
             );
-            file = await cancellationToken.race(
+            final openedFile = await cancellationToken.race(
               client.open(entry.remotePath).timeout(fileTimeout),
             );
+            file = openedFile;
             var fileBytes = 0;
-            final stream = file.read().map((chunk) {
+            final stream = openedFile.read().map((chunk) {
               cancellationToken.throwIfCancelled();
               fileBytes += chunk.length;
               transferredBytes += chunk.length;
@@ -579,7 +579,7 @@ class SshConnection {
             final value = await cancellationToken.race(
               consume(entry, stream, readAttempt).timeout(fileTimeout),
             );
-            await file.close();
+            await openedFile.close();
             file = null;
             final after = await cancellationToken.race(
               client.stat(entry.remotePath).timeout(fileTimeout),

@@ -73,8 +73,8 @@ class _CentraSettingsPanelState extends State<CentraSettingsPanel> {
           children: <Widget>[
             Text(strings('language'),
                 style: const TextStyle(color: _settingsMuted)),
-            Wrap(
-              spacing: 1,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: CentraStrings.locales
                   .map(
                     (value) => _choice(

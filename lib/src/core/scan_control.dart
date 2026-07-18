@@ -92,7 +92,7 @@ class ScanCancellationToken {
 
   Future<T> race<T>(Future<T> operation) {
     throwIfCancelled();
-    return Future<T>.any(<Future<T>>[
+    return Future.any<T>(<Future<T>>[
       operation,
       whenCancelled.then<T>((_) => throw const ScanCancelledException()),
     ]);
